@@ -1,0 +1,87 @@
+{
+  "name": "@provable-games/denshokan-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Denshokan — query game tokens via REST API and Starknet RPC with automatic fallback",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./react": {
+      "import": {
+        "types": "./dist/react.d.ts",
+        "default": "./dist/react.js"
+      },
+      "require": {
+        "types": "./dist/react.d.cts",
+        "default": "./dist/react.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "starknet",
+    "denshokan",
+    "nft",
+    "gaming",
+    "sdk"
+  ],
+  "author": "Provable Games",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Provable-Games/denshokan-sdk.git"
+  },
+  "homepage": "https://github.com/Provable-Games/denshokan-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/Provable-Games/denshokan-sdk/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.2.0",
+    "react": "^18.2.0",
+    "starknet": "^6.23.1",
+    "tsup": "^8.1.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0",
+    "starknet": ">=6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "starknet": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
