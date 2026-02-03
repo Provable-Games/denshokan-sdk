@@ -2,6 +2,7 @@ import type { FetchConfig } from "../types/config.js";
 import type { PlayerStats, PlayerTokensParams } from "../types/player.js";
 import type { Token, PaginatedResult } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
+import { mapPaginatedTokens, mapPlayerStats } from "../utils/mappers.js";
 
 interface ApiContext {
   baseUrl: string;
@@ -15,16 +16,17 @@ export async function apiGetPlayerTokens(
   signal?: AbortSignal,
 ): Promise<PaginatedResult<Token>> {
   const qs = buildQueryString({
-    game_id: params?.game_id,
+    game_id: params?.gameId,
     limit: params?.limit,
     offset: params?.offset,
   });
-  return apiFetch<PaginatedResult<Token>>({
+  const raw = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,
     path: `/players/${address}/tokens${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
+  return mapPaginatedTokens(raw);
 }
 
 export async function apiGetPlayerStats(
@@ -32,11 +34,11 @@ export async function apiGetPlayerStats(
   address: string,
   signal?: AbortSignal,
 ): Promise<PlayerStats> {
-  const result = await apiFetch<{ data: PlayerStats }>({
+  const result = await apiFetch<{ data: Record<string, unknown> }>({
     baseUrl: ctx.baseUrl,
     path: `/players/${address}/stats`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return result.data;
+  return mapPlayerStats(result.data);
 }

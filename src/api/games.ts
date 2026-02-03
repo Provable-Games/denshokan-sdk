@@ -9,6 +9,13 @@ import type {
   GameSetting,
 } from "../types/game.js";
 import { apiFetch, buildQueryString } from "./base.js";
+import {
+  mapGame,
+  mapGames,
+  mapGameStats,
+  mapLeaderboardEntries,
+  mapLeaderboardPosition,
+} from "../utils/mappers.js";
 
 interface ApiContext {
   baseUrl: string;
@@ -21,13 +28,13 @@ export async function apiGetGames(
   signal?: AbortSignal,
 ): Promise<Game[]> {
   const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
-  const result = await apiFetch<{ data: Game[] }>({
+  const result = await apiFetch<{ data: Record<string, unknown>[] }>({
     baseUrl: ctx.baseUrl,
     path: `/games${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return result.data;
+  return mapGames(result.data);
 }
 
 export async function apiGetGame(
@@ -35,13 +42,13 @@ export async function apiGetGame(
   gameId: number,
   signal?: AbortSignal,
 ): Promise<Game> {
-  const result = await apiFetch<{ data: Game }>({
+  const result = await apiFetch<{ data: Record<string, unknown> }>({
     baseUrl: ctx.baseUrl,
     path: `/games/${gameId}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return result.data;
+  return mapGame(result.data);
 }
 
 export async function apiGetGameStats(
@@ -49,13 +56,13 @@ export async function apiGetGameStats(
   gameId: number,
   signal?: AbortSignal,
 ): Promise<GameStats> {
-  const result = await apiFetch<{ data: GameStats }>({
+  const result = await apiFetch<{ data: Record<string, unknown> }>({
     baseUrl: ctx.baseUrl,
     path: `/games/${gameId}/stats`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return result.data;
+  return mapGameStats(result.data);
 }
 
 export async function apiGetGameLeaderboard(
@@ -65,13 +72,13 @@ export async function apiGetGameLeaderboard(
   signal?: AbortSignal,
 ): Promise<LeaderboardEntry[]> {
   const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
-  const result = await apiFetch<{ data: LeaderboardEntry[] }>({
+  const result = await apiFetch<{ data: Record<string, unknown>[] }>({
     baseUrl: ctx.baseUrl,
     path: `/games/${gameId}/leaderboard${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return result.data;
+  return mapLeaderboardEntries(result.data);
 }
 
 export async function apiGetLeaderboardPosition(
@@ -82,13 +89,13 @@ export async function apiGetLeaderboardPosition(
   signal?: AbortSignal,
 ): Promise<LeaderboardPosition> {
   const qs = buildQueryString({ context });
-  const result = await apiFetch<{ data: LeaderboardPosition }>({
+  const result = await apiFetch<{ data: Record<string, unknown> }>({
     baseUrl: ctx.baseUrl,
     path: `/games/${gameId}/leaderboard/position/${tokenId}${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return result.data;
+  return mapLeaderboardPosition(result.data);
 }
 
 export async function apiGetGameObjectives(

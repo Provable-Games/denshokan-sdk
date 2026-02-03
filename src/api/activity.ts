@@ -1,6 +1,7 @@
 import type { FetchConfig } from "../types/config.js";
 import type { ActivityEvent, ActivityParams, ActivityStats } from "../types/activity.js";
 import { apiFetch, buildQueryString } from "./base.js";
+import { mapActivityEvents, mapActivityStats } from "../utils/mappers.js";
 
 interface ApiContext {
   baseUrl: string;
@@ -17,13 +18,13 @@ export async function apiGetActivity(
     limit: params?.limit,
     offset: params?.offset,
   });
-  const result = await apiFetch<{ data: ActivityEvent[] }>({
+  const result = await apiFetch<{ data: Record<string, unknown>[] }>({
     baseUrl: ctx.baseUrl,
     path: `/activity${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return result.data;
+  return mapActivityEvents(result.data);
 }
 
 export async function apiGetActivityStats(
@@ -32,11 +33,11 @@ export async function apiGetActivityStats(
   signal?: AbortSignal,
 ): Promise<ActivityStats> {
   const qs = buildQueryString({ game_id: gameId });
-  const result = await apiFetch<{ data: ActivityStats }>({
+  const result = await apiFetch<{ data: Record<string, unknown> }>({
     baseUrl: ctx.baseUrl,
     path: `/activity/stats${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return result.data;
+  return mapActivityStats(result.data);
 }

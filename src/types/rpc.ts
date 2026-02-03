@@ -4,21 +4,21 @@ export interface RoyaltyInfo {
 }
 
 export interface GameMetadata {
-  game_id: number;
+  gameId: number;
   name: string;
-  contract_address: string;
+  contractAddress: string;
 }
 
 export interface MintParams {
-  game_id: number;
-  settings_id: number;
-  objective_id: number;
-  player_name: string;
+  gameId: number;
+  settingsId: number;
+  objectiveId: number;
+  playerName: string;
   soulbound: boolean;
   to: string;
 }
 
 export interface PlayerNameUpdate {
-  token_id: string;
+  tokenId: string;
   name: string;
 }

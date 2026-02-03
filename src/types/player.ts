@@ -1,13 +1,13 @@
 export interface PlayerStats {
   address: string;
-  total_tokens: number;
-  active_tokens: number;
-  games_played: number;
-  highest_score: number;
+  totalTokens: number;
+  activeTokens: number;
+  gamesPlayed: number;
+  highestScore: number;
 }
 
 export interface PlayerTokensParams {
-  game_id?: number;
+  gameId?: number;
   limit?: number;
   offset?: number;
 }

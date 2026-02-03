@@ -1,17 +1,17 @@
 export interface Token {
-  token_id: string;
-  game_id: number;
+  tokenId: string;
+  gameId: number;
   owner: string;
   score: number;
-  game_over: boolean;
-  player_name: string;
-  minted_by: string;
-  minted_at: string;
-  settings_id: number;
-  objective_id: number;
+  gameOver: boolean;
+  playerName: string;
+  mintedBy: string;
+  mintedAt: string;
+  settingsId: number;
+  objectiveId: number;
   soulbound: boolean;
-  is_playable: boolean;
-  game_address: string;
+  isPlayable: boolean;
+  gameAddress: string;
 }
 
 export interface DecodedTokenId {
@@ -32,15 +32,15 @@ export interface DecodedTokenId {
 }
 
 export interface TokenMetadata {
-  game_id: number;
-  settings_id: number;
-  objective_id: number;
-  player_name: string;
-  minted_by: string;
-  is_playable: boolean;
-  is_soulbound: boolean;
-  renderer_address: string;
-  game_address: string;
+  gameId: number;
+  settingsId: number;
+  objectiveId: number;
+  playerName: string;
+  mintedBy: string;
+  isPlayable: boolean;
+  isSoulbound: boolean;
+  rendererAddress: string;
+  gameAddress: string;
 }
 
 export interface TokenScoreEntry {
@@ -54,9 +54,9 @@ export interface PaginatedResult<T> {
 }
 
 export interface TokensFilterParams {
-  game_id?: number;
+  gameId?: number;
   owner?: string;
-  game_over?: string;
+  gameOver?: string;
   limit?: number;
   offset?: number;
 }

@@ -274,14 +274,14 @@ export async function rpcUpdatePlayerName(
 function parseTokenMetadata(raw: unknown): TokenMetadata {
   const obj = raw as Record<string, unknown>;
   return {
-    game_id: Number(obj.game_id ?? 0),
-    settings_id: Number(obj.settings_id ?? 0),
-    objective_id: Number(obj.objective_id ?? 0),
-    player_name: obj.player_name?.toString() ?? "",
-    minted_by: normalizeAddress(obj.minted_by?.toString() ?? "0"),
-    is_playable: Boolean(obj.is_playable),
-    is_soulbound: Boolean(obj.is_soulbound),
-    renderer_address: normalizeAddress(obj.renderer_address?.toString() ?? "0"),
-    game_address: normalizeAddress(obj.game_address?.toString() ?? "0"),
+    gameId: Number(obj.game_id ?? 0),
+    settingsId: Number(obj.settings_id ?? 0),
+    objectiveId: Number(obj.objective_id ?? 0),
+    playerName: obj.player_name?.toString() ?? "",
+    mintedBy: normalizeAddress(obj.minted_by?.toString() ?? "0"),
+    isPlayable: Boolean(obj.is_playable),
+    isSoulbound: Boolean(obj.is_soulbound),
+    rendererAddress: normalizeAddress(obj.renderer_address?.toString() ?? "0"),
+    gameAddress: normalizeAddress(obj.game_address?.toString() ?? "0"),
   };
 }

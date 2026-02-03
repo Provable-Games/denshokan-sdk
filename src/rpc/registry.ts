@@ -20,9 +20,9 @@ export async function rpcGameMetadata(
     const result = await contract.call("game_metadata", [gameId]);
     const obj = result as Record<string, unknown>;
     return {
-      game_id: Number(obj.game_id ?? gameId),
+      gameId: Number(obj.game_id ?? gameId),
       name: obj.name?.toString() ?? "",
-      contract_address: normalizeAddress(obj.contract_address?.toString() ?? "0"),
+      contractAddress: normalizeAddress(obj.contract_address?.toString() ?? "0"),
     };
   }, contract.address);
 }

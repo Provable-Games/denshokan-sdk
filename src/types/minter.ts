@@ -2,6 +2,6 @@ export interface Minter {
   id: string;
   name: string;
   address: string;
-  game_id: number;
+  gameId: number;
   active: boolean;
 }

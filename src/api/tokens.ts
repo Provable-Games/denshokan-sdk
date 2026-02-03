@@ -1,6 +1,7 @@
 import type { FetchConfig } from "../types/config.js";
 import type { Token, TokenScoreEntry, PaginatedResult, TokensFilterParams } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
+import { mapPaginatedTokens, mapToken } from "../utils/mappers.js";
 
 interface ApiContext {
   baseUrl: string;
@@ -13,18 +14,19 @@ export async function apiGetTokens(
   signal?: AbortSignal,
 ): Promise<PaginatedResult<Token>> {
   const qs = buildQueryString({
-    game_id: params?.game_id,
+    game_id: params?.gameId,
     owner: params?.owner,
-    game_over: params?.game_over,
+    game_over: params?.gameOver,
     limit: params?.limit,
     offset: params?.offset,
   });
-  return apiFetch<PaginatedResult<Token>>({
+  const raw = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,
     path: `/tokens${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
+  return mapPaginatedTokens(raw);
 }
 
 export async function apiGetToken(
@@ -32,13 +34,13 @@ export async function apiGetToken(
   tokenId: string,
   signal?: AbortSignal,
 ): Promise<Token> {
-  const result = await apiFetch<{ data: Token }>({
+  const result = await apiFetch<{ data: Record<string, unknown> }>({
     baseUrl: ctx.baseUrl,
     path: `/tokens/${tokenId}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return result.data;
+  return mapToken(result.data);
 }
 
 export async function apiGetTokenScores(
