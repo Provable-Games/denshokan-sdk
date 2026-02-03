@@ -33,6 +33,7 @@ import type {
 import { getChainConfig } from "./chains/constants.js";
 import { DEFAULT_FETCH_CONFIG } from "./utils/retry.js";
 import { decodePackedTokenId } from "./utils/token-id.js";
+import { mintParamsToSnake, playerNameUpdateToSnake } from "./utils/mappers.js";
 import { InvalidChainError } from "./errors/index.js";
 import { ConnectionStatus } from "./datasource/health.js";
 import { withFallback } from "./datasource/resolver.js";
@@ -231,11 +232,11 @@ export class DenshokanClient {
         async () => {
           const meta = await rpcGameMetadata(this.registryContract, gameId);
           return {
-            id: meta.game_id,
+            gameId: meta.gameId,
             name: meta.name,
             description: "",
-            contract_address: meta.contract_address,
-            created_at: "",
+            contractAddress: meta.contractAddress,
+            createdAt: "",
           };
         },
         this.connectionStatus,
@@ -243,11 +244,11 @@ export class DenshokanClient {
     }
     const meta = await rpcGameMetadata(this.registryContract, gameId);
     return {
-      id: meta.game_id,
+      gameId: meta.gameId,
       name: meta.name,
       description: "",
-      contract_address: meta.contract_address,
-      created_at: "",
+      contractAddress: meta.contractAddress,
+      createdAt: "",
     };
   }
 
@@ -301,19 +302,19 @@ export class DenshokanClient {
     ]);
     const decoded = decodePackedTokenId(tokenId);
     return {
-      token_id: tokenId,
-      game_id: metadata.game_id,
+      tokenId,
+      gameId: metadata.gameId,
       owner,
       score: 0,
-      game_over: false,
-      player_name: metadata.player_name,
-      minted_by: metadata.minted_by,
-      minted_at: decoded.mintedAt.toISOString(),
-      settings_id: metadata.settings_id,
-      objective_id: metadata.objective_id,
-      soulbound: metadata.is_soulbound,
-      is_playable: metadata.is_playable,
-      game_address: metadata.game_address,
+      gameOver: false,
+      playerName: metadata.playerName,
+      mintedBy: metadata.mintedBy,
+      mintedAt: decoded.mintedAt.toISOString(),
+      settingsId: metadata.settingsId,
+      objectiveId: metadata.objectiveId,
+      soulbound: metadata.isSoulbound,
+      isPlayable: metadata.isPlayable,
+      gameAddress: metadata.gameAddress,
     };
   }
 
@@ -568,27 +569,13 @@ export class DenshokanClient {
   // =========================================================================
 
   async mint(params: MintParams): Promise<string> {
-    return rpcMint(this.denshokanContract, {
-      game_id: params.game_id,
-      settings_id: params.settings_id,
-      objective_id: params.objective_id,
-      player_name: params.player_name,
-      soulbound: params.soulbound,
-      to: params.to,
-    });
+    return rpcMint(this.denshokanContract, mintParamsToSnake(params));
   }
 
   async mintBatch(params: MintParams[]): Promise<string[]> {
     return rpcMintBatch(
       this.denshokanContract,
-      params.map((p) => ({
-        game_id: p.game_id,
-        settings_id: p.settings_id,
-        objective_id: p.objective_id,
-        player_name: p.player_name,
-        soulbound: p.soulbound,
-        to: p.to,
-      })),
+      params.map(mintParamsToSnake),
     );
   }
 
@@ -607,7 +594,7 @@ export class DenshokanClient {
   async updatePlayerNameBatch(updates: PlayerNameUpdate[]): Promise<void> {
     return rpcUpdatePlayerNameBatch(
       this.denshokanContract,
-      updates.map((u) => ({ token_id: u.token_id, name: u.name })),
+      updates.map(playerNameUpdateToSnake),
     );
   }
 

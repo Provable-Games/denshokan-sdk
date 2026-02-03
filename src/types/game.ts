@@ -1,30 +1,30 @@
 export interface Game {
-  id: number;
+  gameId: number;
   name: string;
   description: string;
-  contract_address: string;
-  image_url?: string;
-  created_at: string;
+  contractAddress: string;
+  imageUrl?: string;
+  createdAt: string;
 }
 
 export interface GameStats {
-  game_id: number;
-  total_tokens: number;
-  active_tokens: number;
-  total_players: number;
-  highest_score: number;
+  gameId: number;
+  totalTokens: number;
+  activeTokens: number;
+  totalPlayers: number;
+  highestScore: number;
 }
 
 export interface LeaderboardEntry {
-  token_id: string;
+  tokenId: string;
   owner: string;
   score: number;
-  player_name: string;
+  playerName: string;
   rank: number;
 }
 
 export interface LeaderboardPosition {
-  token_id: string;
+  tokenId: string;
   rank: number;
   score: number;
   surrounding: LeaderboardEntry[];
