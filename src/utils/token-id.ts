@@ -1,4 +1,4 @@
-import type { DecodedTokenId } from "../types/token.js";
+import type { DecodedTokenId, CoreToken } from "../types/token.js";
 
 const MASKS = {
   GAME_ID: 0x3FFFFFFFn,
@@ -48,5 +48,29 @@ export function decodePackedTokenId(tokenId: string | bigint): DecodedTokenId {
     txHash: Number((packed >> OFFSETS.TX_HASH) & MASKS.TX_HASH),
     salt: Number((packed >> OFFSETS.SALT) & MASKS.SALT),
     metadata: Number((packed >> OFFSETS.METADATA) & MASKS.METADATA),
+  };
+}
+
+/**
+ * Decode a packed token ID into a CoreToken.
+ * Pure function - no RPC calls needed. Useful for quick client-side display.
+ */
+export function decodeCoreToken(tokenId: string | bigint): CoreToken {
+  const decoded = decodePackedTokenId(tokenId);
+  return {
+    tokenId: typeof tokenId === "string" ? tokenId : tokenId.toString(),
+    gameId: decoded.gameId,
+    settingsId: decoded.settingsId,
+    objectiveId: decoded.objectiveId,
+    mintedAt: decoded.mintedAt.toISOString(),
+    soulbound: decoded.soulbound,
+    startDelay: decoded.startDelay,
+    endDelay: decoded.endDelay,
+    hasContext: decoded.hasContext,
+    paymaster: decoded.paymaster,
+    mintedByTruncated: decoded.mintedBy,
+    txHash: decoded.txHash,
+    salt: decoded.salt,
+    metadata: decoded.metadata,
   };
 }

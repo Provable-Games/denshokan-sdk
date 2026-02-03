@@ -13,10 +13,12 @@ import type {
   GameDetail,
   Token,
   TokenMetadata,
+  TokenMutableState,
   TokenScoreEntry,
   PaginatedResult,
   TokensFilterParams,
   DecodedTokenId,
+  CoreToken,
   PlayerStats,
   PlayerTokensParams,
   Minter,
@@ -32,7 +34,7 @@ import type {
 } from "./types/index.js";
 import { getChainConfig } from "./chains/constants.js";
 import { DEFAULT_FETCH_CONFIG } from "./utils/retry.js";
-import { decodePackedTokenId } from "./utils/token-id.js";
+import { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
 import { mintParamsToSnake, playerNameUpdateToSnake } from "./utils/mappers.js";
 import { InvalidChainError } from "./errors/index.js";
 import { ConnectionStatus } from "./datasource/health.js";
@@ -63,8 +65,13 @@ import {
   rpcName,
   rpcSymbol,
   rpcRoyaltyInfo,
+  rpcTotalSupply,
+  rpcTokenByIndex,
+  rpcTokenOfOwnerByIndex,
   rpcTokenMetadata,
   rpcTokenMetadataBatch,
+  rpcTokenMutableState,
+  rpcTokenMutableStateBatch,
   rpcIsPlayable,
   rpcIsPlayableBatch,
   rpcSettingsId,
@@ -163,42 +170,45 @@ export class DenshokanClient {
     return { baseUrl: this.config.apiUrl, fetchConfig: this.config.fetch };
   }
 
-  private get provider(): RpcProvider {
+  private async getProvider(): Promise<RpcProvider> {
     if (!this._provider) {
       this._provider = this.config.provider
         ? (this.config.provider as RpcProvider)
-        : createProvider(this.config.rpcUrl);
+        : await createProvider(this.config.rpcUrl);
     }
     return this._provider;
   }
 
-  private get denshokanContract(): Contract {
+  private async getDenshokanContract(): Promise<Contract> {
     if (!this._denshokanContract) {
-      this._denshokanContract = createContract(
+      const provider = await this.getProvider();
+      this._denshokanContract = await createContract(
         denshokanAbi as unknown[],
         this.config.denshokanAddress,
-        this.provider,
+        provider,
       );
     }
     return this._denshokanContract;
   }
 
-  private get registryContract(): Contract {
+  private async getRegistryContract(): Promise<Contract> {
     if (!this._registryContract) {
+      const provider = await this.getProvider();
       // Registry uses same ABI structure — at minimum it has game_metadata and game_address
-      this._registryContract = createContract(
+      this._registryContract = await createContract(
         denshokanAbi as unknown[],
         this.config.registryAddress,
-        this.provider,
+        provider,
       );
     }
     return this._registryContract;
   }
 
-  private getGameContract(gameAddress: string): Contract {
+  private async getGameContract(gameAddress: string): Promise<Contract> {
     let contract = this._gameContracts.get(gameAddress);
     if (!contract) {
-      contract = createContract(denshokanAbi as unknown[], gameAddress, this.provider);
+      const provider = await this.getProvider();
+      contract = await createContract(denshokanAbi as unknown[], gameAddress, provider);
       this._gameContracts.set(gameAddress, contract);
     }
     return contract;
@@ -207,7 +217,8 @@ export class DenshokanClient {
   private async resolveGameAddress(gameId: number): Promise<string> {
     const cached = this._gameAddressCache.get(gameId);
     if (cached) return cached;
-    const address = await rpcGameAddress(this.registryContract, gameId);
+    const registryContract = await this.getRegistryContract();
+    const address = await rpcGameAddress(registryContract, gameId);
     this._gameAddressCache.set(gameId, address);
     return address;
   }
@@ -230,7 +241,8 @@ export class DenshokanClient {
       return withFallback(
         () => apiGetGame(this.apiCtx, gameId),
         async () => {
-          const meta = await rpcGameMetadata(this.registryContract, gameId);
+          const contract = await this.getRegistryContract();
+          const meta = await rpcGameMetadata(contract, gameId);
           return {
             gameId: meta.gameId,
             name: meta.name,
@@ -242,7 +254,8 @@ export class DenshokanClient {
         this.connectionStatus,
       );
     }
-    const meta = await rpcGameMetadata(this.registryContract, gameId);
+    const contract = await this.getRegistryContract();
+    const meta = await rpcGameMetadata(contract, gameId);
     return {
       gameId: meta.gameId,
       name: meta.name,
@@ -277,7 +290,14 @@ export class DenshokanClient {
   // =========================================================================
 
   async getTokens(params?: TokensFilterParams): Promise<PaginatedResult<Token>> {
-    return apiGetTokens(this.apiCtx, params);
+    if (this.config.primarySource === "api") {
+      return withFallback(
+        () => apiGetTokens(this.apiCtx, params),
+        async () => this.buildTokensFromRpc(params),
+        this.connectionStatus,
+      );
+    }
+    return this.buildTokensFromRpc(params);
   }
 
   async getToken(tokenId: string): Promise<Token> {
@@ -296,34 +316,116 @@ export class DenshokanClient {
   }
 
   private async buildTokenFromRpc(tokenId: string): Promise<Token> {
-    const [metadata, owner] = await Promise.all([
-      rpcTokenMetadata(this.denshokanContract, tokenId),
-      rpcOwnerOf(this.denshokanContract, tokenId),
-    ]);
+    // Decode token ID first - many fields can be extracted without RPC
     const decoded = decodePackedTokenId(tokenId);
+    const contract = await this.getDenshokanContract();
+
+    // Fetch mutable state and other RPC-only fields in parallel
+    const [mutableState, owner, playerName, isPlayable, gameAddress] = await Promise.all([
+      rpcTokenMutableState(contract, tokenId),
+      rpcOwnerOf(contract, tokenId),
+      rpcPlayerName(contract, tokenId),
+      rpcIsPlayable(contract, tokenId),
+      rpcTokenGameAddress(contract, tokenId),
+    ]);
+
     return {
       tokenId,
-      gameId: metadata.gameId,
+      // FROM DECODED TOKEN ID (no RPC needed for these)
+      gameId: decoded.gameId,
+      settingsId: decoded.settingsId,
+      objectiveId: decoded.objectiveId,
+      mintedAt: decoded.mintedAt.toISOString(),
+      soulbound: decoded.soulbound,
+      startDelay: decoded.startDelay,
+      endDelay: decoded.endDelay,
+      hasContext: decoded.hasContext,
+      paymaster: decoded.paymaster,
+      mintedBy: Number(decoded.mintedBy), // 40-bit truncated address fits in JS number
+      // FROM RPC (can't derive from token ID)
       owner,
       score: 0,
-      gameOver: false,
-      playerName: metadata.playerName,
-      mintedBy: metadata.mintedBy,
-      mintedAt: decoded.mintedAt.toISOString(),
-      settingsId: metadata.settingsId,
-      objectiveId: metadata.objectiveId,
-      soulbound: metadata.isSoulbound,
-      isPlayable: metadata.isPlayable,
-      gameAddress: metadata.gameAddress,
+      gameOver: mutableState.gameOver,
+      playerName,
+      isPlayable,
+      gameAddress,
     };
   }
 
+  private async buildTokensFromRpc(params?: TokensFilterParams): Promise<PaginatedResult<Token>> {
+    const { gameId, owner, gameOver, limit = 100, offset = 0 } = params ?? {};
+    const contract = await this.getDenshokanContract();
+
+    // Step 1: Get all relevant token IDs
+    let allTokenIds: string[];
+    if (owner) {
+      // Enumerate tokens for specific owner
+      const balance = await rpcBalanceOf(contract, owner);
+      allTokenIds = [];
+      for (let i = 0n; i < balance; i++) {
+        const tokenId = await rpcTokenOfOwnerByIndex(contract, owner, i);
+        allTokenIds.push(tokenId);
+      }
+    } else {
+      // Enumerate all tokens
+      const totalSupply = await rpcTotalSupply(contract);
+      allTokenIds = [];
+      for (let i = 0n; i < totalSupply; i++) {
+        const tokenId = await rpcTokenByIndex(contract, i);
+        allTokenIds.push(tokenId);
+      }
+    }
+
+    // Step 2: Filter by gameId (can decode from token ID, no RPC needed)
+    let filteredTokenIds = allTokenIds;
+    if (gameId !== undefined) {
+      filteredTokenIds = filteredTokenIds.filter((tokenId) => {
+        const decoded = decodePackedTokenId(tokenId);
+        return decoded.gameId === gameId;
+      });
+    }
+
+    // Step 3: Filter by gameOver if specified (requires mutable state lookup)
+    if (gameOver !== undefined) {
+      const gameOverBool = gameOver === "true";
+      const mutableStates = await rpcTokenMutableStateBatch(contract, filteredTokenIds);
+      filteredTokenIds = filteredTokenIds.filter((_, idx) => mutableStates[idx].gameOver === gameOverBool);
+    }
+
+    // Step 4: Apply pagination
+    const total = filteredTokenIds.length;
+    const paginatedTokenIds = filteredTokenIds.slice(offset, offset + limit);
+
+    // Step 5: Build full Token objects for the paginated results
+    const tokens = await Promise.all(paginatedTokenIds.map((tokenId) => this.buildTokenFromRpc(tokenId)));
+
+    return { data: tokens, total };
+  }
+
   // =========================================================================
-  // Players (API only)
+  // Players (API, with RPC fallback for tokens)
   // =========================================================================
 
   async getPlayerTokens(address: string, params?: PlayerTokensParams): Promise<PaginatedResult<Token>> {
-    return apiGetPlayerTokens(this.apiCtx, address, params);
+    if (this.config.primarySource === "api") {
+      return withFallback(
+        () => apiGetPlayerTokens(this.apiCtx, address, params),
+        () =>
+          this.buildTokensFromRpc({
+            owner: address,
+            gameId: params?.gameId,
+            limit: params?.limit,
+            offset: params?.offset,
+          }),
+        this.connectionStatus,
+      );
+    }
+    return this.buildTokensFromRpc({
+      owner: address,
+      gameId: params?.gameId,
+      limit: params?.limit,
+      offset: params?.offset,
+    });
   }
 
   async getPlayerStats(address: string): Promise<PlayerStats> {
@@ -359,27 +461,97 @@ export class DenshokanClient {
   // =========================================================================
 
   async balanceOf(account: string): Promise<bigint> {
-    return rpcBalanceOf(this.denshokanContract, account);
+    const contract = await this.getDenshokanContract();
+    return rpcBalanceOf(contract, account);
   }
 
   async ownerOf(tokenId: string): Promise<string> {
-    return rpcOwnerOf(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcOwnerOf(contract, tokenId);
   }
 
   async tokenUri(tokenId: string): Promise<string> {
-    return rpcTokenUri(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcTokenUri(contract, tokenId);
   }
 
   async name(): Promise<string> {
-    return rpcName(this.denshokanContract);
+    const contract = await this.getDenshokanContract();
+    return rpcName(contract);
   }
 
   async symbol(): Promise<string> {
-    return rpcSymbol(this.denshokanContract);
+    const contract = await this.getDenshokanContract();
+    return rpcSymbol(contract);
   }
 
   async royaltyInfo(tokenId: string, salePrice: bigint): Promise<RoyaltyInfo> {
-    return rpcRoyaltyInfo(this.denshokanContract, tokenId, salePrice);
+    const contract = await this.getDenshokanContract();
+    return rpcRoyaltyInfo(contract, tokenId, salePrice);
+  }
+
+  // =========================================================================
+  // RPC: Denshokan Contract (ERC721Enumerable)
+  // =========================================================================
+
+  async totalSupply(): Promise<bigint> {
+    const contract = await this.getDenshokanContract();
+    return rpcTotalSupply(contract);
+  }
+
+  async tokenByIndex(index: bigint): Promise<string> {
+    const contract = await this.getDenshokanContract();
+    return rpcTokenByIndex(contract, index);
+  }
+
+  async tokenOfOwnerByIndex(owner: string, index: bigint): Promise<string> {
+    const contract = await this.getDenshokanContract();
+    return rpcTokenOfOwnerByIndex(contract, owner, index);
+  }
+
+  /**
+   * Enumerate all token IDs in the contract.
+   * Uses ERC721Enumerable to iterate through all tokens.
+   * @param options.limit - Maximum number of tokens to return (default: all)
+   * @param options.offset - Starting index (default: 0)
+   */
+  async enumerateTokenIds(options?: { limit?: number; offset?: number }): Promise<string[]> {
+    const contract = await this.getDenshokanContract();
+    const total = await rpcTotalSupply(contract);
+    const offset = BigInt(options?.offset ?? 0);
+    const limit = options?.limit ? BigInt(options.limit) : total - offset;
+    const end = offset + limit > total ? total : offset + limit;
+
+    const tokenIds: string[] = [];
+    for (let i = offset; i < end; i++) {
+      const tokenId = await rpcTokenByIndex(contract, i);
+      tokenIds.push(tokenId);
+    }
+    return tokenIds;
+  }
+
+  /**
+   * Enumerate all token IDs owned by a specific address.
+   * Uses ERC721Enumerable to iterate through owner's tokens.
+   * @param options.limit - Maximum number of tokens to return (default: all)
+   * @param options.offset - Starting index (default: 0)
+   */
+  async enumerateTokenIdsByOwner(
+    owner: string,
+    options?: { limit?: number; offset?: number },
+  ): Promise<string[]> {
+    const contract = await this.getDenshokanContract();
+    const balance = await rpcBalanceOf(contract, owner);
+    const offset = BigInt(options?.offset ?? 0);
+    const limit = options?.limit ? BigInt(options.limit) : balance - offset;
+    const end = offset + limit > balance ? balance : offset + limit;
+
+    const tokenIds: string[] = [];
+    for (let i = offset; i < end; i++) {
+      const tokenId = await rpcTokenOfOwnerByIndex(contract, owner, i);
+      tokenIds.push(tokenId);
+    }
+    return tokenIds;
   }
 
   // =========================================================================
@@ -387,75 +559,103 @@ export class DenshokanClient {
   // =========================================================================
 
   async tokenMetadata(tokenId: string): Promise<TokenMetadata> {
-    return rpcTokenMetadata(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcTokenMetadata(contract, tokenId);
   }
 
   async tokenMetadataBatch(tokenIds: string[]): Promise<TokenMetadata[]> {
-    return rpcTokenMetadataBatch(this.denshokanContract, tokenIds);
+    const contract = await this.getDenshokanContract();
+    return rpcTokenMetadataBatch(contract, tokenIds);
+  }
+
+  async tokenMutableState(tokenId: string): Promise<TokenMutableState> {
+    const contract = await this.getDenshokanContract();
+    return rpcTokenMutableState(contract, tokenId);
+  }
+
+  async tokenMutableStateBatch(tokenIds: string[]): Promise<TokenMutableState[]> {
+    const contract = await this.getDenshokanContract();
+    return rpcTokenMutableStateBatch(contract, tokenIds);
   }
 
   async isPlayable(tokenId: string): Promise<boolean> {
-    return rpcIsPlayable(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcIsPlayable(contract, tokenId);
   }
 
   async isPlayableBatch(tokenIds: string[]): Promise<boolean[]> {
-    return rpcIsPlayableBatch(this.denshokanContract, tokenIds);
+    const contract = await this.getDenshokanContract();
+    return rpcIsPlayableBatch(contract, tokenIds);
   }
 
   async settingsId(tokenId: string): Promise<number> {
-    return rpcSettingsId(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcSettingsId(contract, tokenId);
   }
 
   async settingsIdBatch(tokenIds: string[]): Promise<number[]> {
-    return rpcSettingsIdBatch(this.denshokanContract, tokenIds);
+    const contract = await this.getDenshokanContract();
+    return rpcSettingsIdBatch(contract, tokenIds);
   }
 
   async playerName(tokenId: string): Promise<string> {
-    return rpcPlayerName(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcPlayerName(contract, tokenId);
   }
 
   async playerNameBatch(tokenIds: string[]): Promise<string[]> {
-    return rpcPlayerNameBatch(this.denshokanContract, tokenIds);
+    const contract = await this.getDenshokanContract();
+    return rpcPlayerNameBatch(contract, tokenIds);
   }
 
   async objectiveId(tokenId: string): Promise<number> {
-    return rpcObjectiveId(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcObjectiveId(contract, tokenId);
   }
 
   async objectiveIdBatch(tokenIds: string[]): Promise<number[]> {
-    return rpcObjectiveIdBatch(this.denshokanContract, tokenIds);
+    const contract = await this.getDenshokanContract();
+    return rpcObjectiveIdBatch(contract, tokenIds);
   }
 
   async mintedBy(tokenId: string): Promise<string> {
-    return rpcMintedBy(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcMintedBy(contract, tokenId);
   }
 
   async mintedByBatch(tokenIds: string[]): Promise<string[]> {
-    return rpcMintedByBatch(this.denshokanContract, tokenIds);
+    const contract = await this.getDenshokanContract();
+    return rpcMintedByBatch(contract, tokenIds);
   }
 
   async isSoulbound(tokenId: string): Promise<boolean> {
-    return rpcIsSoulbound(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcIsSoulbound(contract, tokenId);
   }
 
   async isSoulboundBatch(tokenIds: string[]): Promise<boolean[]> {
-    return rpcIsSoulboundBatch(this.denshokanContract, tokenIds);
+    const contract = await this.getDenshokanContract();
+    return rpcIsSoulboundBatch(contract, tokenIds);
   }
 
   async rendererAddress(tokenId: string): Promise<string> {
-    return rpcRendererAddress(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcRendererAddress(contract, tokenId);
   }
 
   async rendererAddressBatch(tokenIds: string[]): Promise<string[]> {
-    return rpcRendererAddressBatch(this.denshokanContract, tokenIds);
+    const contract = await this.getDenshokanContract();
+    return rpcRendererAddressBatch(contract, tokenIds);
   }
 
   async tokenGameAddress(tokenId: string): Promise<string> {
-    return rpcTokenGameAddress(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcTokenGameAddress(contract, tokenId);
   }
 
   async tokenGameAddressBatch(tokenIds: string[]): Promise<string[]> {
-    return rpcTokenGameAddressBatch(this.denshokanContract, tokenIds);
+    const contract = await this.getDenshokanContract();
+    return rpcTokenGameAddressBatch(contract, tokenIds);
   }
 
   // =========================================================================
@@ -463,7 +663,8 @@ export class DenshokanClient {
   // =========================================================================
 
   async gameMetadata(gameId: number): Promise<GameMetadata> {
-    return rpcGameMetadata(this.registryContract, gameId);
+    const contract = await this.getRegistryContract();
+    return rpcGameMetadata(contract, gameId);
   }
 
   async gameAddress(gameId: number): Promise<string> {
@@ -476,23 +677,23 @@ export class DenshokanClient {
 
   async score(tokenId: string, gameAddress?: string): Promise<bigint> {
     const address = gameAddress ?? await this.resolveGameAddressForToken(tokenId);
-    const contract = this.getGameContract(address);
+    const contract = await this.getGameContract(address);
     return rpcScore(contract, tokenId);
   }
 
   async scoreBatch(tokenIds: string[], gameAddress: string): Promise<bigint[]> {
-    const contract = this.getGameContract(gameAddress);
+    const contract = await this.getGameContract(gameAddress);
     return rpcScoreBatch(contract, tokenIds);
   }
 
   async gameOver(tokenId: string, gameAddress?: string): Promise<boolean> {
     const address = gameAddress ?? await this.resolveGameAddressForToken(tokenId);
-    const contract = this.getGameContract(address);
+    const contract = await this.getGameContract(address);
     return rpcGameOver(contract, tokenId);
   }
 
   async gameOverBatch(tokenIds: string[], gameAddress: string): Promise<boolean[]> {
-    const contract = this.getGameContract(gameAddress);
+    const contract = await this.getGameContract(gameAddress);
     return rpcGameOverBatch(contract, tokenIds);
   }
 
@@ -501,27 +702,33 @@ export class DenshokanClient {
   // =========================================================================
 
   async tokenName(tokenId: string, gameAddress: string): Promise<string> {
-    return rpcTokenName(this.getGameContract(gameAddress), tokenId);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcTokenName(contract, tokenId);
   }
 
   async tokenNameBatch(tokenIds: string[], gameAddress: string): Promise<string[]> {
-    return rpcTokenNameBatch(this.getGameContract(gameAddress), tokenIds);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcTokenNameBatch(contract, tokenIds);
   }
 
   async tokenDescription(tokenId: string, gameAddress: string): Promise<string> {
-    return rpcTokenDescription(this.getGameContract(gameAddress), tokenId);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcTokenDescription(contract, tokenId);
   }
 
   async tokenDescriptionBatch(tokenIds: string[], gameAddress: string): Promise<string[]> {
-    return rpcTokenDescriptionBatch(this.getGameContract(gameAddress), tokenIds);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcTokenDescriptionBatch(contract, tokenIds);
   }
 
   async gameDetails(tokenId: string, gameAddress: string): Promise<GameDetail[]> {
-    return rpcGameDetails(this.getGameContract(gameAddress), tokenId);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcGameDetails(contract, tokenId);
   }
 
   async gameDetailsBatch(tokenIds: string[], gameAddress: string): Promise<GameDetail[][]> {
-    return rpcGameDetailsBatch(this.getGameContract(gameAddress), tokenIds);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcGameDetailsBatch(contract, tokenIds);
   }
 
   // =========================================================================
@@ -529,19 +736,23 @@ export class DenshokanClient {
   // =========================================================================
 
   async objectiveExists(objectiveId: number, gameAddress: string): Promise<boolean> {
-    return rpcObjectiveExists(this.getGameContract(gameAddress), objectiveId);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcObjectiveExists(contract, objectiveId);
   }
 
   async objectiveExistsBatch(objectiveIds: number[], gameAddress: string): Promise<boolean[]> {
-    return rpcObjectiveExistsBatch(this.getGameContract(gameAddress), objectiveIds);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcObjectiveExistsBatch(contract, objectiveIds);
   }
 
   async objectivesDetails(tokenId: string, gameAddress: string): Promise<GameObjective[]> {
-    return rpcObjectivesDetails(this.getGameContract(gameAddress), tokenId);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcObjectivesDetails(contract, tokenId);
   }
 
   async objectivesDetailsBatch(tokenIds: string[], gameAddress: string): Promise<GameObjective[][]> {
-    return rpcObjectivesDetailsBatch(this.getGameContract(gameAddress), tokenIds);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcObjectivesDetailsBatch(contract, tokenIds);
   }
 
   // =========================================================================
@@ -549,19 +760,23 @@ export class DenshokanClient {
   // =========================================================================
 
   async settingsExists(settingsId: number, gameAddress: string): Promise<boolean> {
-    return rpcSettingsExists(this.getGameContract(gameAddress), settingsId);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcSettingsExists(contract, settingsId);
   }
 
   async settingsExistsBatch(settingsIds: number[], gameAddress: string): Promise<boolean[]> {
-    return rpcSettingsExistsBatch(this.getGameContract(gameAddress), settingsIds);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcSettingsExistsBatch(contract, settingsIds);
   }
 
   async settingsDetails(settingsId: number, gameAddress: string): Promise<GameSettingDetails> {
-    return rpcSettingsDetail(this.getGameContract(gameAddress), settingsId);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcSettingsDetail(contract, settingsId);
   }
 
   async settingsDetailsBatch(settingsIds: number[], gameAddress: string): Promise<GameSettingDetails[]> {
-    return rpcSettingsDetailsBatch(this.getGameContract(gameAddress), settingsIds);
+    const contract = await this.getGameContract(gameAddress);
+    return rpcSettingsDetailsBatch(contract, settingsIds);
   }
 
   // =========================================================================
@@ -569,31 +784,37 @@ export class DenshokanClient {
   // =========================================================================
 
   async mint(params: MintParams): Promise<string> {
-    return rpcMint(this.denshokanContract, mintParamsToSnake(params));
+    const contract = await this.getDenshokanContract();
+    return rpcMint(contract, mintParamsToSnake(params));
   }
 
   async mintBatch(params: MintParams[]): Promise<string[]> {
+    const contract = await this.getDenshokanContract();
     return rpcMintBatch(
-      this.denshokanContract,
+      contract,
       params.map(mintParamsToSnake),
     );
   }
 
   async updateGame(tokenId: string): Promise<void> {
-    return rpcUpdateGame(this.denshokanContract, tokenId);
+    const contract = await this.getDenshokanContract();
+    return rpcUpdateGame(contract, tokenId);
   }
 
   async updateGameBatch(tokenIds: string[]): Promise<void> {
-    return rpcUpdateGameBatch(this.denshokanContract, tokenIds);
+    const contract = await this.getDenshokanContract();
+    return rpcUpdateGameBatch(contract, tokenIds);
   }
 
   async updatePlayerName(tokenId: string, name: string): Promise<void> {
-    return rpcUpdatePlayerName(this.denshokanContract, tokenId, name);
+    const contract = await this.getDenshokanContract();
+    return rpcUpdatePlayerName(contract, tokenId, name);
   }
 
   async updatePlayerNameBatch(updates: PlayerNameUpdate[]): Promise<void> {
+    const contract = await this.getDenshokanContract();
     return rpcUpdatePlayerNameBatch(
-      this.denshokanContract,
+      contract,
       updates.map(playerNameUpdateToSnake),
     );
   }
@@ -604,6 +825,14 @@ export class DenshokanClient {
 
   decodeTokenId(tokenId: string | bigint): DecodedTokenId {
     return decodePackedTokenId(tokenId);
+  }
+
+  /**
+   * Decode a token ID into a CoreToken.
+   * Pure function - no RPC calls. Useful for quick client-side display.
+   */
+  decodeToken(tokenId: string | bigint): CoreToken {
+    return decodeCoreToken(tokenId);
   }
 
   getConnectionStatus(): ConnectionStatus {

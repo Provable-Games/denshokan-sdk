@@ -1,4 +1,5 @@
-import type { Token, PaginatedResult } from "../types/token.js";
+import type { Token, PaginatedResult, DecodedTokenId } from "../types/token.js";
+import { decodePackedTokenId } from "./token-id.js";
 import type { Game, GameStats, LeaderboardEntry, LeaderboardPosition } from "../types/game.js";
 import type { PlayerStats } from "../types/player.js";
 import type { Minter } from "../types/minter.js";
@@ -10,20 +11,36 @@ import type { GameMetadata, MintParams, PlayerNameUpdate } from "../types/rpc.js
 // =========================================================================
 
 export function mapToken(raw: Record<string, unknown>): Token {
+  const tokenId = String(raw.tokenId ?? raw.token_id ?? "");
+
+  // Decode token ID for immutable fields - fallback when API doesn't provide them
+  let decoded: DecodedTokenId | null = null;
+  try {
+    if (tokenId) decoded = decodePackedTokenId(tokenId);
+  } catch {
+    // Invalid or missing tokenId - proceed without decoded fallback
+  }
+
   return {
-    tokenId: String(raw.tokenId ?? raw.token_id ?? ""),
-    gameId: Number(raw.gameId ?? raw.game_id ?? 0),
+    tokenId,
+    // Prefer API value, fallback to decoded
+    gameId: Number(raw.gameId ?? raw.game_id ?? decoded?.gameId ?? 0),
     owner: String(raw.ownerAddress ?? raw.owner_address ?? raw.owner ?? ""),
     score: Number(raw.currentScore ?? raw.current_score ?? raw.score ?? 0),
     gameOver: Boolean(raw.gameOver ?? raw.game_over),
     playerName: String(raw.playerName ?? raw.player_name ?? ""),
-    mintedBy: String(raw.mintedBy ?? raw.minted_by ?? ""),
-    mintedAt: String(raw.mintedAt ?? raw.minted_at ?? ""),
-    settingsId: Number(raw.settingsId ?? raw.settings_id ?? 0),
-    objectiveId: Number(raw.objectiveId ?? raw.objective_id ?? 0),
-    soulbound: Boolean(raw.soulbound),
+    mintedBy: Number(raw.mintedBy ?? raw.minted_by ?? (decoded ? Number(decoded.mintedBy) : 0)),
+    mintedAt: String(raw.mintedAt ?? raw.minted_at ?? decoded?.mintedAt.toISOString() ?? ""),
+    settingsId: Number(raw.settingsId ?? raw.settings_id ?? decoded?.settingsId ?? 0),
+    objectiveId: Number(raw.objectiveId ?? raw.objective_id ?? decoded?.objectiveId ?? 0),
+    soulbound: Boolean(raw.soulbound ?? decoded?.soulbound),
     isPlayable: Boolean(raw.isPlayable ?? raw.is_playable),
     gameAddress: String(raw.gameAddress ?? raw.game_address ?? ""),
+    // New fields from decoded token ID
+    startDelay: Number(raw.startDelay ?? raw.start_delay ?? decoded?.startDelay ?? 0),
+    endDelay: Number(raw.endDelay ?? raw.end_delay ?? decoded?.endDelay ?? 0),
+    hasContext: Boolean(raw.hasContext ?? raw.has_context ?? decoded?.hasContext),
+    paymaster: Boolean(raw.paymaster ?? decoded?.paymaster),
   };
 }
 

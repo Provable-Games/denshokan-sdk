@@ -1,8 +1,16 @@
 import type { Contract } from "starknet";
-import type { TokenMetadata } from "../types/token.js";
+import type { TokenMetadata, TokenMutableState } from "../types/token.js";
 import type { RoyaltyInfo } from "../types/rpc.js";
 import { RpcError } from "../errors/index.js";
-import { normalizeAddress } from "../utils/address.js";
+
+let starknetModule: typeof import("starknet") | null = null;
+
+async function getStarknet(): Promise<typeof import("starknet")> {
+  if (!starknetModule) {
+    starknetModule = await import("starknet");
+  }
+  return starknetModule;
+}
 
 function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise<T> {
   return fn().catch((error: unknown) => {
@@ -11,6 +19,55 @@ function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise
       contractAddress,
     );
   });
+}
+
+/**
+ * Convert a BigInt or hex/decimal string to a normalized 0x-prefixed hex address.
+ */
+function toHexAddress(value: unknown): string {
+  if (typeof value === "bigint") {
+    return "0x" + value.toString(16).padStart(64, "0");
+  }
+  const str = String(value);
+  // If already hex, normalize it
+  if (str.startsWith("0x")) {
+    const stripped = str.slice(2).replace(/^0+/, "");
+    return "0x" + stripped.padStart(64, "0");
+  }
+  // Decimal string - convert to hex
+  try {
+    const bigVal = BigInt(str);
+    return "0x" + bigVal.toString(16).padStart(64, "0");
+  } catch {
+    return "0x" + "0".repeat(64);
+  }
+}
+
+/**
+ * Decode a felt252 (BigInt or hex string) to an ASCII string.
+ */
+async function feltToString(value: unknown): Promise<string> {
+  if (value === null || value === undefined || value === 0n || value === "0" || value === "0x0") {
+    return "";
+  }
+  const starknet = await getStarknet();
+  try {
+    // Convert to hex string for decodeShortString
+    let hexStr: string;
+    if (typeof value === "bigint") {
+      hexStr = "0x" + value.toString(16);
+    } else {
+      const str = String(value);
+      if (str.startsWith("0x")) {
+        hexStr = str;
+      } else {
+        hexStr = "0x" + BigInt(str).toString(16);
+      }
+    }
+    return starknet.shortString.decodeShortString(hexStr);
+  } catch {
+    return String(value);
+  }
 }
 
 // === ERC721 standard calls (non-batchable) ===
@@ -25,7 +82,7 @@ export async function rpcBalanceOf(contract: Contract, account: string): Promise
 export async function rpcOwnerOf(contract: Contract, tokenId: string): Promise<string> {
   return wrapRpcCall(async () => {
     const result = await contract.call("owner_of", [tokenId]);
-    return normalizeAddress(result.toString());
+    return toHexAddress(result);
   }, contract.address);
 }
 
@@ -59,9 +116,36 @@ export async function rpcRoyaltyInfo(
     const result = await contract.call("royalty_info", [tokenId, salePrice]);
     const arr = result as unknown as [unknown, unknown];
     return {
-      receiver: normalizeAddress(arr[0]?.toString() ?? "0"),
-      amount: BigInt(arr[1]?.toString() ?? "0"),
+      receiver: toHexAddress(arr[0] ?? 0),
+      amount: BigInt(String(arr[1] ?? 0)),
     };
+  }, contract.address);
+}
+
+// === ERC721Enumerable calls ===
+
+export async function rpcTotalSupply(contract: Contract): Promise<bigint> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("total_supply");
+    return BigInt(result.toString());
+  }, contract.address);
+}
+
+export async function rpcTokenByIndex(contract: Contract, index: bigint): Promise<string> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("token_by_index", [index]);
+    return result.toString();
+  }, contract.address);
+}
+
+export async function rpcTokenOfOwnerByIndex(
+  contract: Contract,
+  owner: string,
+  index: bigint,
+): Promise<string> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("token_of_owner_by_index", [owner, index]);
+    return result.toString();
   }, contract.address);
 }
 
@@ -73,7 +157,8 @@ export async function rpcTokenMetadataBatch(
 ): Promise<TokenMetadata[]> {
   return wrapRpcCall(async () => {
     const result = await contract.call("token_metadata_batch", [tokenIds]);
-    return (result as unknown as unknown[]).map(parseTokenMetadata);
+    const values = result as unknown as unknown[];
+    return Promise.all(values.map(parseTokenMetadata));
   }, contract.address);
 }
 
@@ -121,7 +206,8 @@ export async function rpcPlayerNameBatch(
 ): Promise<string[]> {
   return wrapRpcCall(async () => {
     const result = await contract.call("player_name_batch", [tokenIds]);
-    return (result as unknown as unknown[]).map((v) => v?.toString() ?? "");
+    const values = result as unknown as unknown[];
+    return Promise.all(values.map((v) => feltToString(v)));
   }, contract.address);
 }
 
@@ -151,7 +237,7 @@ export async function rpcMintedByBatch(
 ): Promise<string[]> {
   return wrapRpcCall(async () => {
     const result = await contract.call("minted_by_batch", [tokenIds]);
-    return (result as unknown as unknown[]).map((v) => normalizeAddress(v?.toString() ?? "0"));
+    return (result as unknown as unknown[]).map((v) => toHexAddress(v ?? 0));
   }, contract.address);
 }
 
@@ -181,7 +267,7 @@ export async function rpcRendererAddressBatch(
 ): Promise<string[]> {
   return wrapRpcCall(async () => {
     const result = await contract.call("renderer_address_batch", [tokenIds]);
-    return (result as unknown as unknown[]).map((v) => normalizeAddress(v?.toString() ?? "0"));
+    return (result as unknown as unknown[]).map((v) => toHexAddress(v ?? 0));
   }, contract.address);
 }
 
@@ -196,12 +282,30 @@ export async function rpcTokenGameAddressBatch(
 ): Promise<string[]> {
   return wrapRpcCall(async () => {
     const result = await contract.call("token_game_address_batch", [tokenIds]);
-    return (result as unknown as unknown[]).map((v) => normalizeAddress(v?.toString() ?? "0"));
+    return (result as unknown as unknown[]).map((v) => toHexAddress(v ?? 0));
   }, contract.address);
 }
 
 export async function rpcTokenGameAddress(contract: Contract, tokenId: string): Promise<string> {
   const [result] = await rpcTokenGameAddressBatch(contract, [tokenId]);
+  return result;
+}
+
+export async function rpcTokenMutableStateBatch(
+  contract: Contract,
+  tokenIds: string[],
+): Promise<TokenMutableState[]> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("token_mutable_state_batch", [tokenIds]);
+    return (result as unknown as unknown[]).map(parseTokenMutableState);
+  }, contract.address);
+}
+
+export async function rpcTokenMutableState(
+  contract: Contract,
+  tokenId: string,
+): Promise<TokenMutableState> {
+  const [result] = await rpcTokenMutableStateBatch(contract, [tokenId]);
   return result;
 }
 
@@ -271,17 +375,26 @@ export async function rpcUpdatePlayerName(
 
 // === Helpers ===
 
-function parseTokenMetadata(raw: unknown): TokenMetadata {
+async function parseTokenMetadata(raw: unknown): Promise<TokenMetadata> {
   const obj = raw as Record<string, unknown>;
+  const playerName = await feltToString(obj.player_name);
   return {
     gameId: Number(obj.game_id ?? 0),
     settingsId: Number(obj.settings_id ?? 0),
     objectiveId: Number(obj.objective_id ?? 0),
-    playerName: obj.player_name?.toString() ?? "",
-    mintedBy: normalizeAddress(obj.minted_by?.toString() ?? "0"),
+    playerName,
+    mintedBy: toHexAddress(obj.minted_by ?? 0),
     isPlayable: Boolean(obj.is_playable),
     isSoulbound: Boolean(obj.is_soulbound),
-    rendererAddress: normalizeAddress(obj.renderer_address?.toString() ?? "0"),
-    gameAddress: normalizeAddress(obj.game_address?.toString() ?? "0"),
+    rendererAddress: toHexAddress(obj.renderer_address ?? 0),
+    gameAddress: toHexAddress(obj.game_address ?? 0),
+  };
+}
+
+function parseTokenMutableState(raw: unknown): TokenMutableState {
+  const obj = raw as Record<string, unknown>;
+  return {
+    gameOver: Boolean(obj.game_over),
+    completedObjective: Boolean(obj.completed_objective),
   };
 }

@@ -10,6 +10,8 @@ export type {
   ResolvedConfig,
   Token,
   DecodedTokenId,
+  CoreToken,
+  TokenMutableState,
   TokenMetadata,
   TokenScoreEntry,
   PaginatedResult,
@@ -54,7 +56,7 @@ export {
 } from "./errors/index.js";
 
 // Utils
-export { decodePackedTokenId } from "./utils/token-id.js";
+export { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
 export { normalizeAddress } from "./utils/address.js";
 
 // Datasource

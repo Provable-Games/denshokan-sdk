@@ -2,6 +2,8 @@ export type { DataSource, FetchConfig, WSConfig, DenshokanClientConfig, Resolved
 export type {
   Token,
   DecodedTokenId,
+  CoreToken,
+  TokenMutableState,
   TokenMetadata,
   TokenScoreEntry,
   PaginatedResult,

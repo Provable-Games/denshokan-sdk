@@ -391,6 +391,20 @@
     ]
   },
   {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::token::TokenMutableState",
+    "members": [
+      {
+        "name": "game_over",
+        "type": "core::bool"
+      },
+      {
+        "name": "completed_objective",
+        "type": "core::bool"
+      }
+    ]
+  },
+  {
     "type": "enum",
     "name": "core::option::Option::<core::felt252>",
     "variants": [
@@ -778,6 +792,22 @@
       },
       {
         "type": "function",
+        "name": "token_mutable_state",
+        "inputs": [
+          {
+            "name": "token_id",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "game_components_interfaces::structs::token::TokenMutableState"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
         "name": "token_metadata_batch",
         "inputs": [
           {
@@ -922,6 +952,22 @@
       },
       {
         "type": "function",
+        "name": "token_mutable_state_batch",
+        "inputs": [
+          {
+            "name": "token_ids",
+            "type": "core::array::Span::<core::felt252>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<game_components_interfaces::structs::token::TokenMutableState>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
         "name": "mint",
         "inputs": [
           {
@@ -1055,6 +1101,64 @@
         ],
         "outputs": [],
         "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "ERC721EnumerableImpl",
+    "interface_name": "openzeppelin_interfaces::token::erc721::IERC721Enumerable"
+  },
+  {
+    "type": "interface",
+    "name": "openzeppelin_interfaces::token::erc721::IERC721Enumerable",
+    "items": [
+      {
+        "type": "function",
+        "name": "total_supply",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "token_by_index",
+        "inputs": [
+          {
+            "name": "index",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "token_of_owner_by_index",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "index",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
       }
     ]
   },
@@ -1580,6 +1684,12 @@
   },
   {
     "type": "event",
+    "name": "openzeppelin_token::erc721::extensions::erc721_enumerable::erc721_enumerable::ERC721EnumerableComponent::Event",
+    "kind": "enum",
+    "variants": []
+  },
+  {
+    "type": "event",
     "name": "game_components_token::extensions::minter::minter::MinterComponent::MinterRegistryUpdate",
     "kind": "struct",
     "members": [
@@ -1766,6 +1876,11 @@
       {
         "name": "CoreTokenEvent",
         "type": "game_components_token::core::core_token::CoreTokenComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "ERC721EnumerableEvent",
+        "type": "openzeppelin_token::erc721::extensions::erc721_enumerable::erc721_enumerable::ERC721EnumerableComponent::Event",
         "kind": "flat"
       },
       {

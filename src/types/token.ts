@@ -5,13 +5,49 @@ export interface Token {
   score: number;
   gameOver: boolean;
   playerName: string;
-  mintedBy: string;
+  /** 40-bit truncated minter address from token ID (not full address) */
+  mintedBy: number;
   mintedAt: string;
   settingsId: number;
   objectiveId: number;
   soulbound: boolean;
   isPlayable: boolean;
   gameAddress: string;
+  startDelay: number;
+  endDelay: number;
+  hasContext: boolean;
+  paymaster: boolean;
+}
+
+/**
+ * Core token data decoded purely from the packed token ID.
+ * No RPC calls required - useful for quick client-side display.
+ */
+export interface CoreToken {
+  tokenId: string;
+  gameId: number;
+  settingsId: number;
+  objectiveId: number;
+  mintedAt: string;
+  soulbound: boolean;
+  startDelay: number;
+  endDelay: number;
+  hasContext: boolean;
+  paymaster: boolean;
+  /** 40-bit truncated minter address (not full address) */
+  mintedByTruncated: bigint;
+  txHash: number;
+  salt: number;
+  metadata: number;
+}
+
+/**
+ * Mutable token state that can change after minting.
+ * Fetched via token_mutable_state RPC call.
+ */
+export interface TokenMutableState {
+  gameOver: boolean;
+  completedObjective: boolean;
 }
 
 export interface DecodedTokenId {
