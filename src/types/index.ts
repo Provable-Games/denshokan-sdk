@@ -24,4 +24,4 @@ export type { PlayerStats, PlayerTokensParams } from "./player.js";
 export type { Minter } from "./minter.js";
 export type { ActivityEvent, ActivityParams, ActivityStats } from "./activity.js";
 export type { WSChannel, WSMessage, WSSubscribeOptions, WSEventHandler } from "./websocket.js";
-export type { RoyaltyInfo, GameMetadata, MintParams, PlayerNameUpdate } from "./rpc.js";
+export type { RoyaltyInfo, GameMetadata, MintParams, PlayerNameUpdate, FilterResult } from "./rpc.js";

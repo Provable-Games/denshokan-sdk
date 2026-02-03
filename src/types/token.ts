@@ -90,9 +90,26 @@ export interface PaginatedResult<T> {
 }
 
 export interface TokensFilterParams {
+  /** Filter by game ID (resolved to game address via registry) */
   gameId?: number;
+  /** Filter by game contract address directly */
+  gameAddress?: string;
+  /** Filter by owner address */
   owner?: string;
+  /** Filter by settings ID (requires gameId or gameAddress) */
+  settingsId?: number;
+  /** Filter by objective ID (requires gameId or gameAddress) */
+  objectiveId?: number;
+  /** Filter by minter address */
+  minterAddress?: string;
+  /** Filter by soulbound status */
+  soulbound?: boolean;
+  /** Filter by minted time range (unix timestamps) */
+  mintedAfter?: number;
+  mintedBefore?: number;
+  /** Filter by game over status (requires client-side filtering) */
   gameOver?: string;
+  /** Pagination */
   limit?: number;
   offset?: number;
 }

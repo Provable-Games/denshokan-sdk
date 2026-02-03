@@ -22,3 +22,8 @@ export interface PlayerNameUpdate {
   tokenId: string;
   name: string;
 }
+
+export interface FilterResult {
+  tokenIds: string[];
+  total: number;
+}

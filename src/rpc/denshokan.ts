@@ -1,6 +1,6 @@
 import type { Contract } from "starknet";
 import type { TokenMetadata, TokenMutableState } from "../types/token.js";
-import type { RoyaltyInfo } from "../types/rpc.js";
+import type { RoyaltyInfo, FilterResult } from "../types/rpc.js";
 import { RpcError } from "../errors/index.js";
 
 let starknetModule: typeof import("starknet") | null = null;
@@ -307,6 +307,215 @@ export async function rpcTokenMutableState(
 ): Promise<TokenMutableState> {
   const [result] = await rpcTokenMutableStateBatch(contract, [tokenId]);
   return result;
+}
+
+// === Filter queries (IDenshokanFilter) ===
+
+function parseFilterResult(raw: unknown): FilterResult {
+  const obj = raw as Record<string, unknown>;
+  const tokenIds = (obj.token_ids as unknown[])?.map((v) => String(v)) ?? [];
+  const total = Number(obj.total ?? 0);
+  return { tokenIds, total };
+}
+
+// Game-based filters
+
+export async function rpcTokensByGameAddress(
+  contract: Contract,
+  gameAddress: string,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_by_game_address", [gameAddress, offset, limit]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+export async function rpcTokensByGameAndSettings(
+  contract: Contract,
+  gameAddress: string,
+  settingsId: number,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_by_game_and_settings", [
+      gameAddress,
+      settingsId,
+      offset,
+      limit,
+    ]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+export async function rpcTokensByGameAndObjective(
+  contract: Contract,
+  gameAddress: string,
+  objectiveId: number,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_by_game_and_objective", [
+      gameAddress,
+      objectiveId,
+      offset,
+      limit,
+    ]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+// Minter-based filter
+
+export async function rpcTokensByMinterAddress(
+  contract: Contract,
+  minterAddress: string,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_by_minter_address", [minterAddress, offset, limit]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+// Owner + Game filter
+
+export async function rpcTokensOfOwnerByGame(
+  contract: Contract,
+  owner: string,
+  gameAddress: string,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_of_owner_by_game", [
+      owner,
+      gameAddress,
+      offset,
+      limit,
+    ]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+// Soulbound filter
+
+export async function rpcTokensBySoulbound(
+  contract: Contract,
+  isSoulbound: boolean,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_by_soulbound", [isSoulbound, offset, limit]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+// Time-based filter
+
+export async function rpcTokensByMintedAtRange(
+  contract: Contract,
+  startTime: number,
+  endTime: number,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_by_minted_at_range", [
+      startTime,
+      endTime,
+      offset,
+      limit,
+    ]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+// Count functions
+
+export async function rpcCountTokensByGameAddress(
+  contract: Contract,
+  gameAddress: string,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_by_game_address", [gameAddress]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function rpcCountTokensByGameAndSettings(
+  contract: Contract,
+  gameAddress: string,
+  settingsId: number,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_by_game_and_settings", [
+      gameAddress,
+      settingsId,
+    ]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function rpcCountTokensByGameAndObjective(
+  contract: Contract,
+  gameAddress: string,
+  objectiveId: number,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_by_game_and_objective", [
+      gameAddress,
+      objectiveId,
+    ]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function rpcCountTokensByMinterAddress(
+  contract: Contract,
+  minterAddress: string,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_by_minter_address", [minterAddress]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function rpcCountTokensOfOwnerByGame(
+  contract: Contract,
+  owner: string,
+  gameAddress: string,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_of_owner_by_game", [owner, gameAddress]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function rpcCountTokensBySoulbound(
+  contract: Contract,
+  isSoulbound: boolean,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_by_soulbound", [isSoulbound]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function rpcCountTokensByMintedAtRange(
+  contract: Contract,
+  startTime: number,
+  endTime: number,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_by_minted_at_range", [startTime, endTime]);
+    return Number(result);
+  }, contract.address);
 }
 
 // === Write operations ===

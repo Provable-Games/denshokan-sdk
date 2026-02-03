@@ -29,6 +29,7 @@ import type {
   GameMetadata,
   MintParams,
   PlayerNameUpdate,
+  FilterResult,
   WSSubscribeOptions,
   WSEventHandler,
 } from "./types/index.js";
@@ -94,6 +95,14 @@ import {
   rpcUpdateGameBatch,
   rpcUpdatePlayerName,
   rpcUpdatePlayerNameBatch,
+  // Filter queries
+  rpcTokensByGameAddress,
+  rpcTokensByGameAndSettings,
+  rpcTokensByGameAndObjective,
+  rpcTokensByMinterAddress,
+  rpcTokensOfOwnerByGame,
+  rpcTokensBySoulbound,
+  rpcTokensByMintedAtRange,
 } from "./rpc/denshokan.js";
 import { rpcGameMetadata, rpcGameAddress } from "./rpc/registry.js";
 import {
@@ -353,51 +362,110 @@ export class DenshokanClient {
   }
 
   private async buildTokensFromRpc(params?: TokensFilterParams): Promise<PaginatedResult<Token>> {
-    const { gameId, owner, gameOver, limit = 100, offset = 0 } = params ?? {};
+    const {
+      gameId,
+      gameAddress: providedGameAddress,
+      owner,
+      settingsId,
+      objectiveId,
+      minterAddress,
+      soulbound,
+      mintedAfter,
+      mintedBefore,
+      gameOver,
+      limit = 100,
+      offset = 0,
+    } = params ?? {};
+
     const contract = await this.getDenshokanContract();
 
-    // Step 1: Get all relevant token IDs
-    let allTokenIds: string[];
-    if (owner) {
-      // Enumerate tokens for specific owner
+    // Resolve gameAddress from gameId if needed
+    let gameAddress = providedGameAddress;
+    if (!gameAddress && gameId !== undefined) {
+      gameAddress = await this.resolveGameAddress(gameId);
+    }
+
+    // Use contract-side filtering when possible
+    let filterResult: FilterResult | null = null;
+
+    if (owner && gameAddress) {
+      // Owner + Game filter (most specific for user's tokens in a game)
+      filterResult = await rpcTokensOfOwnerByGame(contract, owner, gameAddress, offset, limit);
+    } else if (gameAddress && settingsId !== undefined) {
+      // Game + Settings filter
+      filterResult = await rpcTokensByGameAndSettings(
+        contract,
+        gameAddress,
+        settingsId,
+        offset,
+        limit,
+      );
+    } else if (gameAddress && objectiveId !== undefined) {
+      // Game + Objective filter
+      filterResult = await rpcTokensByGameAndObjective(
+        contract,
+        gameAddress,
+        objectiveId,
+        offset,
+        limit,
+      );
+    } else if (gameAddress) {
+      // Game-only filter
+      filterResult = await rpcTokensByGameAddress(contract, gameAddress, offset, limit);
+    } else if (minterAddress) {
+      // Minter filter
+      filterResult = await rpcTokensByMinterAddress(contract, minterAddress, offset, limit);
+    } else if (soulbound !== undefined) {
+      // Soulbound filter
+      filterResult = await rpcTokensBySoulbound(contract, soulbound, offset, limit);
+    } else if (mintedAfter !== undefined || mintedBefore !== undefined) {
+      // Time range filter
+      const startTime = mintedAfter ?? 0;
+      const endTime = mintedBefore ?? Math.floor(Date.now() / 1000) + 86400 * 365 * 100; // 100 years
+      filterResult = await rpcTokensByMintedAtRange(contract, startTime, endTime, offset, limit);
+    }
+
+    let tokenIds: string[];
+    let total: number;
+
+    if (filterResult) {
+      // Contract-side filtering was used
+      tokenIds = filterResult.tokenIds;
+      total = filterResult.total;
+    } else if (owner) {
+      // Owner-only filter (enumerate owner's tokens)
       const balance = await rpcBalanceOf(contract, owner);
-      allTokenIds = [];
+      const allOwnerTokenIds: string[] = [];
       for (let i = 0n; i < balance; i++) {
         const tokenId = await rpcTokenOfOwnerByIndex(contract, owner, i);
-        allTokenIds.push(tokenId);
+        allOwnerTokenIds.push(tokenId);
       }
+      total = allOwnerTokenIds.length;
+      tokenIds = allOwnerTokenIds.slice(offset, offset + limit);
     } else {
-      // Enumerate all tokens
+      // No filter - enumerate all tokens
       const totalSupply = await rpcTotalSupply(contract);
-      allTokenIds = [];
-      for (let i = 0n; i < totalSupply; i++) {
+      total = Number(totalSupply);
+      const allTokenIds: string[] = [];
+      const start = BigInt(offset);
+      const end = start + BigInt(limit) > totalSupply ? totalSupply : start + BigInt(limit);
+      for (let i = start; i < end; i++) {
         const tokenId = await rpcTokenByIndex(contract, i);
         allTokenIds.push(tokenId);
       }
+      tokenIds = allTokenIds;
     }
 
-    // Step 2: Filter by gameId (can decode from token ID, no RPC needed)
-    let filteredTokenIds = allTokenIds;
-    if (gameId !== undefined) {
-      filteredTokenIds = filteredTokenIds.filter((tokenId) => {
-        const decoded = decodePackedTokenId(tokenId);
-        return decoded.gameId === gameId;
-      });
-    }
-
-    // Step 3: Filter by gameOver if specified (requires mutable state lookup)
-    if (gameOver !== undefined) {
+    // Client-side filtering for gameOver (mutable state not in contract filters)
+    if (gameOver !== undefined && tokenIds.length > 0) {
       const gameOverBool = gameOver === "true";
-      const mutableStates = await rpcTokenMutableStateBatch(contract, filteredTokenIds);
-      filteredTokenIds = filteredTokenIds.filter((_, idx) => mutableStates[idx].gameOver === gameOverBool);
+      const mutableStates = await rpcTokenMutableStateBatch(contract, tokenIds);
+      tokenIds = tokenIds.filter((_, idx) => mutableStates[idx].gameOver === gameOverBool);
+      // Note: total count may be inaccurate after client-side filtering
     }
 
-    // Step 4: Apply pagination
-    const total = filteredTokenIds.length;
-    const paginatedTokenIds = filteredTokenIds.slice(offset, offset + limit);
-
-    // Step 5: Build full Token objects for the paginated results
-    const tokens = await Promise.all(paginatedTokenIds.map((tokenId) => this.buildTokenFromRpc(tokenId)));
+    // Build full Token objects for the results
+    const tokens = await Promise.all(tokenIds.map((tokenId) => this.buildTokenFromRpc(tokenId)));
 
     return { data: tokens, total };
   }
