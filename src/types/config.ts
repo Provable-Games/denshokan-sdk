@@ -18,9 +18,11 @@ export interface DenshokanClientConfig {
   wsUrl?: string;
   rpcUrl?: string;
   provider?: unknown;
-  denshokanAddress: string;
-  registryAddress: string;
-  /** Optional viewer contract address for efficient filter queries */
+  /** Denshokan ERC721 contract address. Defaults to chain-specific address if not provided. */
+  denshokanAddress?: string;
+  /** Minigame registry contract address. Defaults to chain-specific address if not provided. */
+  registryAddress?: string;
+  /** Viewer contract address for efficient filter queries. Defaults to chain-specific address if not provided. */
   viewerAddress?: string;
   primarySource?: DataSource;
   fetch?: FetchConfig;
@@ -35,8 +37,8 @@ export interface ResolvedConfig {
   provider: unknown | null;
   denshokanAddress: string;
   registryAddress: string;
-  /** Viewer contract address (optional - if not set, filters use client-side filtering) */
-  viewerAddress: string | null;
+  /** Viewer contract address for efficient filter queries */
+  viewerAddress: string;
   primarySource: DataSource;
   fetch: Required<FetchConfig>;
   ws: Required<WSConfig>;
