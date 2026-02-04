@@ -144,6 +144,10 @@ import {
   viewerTokensBySoulbound,
   viewerTokensByMintedAtRange,
   viewerTokensByPlayable,
+  viewerTokensOfOwner,
+  viewerTokensOfOwnerByPlayable,
+  viewerTokensOfOwnerByGameOver,
+  viewerTokensFullStateBatch,
 } from "./rpc/viewer.js";
 
 const DEFAULT_WS_CONFIG = {
@@ -451,6 +455,25 @@ export class DenshokanClient {
           offset,
           limit,
         );
+      } else if (owner && playable === true) {
+        // Owner's playable tokens across all games
+        filterResult = await viewerTokensOfOwnerByPlayable(
+          viewerContract,
+          owner,
+          offset,
+          limit,
+        );
+      } else if (owner && gameOver === true) {
+        // Owner's completed tokens across all games
+        filterResult = await viewerTokensOfOwnerByGameOver(
+          viewerContract,
+          owner,
+          offset,
+          limit,
+        );
+      } else if (owner) {
+        // Owner's tokens (no other filter)
+        filterResult = await viewerTokensOfOwner(viewerContract, owner, offset, limit);
       } else if (gameAddress && playable === true) {
         // Playable tokens for a game
         filterResult = await viewerTokensByGameAndPlayable(
@@ -608,9 +631,47 @@ export class DenshokanClient {
     }
 
     // Build full Token objects for the results
-    const tokens = await Promise.all(tokenIds.map((tokenId) => this.buildTokenFromRpc(tokenId)));
+    let tokens: Token[];
+    if (viewerContract && tokenIds.length > 0) {
+      // Use batch method for efficiency (1 RPC call for all tokens)
+      tokens = await this.buildTokensFromFullStateBatch(viewerContract, tokenIds);
+    } else {
+      // Fallback to individual calls
+      tokens = await Promise.all(tokenIds.map((tokenId) => this.buildTokenFromRpc(tokenId)));
+    }
 
     return { data: tokens, total };
+  }
+
+  private async buildTokensFromFullStateBatch(
+    viewerContract: Contract,
+    tokenIds: string[],
+  ): Promise<Token[]> {
+    const fullStates = await viewerTokensFullStateBatch(viewerContract, tokenIds);
+    return fullStates.map((state) => {
+      const decoded = decodePackedTokenId(state.tokenId);
+      return {
+        tokenId: state.tokenId,
+        // FROM DECODED TOKEN ID (no RPC needed)
+        gameId: decoded.gameId,
+        settingsId: decoded.settingsId,
+        objectiveId: decoded.objectiveId,
+        mintedAt: decoded.mintedAt.toISOString(),
+        soulbound: decoded.soulbound,
+        startDelay: decoded.startDelay,
+        endDelay: decoded.endDelay,
+        hasContext: decoded.hasContext,
+        paymaster: decoded.paymaster,
+        mintedBy: Number(decoded.mintedBy),
+        // FROM FULL STATE BATCH (single RPC call)
+        owner: state.owner,
+        score: 0,
+        gameOver: state.gameOver,
+        playerName: state.playerName,
+        isPlayable: state.isPlayable,
+        gameAddress: state.gameAddress,
+      };
+    });
   }
 
   // =========================================================================

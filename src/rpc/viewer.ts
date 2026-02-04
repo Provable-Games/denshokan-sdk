@@ -1,6 +1,7 @@
 import type { Contract } from "starknet";
-import type { FilterResult } from "../types/rpc.js";
+import type { FilterResult, TokenFullState } from "../types/rpc.js";
 import { RpcError } from "../errors/index.js";
+import { num } from "starknet";
 
 function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise<T> {
   return fn().catch((error: unknown) => {
@@ -16,6 +17,39 @@ function parseFilterResult(raw: unknown): FilterResult {
   const tokenIds = (obj.token_ids as unknown[])?.map((v) => String(v)) ?? [];
   const total = Number(obj.total ?? 0);
   return { tokenIds, total };
+}
+
+function parseTokenFullState(raw: unknown): TokenFullState {
+  const obj = raw as Record<string, unknown>;
+  const lifecycle = obj.lifecycle as Record<string, unknown>;
+  return {
+    tokenId: String(obj.token_id),
+    owner: num.toHex(obj.owner as bigint),
+    playerName: decodeShortString(obj.player_name),
+    isPlayable: Boolean(obj.is_playable),
+    gameAddress: num.toHex(obj.game_address as bigint),
+    gameOver: Boolean(obj.game_over),
+    completedObjective: Boolean(obj.completed_objective),
+    lifecycle: {
+      start: Number(lifecycle.start ?? 0),
+      end: Number(lifecycle.end ?? 0),
+    },
+  };
+}
+
+function decodeShortString(value: unknown): string {
+  if (!value) return "";
+  const hex = num.toHex(value as bigint);
+  if (hex === "0x0") return "";
+  // Remove 0x prefix and decode hex to string
+  const hexStr = hex.slice(2);
+  let result = "";
+  for (let i = 0; i < hexStr.length; i += 2) {
+    const charCode = parseInt(hexStr.slice(i, i + 2), 16);
+    if (charCode === 0) break;
+    result += String.fromCharCode(charCode);
+  }
+  return result;
 }
 
 // =========================================================================
@@ -362,5 +396,89 @@ export async function viewerCountTokensOfOwnerBySoulbound(
   return wrapRpcCall(async () => {
     const result = await contract.call("count_tokens_of_owner_by_soulbound", [owner, isSoulbound]);
     return Number(result);
+  }, contract.address);
+}
+
+// =========================================================================
+// Owner tokens (no game filter)
+// =========================================================================
+
+export async function viewerTokensOfOwner(
+  contract: Contract,
+  owner: string,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_of_owner", [owner, offset, limit]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+export async function viewerCountTokensOfOwner(
+  contract: Contract,
+  owner: string,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_of_owner", [owner]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function viewerTokensOfOwnerByPlayable(
+  contract: Contract,
+  owner: string,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_of_owner_by_playable", [owner, offset, limit]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+export async function viewerTokensOfOwnerByGameOver(
+  contract: Contract,
+  owner: string,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_of_owner_by_game_over", [owner, offset, limit]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+export async function viewerCountTokensOfOwnerByPlayable(
+  contract: Contract,
+  owner: string,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_of_owner_by_playable", [owner]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function viewerCountTokensOfOwnerByGameOver(
+  contract: Contract,
+  owner: string,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_of_owner_by_game_over", [owner]);
+    return Number(result);
+  }, contract.address);
+}
+
+// =========================================================================
+// Batch full state
+// =========================================================================
+
+export async function viewerTokensFullStateBatch(
+  contract: Contract,
+  tokenIds: string[],
+): Promise<TokenFullState[]> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_full_state_batch", [tokenIds]);
+    return (result as unknown[]).map(parseTokenFullState);
   }, contract.address);
 }

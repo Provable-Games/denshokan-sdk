@@ -27,3 +27,19 @@ export interface FilterResult {
   tokenIds: string[];
   total: number;
 }
+
+export interface Lifecycle {
+  start: number;
+  end: number;
+}
+
+export interface TokenFullState {
+  tokenId: string;
+  owner: string;
+  playerName: string;
+  isPlayable: boolean;
+  gameAddress: string;
+  gameOver: boolean;
+  completedObjective: boolean;
+  lifecycle: Lifecycle;
+}
