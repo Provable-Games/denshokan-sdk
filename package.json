@@ -1,6 +1,6 @@
 {
   "name": "@provable-games/denshokan-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript SDK for Denshokan — query game tokens via REST API and Starknet RPC with automatic fallback",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -61,17 +61,17 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/node": "^20.14.0",
-    "@types/react": "^18.2.0",
-    "react": "^18.2.0",
-    "starknet": "^6.23.1",
-    "tsup": "^8.1.0",
-    "typescript": "^5.4.5",
-    "vitest": "^1.6.0"
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "starknet": "^9.2.1",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
   },
   "peerDependencies": {
-    "react": ">=17.0.0",
-    "starknet": ">=6.0.0"
+    "react": ">=18.0.0",
+    "starknet": ">=9.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
@@ -82,6 +82,6 @@
     }
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   }
 }
