@@ -20,6 +20,8 @@ export interface DenshokanClientConfig {
   provider?: unknown;
   denshokanAddress: string;
   registryAddress: string;
+  /** Optional viewer contract address for efficient filter queries */
+  viewerAddress?: string;
   primarySource?: DataSource;
   fetch?: FetchConfig;
   ws?: WSConfig;
@@ -33,6 +35,8 @@ export interface ResolvedConfig {
   provider: unknown | null;
   denshokanAddress: string;
   registryAddress: string;
+  /** Viewer contract address (optional - if not set, filters use client-side filtering) */
+  viewerAddress: string | null;
   primarySource: DataSource;
   fetch: Required<FetchConfig>;
   ws: Required<WSConfig>;

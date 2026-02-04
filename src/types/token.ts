@@ -104,11 +104,13 @@ export interface TokensFilterParams {
   minterAddress?: string;
   /** Filter by soulbound status */
   soulbound?: boolean;
+  /** Filter by playable status (active games) */
+  playable?: boolean;
+  /** Filter by game over status */
+  gameOver?: boolean;
   /** Filter by minted time range (unix timestamps) */
   mintedAfter?: number;
   mintedBefore?: number;
-  /** Filter by game over status (requires client-side filtering) */
-  gameOver?: string;
   /** Pagination */
   limit?: number;
   offset?: number;

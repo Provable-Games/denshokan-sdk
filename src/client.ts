@@ -128,6 +128,23 @@ import {
 
 // ABI
 import denshokanAbi from "./rpc/abis/denshokan.json";
+import viewerAbi from "./rpc/abis/denshokanViewer.json";
+
+// Viewer RPC imports
+import {
+  viewerTokensByGameAddress,
+  viewerTokensByGameAndSettings,
+  viewerTokensByGameAndObjective,
+  viewerTokensByGameAndPlayable,
+  viewerTokensByGameAndGameOver,
+  viewerTokensByMinterAddress,
+  viewerTokensOfOwnerByGame,
+  viewerTokensOfOwnerByGameAndPlayable,
+  viewerTokensOfOwnerBySoulbound,
+  viewerTokensBySoulbound,
+  viewerTokensByMintedAtRange,
+  viewerTokensByPlayable,
+} from "./rpc/viewer.js";
 
 const DEFAULT_WS_CONFIG = {
   maxReconnectAttempts: 10,
@@ -143,6 +160,7 @@ export class DenshokanClient {
   private _provider: RpcProvider | null = null;
   private _denshokanContract: Contract | null = null;
   private _registryContract: Contract | null = null;
+  private _viewerContract: Contract | null = null;
   private _gameContracts = new Map<string, Contract>();
   private _gameAddressCache = new Map<number, string>();
 
@@ -169,6 +187,7 @@ export class DenshokanClient {
       provider: config.provider ?? null,
       denshokanAddress: config.denshokanAddress,
       registryAddress: config.registryAddress,
+      viewerAddress: config.viewerAddress ?? null,
       primarySource: config.primarySource ?? "api",
       fetch: { ...DEFAULT_FETCH_CONFIG, ...config.fetch },
       ws: { ...DEFAULT_WS_CONFIG, ...config.ws },
@@ -211,6 +230,19 @@ export class DenshokanClient {
       );
     }
     return this._registryContract;
+  }
+
+  private async getViewerContract(): Promise<Contract | null> {
+    if (!this.config.viewerAddress) return null;
+    if (!this._viewerContract) {
+      const provider = await this.getProvider();
+      this._viewerContract = await createContract(
+        viewerAbi as unknown[],
+        this.config.viewerAddress,
+        provider,
+      );
+    }
+    return this._viewerContract;
   }
 
   private async getGameContract(gameAddress: string): Promise<Contract> {
@@ -370,14 +402,16 @@ export class DenshokanClient {
       objectiveId,
       minterAddress,
       soulbound,
+      playable,
+      gameOver,
       mintedAfter,
       mintedBefore,
-      gameOver,
       limit = 100,
       offset = 0,
     } = params ?? {};
 
-    const contract = await this.getDenshokanContract();
+    const denshokanContract = await this.getDenshokanContract();
+    const viewerContract = await this.getViewerContract();
 
     // Resolve gameAddress from gameId if needed
     let gameAddress = providedGameAddress;
@@ -385,44 +419,149 @@ export class DenshokanClient {
       gameAddress = await this.resolveGameAddress(gameId);
     }
 
-    // Use contract-side filtering when possible
+    // Use viewer contract for efficient filtering when available
     let filterResult: FilterResult | null = null;
 
-    if (owner && gameAddress) {
-      // Owner + Game filter (most specific for user's tokens in a game)
-      filterResult = await rpcTokensOfOwnerByGame(contract, owner, gameAddress, offset, limit);
-    } else if (gameAddress && settingsId !== undefined) {
-      // Game + Settings filter
-      filterResult = await rpcTokensByGameAndSettings(
-        contract,
-        gameAddress,
-        settingsId,
-        offset,
-        limit,
-      );
-    } else if (gameAddress && objectiveId !== undefined) {
-      // Game + Objective filter
-      filterResult = await rpcTokensByGameAndObjective(
-        contract,
-        gameAddress,
-        objectiveId,
-        offset,
-        limit,
-      );
-    } else if (gameAddress) {
-      // Game-only filter
-      filterResult = await rpcTokensByGameAddress(contract, gameAddress, offset, limit);
-    } else if (minterAddress) {
-      // Minter filter
-      filterResult = await rpcTokensByMinterAddress(contract, minterAddress, offset, limit);
-    } else if (soulbound !== undefined) {
-      // Soulbound filter
-      filterResult = await rpcTokensBySoulbound(contract, soulbound, offset, limit);
-    } else if (mintedAfter !== undefined || mintedBefore !== undefined) {
-      // Time range filter
-      const startTime = mintedAfter ?? 0;
-      const endTime = mintedBefore ?? Math.floor(Date.now() / 1000) + 86400 * 365 * 100; // 100 years
-      filterResult = await rpcTokensByMintedAtRange(contract, startTime, endTime, offset, limit);
+    if (viewerContract) {
+      // Viewer contract available - use optimized filter queries
+      if (owner && gameAddress && playable === true) {
+        // Owner's playable tokens in a game
+        filterResult = await viewerTokensOfOwnerByGameAndPlayable(
+          viewerContract,
+          owner,
+          gameAddress,
+          offset,
+          limit,
+        );
+      } else if (owner && gameAddress) {
+        // Owner's tokens in a game
+        filterResult = await viewerTokensOfOwnerByGame(
+          viewerContract,
+          owner,
+          gameAddress,
+          offset,
+          limit,
+        );
+      } else if (owner && soulbound !== undefined) {
+        // Owner's soulbound/transferable tokens
+        filterResult = await viewerTokensOfOwnerBySoulbound(
+          viewerContract,
+          owner,
+          soulbound,
+          offset,
+          limit,
+        );
+      } else if (gameAddress && playable === true) {
+        // Playable tokens for a game
+        filterResult = await viewerTokensByGameAndPlayable(
+          viewerContract,
+          gameAddress,
+          offset,
+          limit,
+        );
+      } else if (gameAddress && gameOver === true) {
+        // Game over tokens for a game
+        filterResult = await viewerTokensByGameAndGameOver(
+          viewerContract,
+          gameAddress,
+          offset,
+          limit,
+        );
+      } else if (gameAddress && settingsId !== undefined) {
+        // Game + Settings filter
+        filterResult = await viewerTokensByGameAndSettings(
+          viewerContract,
+          gameAddress,
+          settingsId,
+          offset,
+          limit,
+        );
+      } else if (gameAddress && objectiveId !== undefined) {
+        // Game + Objective filter
+        filterResult = await viewerTokensByGameAndObjective(
+          viewerContract,
+          gameAddress,
+          objectiveId,
+          offset,
+          limit,
+        );
+      } else if (gameAddress) {
+        // Game-only filter
+        filterResult = await viewerTokensByGameAddress(viewerContract, gameAddress, offset, limit);
+      } else if (minterAddress) {
+        // Minter filter
+        filterResult = await viewerTokensByMinterAddress(
+          viewerContract,
+          minterAddress,
+          offset,
+          limit,
+        );
+      } else if (playable === true) {
+        // Global playable tokens
+        filterResult = await viewerTokensByPlayable(viewerContract, offset, limit);
+      } else if (soulbound !== undefined) {
+        // Soulbound filter
+        filterResult = await viewerTokensBySoulbound(viewerContract, soulbound, offset, limit);
+      } else if (mintedAfter !== undefined || mintedBefore !== undefined) {
+        // Time range filter
+        const startTime = mintedAfter ?? 0;
+        const endTime = mintedBefore ?? Math.floor(Date.now() / 1000) + 86400 * 365 * 100;
+        filterResult = await viewerTokensByMintedAtRange(
+          viewerContract,
+          startTime,
+          endTime,
+          offset,
+          limit,
+        );
+      }
+    } else {
+      // No viewer - use denshokan contract filters (limited)
+      if (owner && gameAddress) {
+        filterResult = await rpcTokensOfOwnerByGame(
+          denshokanContract,
+          owner,
+          gameAddress,
+          offset,
+          limit,
+        );
+      } else if (gameAddress && settingsId !== undefined) {
+        filterResult = await rpcTokensByGameAndSettings(
+          denshokanContract,
+          gameAddress,
+          settingsId,
+          offset,
+          limit,
+        );
+      } else if (gameAddress && objectiveId !== undefined) {
+        filterResult = await rpcTokensByGameAndObjective(
+          denshokanContract,
+          gameAddress,
+          objectiveId,
+          offset,
+          limit,
+        );
+      } else if (gameAddress) {
+        filterResult = await rpcTokensByGameAddress(denshokanContract, gameAddress, offset, limit);
+      } else if (minterAddress) {
+        filterResult = await rpcTokensByMinterAddress(
+          denshokanContract,
+          minterAddress,
+          offset,
+          limit,
+        );
+      } else if (soulbound !== undefined) {
+        filterResult = await rpcTokensBySoulbound(denshokanContract, soulbound, offset, limit);
+      } else if (mintedAfter !== undefined || mintedBefore !== undefined) {
+        const startTime = mintedAfter ?? 0;
+        const endTime = mintedBefore ?? Math.floor(Date.now() / 1000) + 86400 * 365 * 100;
+        filterResult = await rpcTokensByMintedAtRange(
+          denshokanContract,
+          startTime,
+          endTime,
+          offset,
+          limit,
+        );
+      }
     }
 
     let tokenIds: string[];
@@ -434,33 +573,37 @@ export class DenshokanClient {
       total = filterResult.total;
     } else if (owner) {
       // Owner-only filter (enumerate owner's tokens)
-      const balance = await rpcBalanceOf(contract, owner);
+      const balance = await rpcBalanceOf(denshokanContract, owner);
       const allOwnerTokenIds: string[] = [];
       for (let i = 0n; i < balance; i++) {
-        const tokenId = await rpcTokenOfOwnerByIndex(contract, owner, i);
+        const tokenId = await rpcTokenOfOwnerByIndex(denshokanContract, owner, i);
         allOwnerTokenIds.push(tokenId);
       }
       total = allOwnerTokenIds.length;
       tokenIds = allOwnerTokenIds.slice(offset, offset + limit);
     } else {
       // No filter - enumerate all tokens
-      const totalSupply = await rpcTotalSupply(contract);
+      const totalSupply = await rpcTotalSupply(denshokanContract);
       total = Number(totalSupply);
       const allTokenIds: string[] = [];
       const start = BigInt(offset);
       const end = start + BigInt(limit) > totalSupply ? totalSupply : start + BigInt(limit);
       for (let i = start; i < end; i++) {
-        const tokenId = await rpcTokenByIndex(contract, i);
+        const tokenId = await rpcTokenByIndex(denshokanContract, i);
         allTokenIds.push(tokenId);
       }
       tokenIds = allTokenIds;
     }
 
-    // Client-side filtering for gameOver (mutable state not in contract filters)
-    if (gameOver !== undefined && tokenIds.length > 0) {
-      const gameOverBool = gameOver === "true";
-      const mutableStates = await rpcTokenMutableStateBatch(contract, tokenIds);
-      tokenIds = tokenIds.filter((_, idx) => mutableStates[idx].gameOver === gameOverBool);
+    // Client-side filtering for playable/gameOver when viewer not available
+    if (!viewerContract && tokenIds.length > 0 && (playable !== undefined || gameOver !== undefined)) {
+      const mutableStates = await rpcTokenMutableStateBatch(denshokanContract, tokenIds);
+      tokenIds = tokenIds.filter((_, idx) => {
+        const state = mutableStates[idx];
+        if (playable !== undefined && state.gameOver === playable) return false; // playable means NOT game over
+        if (gameOver !== undefined && state.gameOver !== gameOver) return false;
+        return true;
+      });
       // Note: total count may be inaccurate after client-side filtering
     }
 
