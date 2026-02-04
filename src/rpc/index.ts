@@ -32,3 +32,19 @@ export {
   rpcSettingsExists, rpcSettingsExistsBatch,
   rpcSettingsDetail, rpcSettingsDetailsBatch,
 } from "./game.js";
+
+// Viewer contract (filter functions)
+export {
+  viewerTokensOfOwnerByMinter,
+  viewerCountTokensOfOwnerByMinter,
+  viewerTokensByMinterAndGame,
+  viewerCountTokensByMinterAndGame,
+  viewerTokensOfOwnerByGameAndSettings,
+  viewerCountTokensOfOwnerByGameAndSettings,
+  viewerTokensOfOwnerByGameAndObjective,
+  viewerCountTokensOfOwnerByGameAndObjective,
+  viewerTokensOfOwnerByGameAndGameOver,
+  viewerCountTokensOfOwnerByGameAndGameOver,
+  viewerTokensByGameAndSoulbound,
+  viewerCountTokensByGameAndSoulbound,
+} from "./viewer.js";

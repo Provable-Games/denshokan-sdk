@@ -137,7 +137,7 @@ export async function viewerTokensByGameAndGameOver(
 }
 
 // =========================================================================
-// Minter-based filter
+// Minter-based filters
 // =========================================================================
 
 export async function viewerTokensByMinterAddress(
@@ -148,6 +148,24 @@ export async function viewerTokensByMinterAddress(
 ): Promise<FilterResult> {
   return wrapRpcCall(async () => {
     const result = await contract.call("tokens_by_minter_address", [minterAddress, offset, limit]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+export async function viewerTokensByMinterAndGame(
+  contract: Contract,
+  minterAddress: string,
+  gameAddress: string,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_by_minter_and_game", [
+      minterAddress,
+      gameAddress,
+      offset,
+      limit,
+    ]);
     return parseFilterResult(result);
   }, contract.address);
 }
@@ -210,6 +228,82 @@ export async function viewerTokensOfOwnerBySoulbound(
   }, contract.address);
 }
 
+export async function viewerTokensOfOwnerByMinter(
+  contract: Contract,
+  owner: string,
+  minterAddress: string,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_of_owner_by_minter", [
+      owner,
+      minterAddress,
+      offset,
+      limit,
+    ]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+export async function viewerTokensOfOwnerByGameAndSettings(
+  contract: Contract,
+  owner: string,
+  gameAddress: string,
+  settingsId: number,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_of_owner_by_game_and_settings", [
+      owner,
+      gameAddress,
+      settingsId,
+      offset,
+      limit,
+    ]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+export async function viewerTokensOfOwnerByGameAndObjective(
+  contract: Contract,
+  owner: string,
+  gameAddress: string,
+  objectiveId: number,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_of_owner_by_game_and_objective", [
+      owner,
+      gameAddress,
+      objectiveId,
+      offset,
+      limit,
+    ]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+export async function viewerTokensOfOwnerByGameAndGameOver(
+  contract: Contract,
+  owner: string,
+  gameAddress: string,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_of_owner_by_game_and_game_over", [
+      owner,
+      gameAddress,
+      offset,
+      limit,
+    ]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
 // =========================================================================
 // Soulbound filter
 // =========================================================================
@@ -222,6 +316,24 @@ export async function viewerTokensBySoulbound(
 ): Promise<FilterResult> {
   return wrapRpcCall(async () => {
     const result = await contract.call("tokens_by_soulbound", [isSoulbound, offset, limit]);
+    return parseFilterResult(result);
+  }, contract.address);
+}
+
+export async function viewerTokensByGameAndSoulbound(
+  contract: Contract,
+  gameAddress: string,
+  isSoulbound: boolean,
+  offset: number,
+  limit: number,
+): Promise<FilterResult> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("tokens_by_game_and_soulbound", [
+      gameAddress,
+      isSoulbound,
+      offset,
+      limit,
+    ]);
     return parseFilterResult(result);
   }, contract.address);
 }
@@ -315,6 +427,20 @@ export async function viewerCountTokensByMinterAddress(
   }, contract.address);
 }
 
+export async function viewerCountTokensByMinterAndGame(
+  contract: Contract,
+  minterAddress: string,
+  gameAddress: string,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_by_minter_and_game", [
+      minterAddress,
+      gameAddress,
+    ]);
+    return Number(result);
+  }, contract.address);
+}
+
 export async function viewerCountTokensOfOwnerByGame(
   contract: Contract,
   owner: string,
@@ -332,6 +458,77 @@ export async function viewerCountTokensBySoulbound(
 ): Promise<number> {
   return wrapRpcCall(async () => {
     const result = await contract.call("count_tokens_by_soulbound", [isSoulbound]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function viewerCountTokensByGameAndSoulbound(
+  contract: Contract,
+  gameAddress: string,
+  isSoulbound: boolean,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_by_game_and_soulbound", [
+      gameAddress,
+      isSoulbound,
+    ]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function viewerCountTokensOfOwnerByMinter(
+  contract: Contract,
+  owner: string,
+  minterAddress: string,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_of_owner_by_minter", [owner, minterAddress]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function viewerCountTokensOfOwnerByGameAndSettings(
+  contract: Contract,
+  owner: string,
+  gameAddress: string,
+  settingsId: number,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_of_owner_by_game_and_settings", [
+      owner,
+      gameAddress,
+      settingsId,
+    ]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function viewerCountTokensOfOwnerByGameAndObjective(
+  contract: Contract,
+  owner: string,
+  gameAddress: string,
+  objectiveId: number,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_of_owner_by_game_and_objective", [
+      owner,
+      gameAddress,
+      objectiveId,
+    ]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function viewerCountTokensOfOwnerByGameAndGameOver(
+  contract: Contract,
+  owner: string,
+  gameAddress: string,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_tokens_of_owner_by_game_and_game_over", [
+      owner,
+      gameAddress,
+    ]);
     return Number(result);
   }, contract.address);
 }

@@ -129,10 +129,16 @@ import {
   viewerTokensByGameAndObjective,
   viewerTokensByGameAndPlayable,
   viewerTokensByGameAndGameOver,
+  viewerTokensByGameAndSoulbound,
   viewerTokensByMinterAddress,
+  viewerTokensByMinterAndGame,
   viewerTokensOfOwnerByGame,
   viewerTokensOfOwnerByGameAndPlayable,
+  viewerTokensOfOwnerByGameAndSettings,
+  viewerTokensOfOwnerByGameAndObjective,
+  viewerTokensOfOwnerByGameAndGameOver,
   viewerTokensOfOwnerBySoulbound,
+  viewerTokensOfOwnerByMinter,
   viewerTokensBySoulbound,
   viewerTokensByMintedAtRange,
   viewerTokensByPlayable,
@@ -417,7 +423,36 @@ export class DenshokanClient {
     // Use viewer contract for efficient filtering
     let filterResult: FilterResult | null = null;
 
-    if (owner && gameAddress && playable === true) {
+    if (owner && gameAddress && settingsId !== undefined) {
+      // Owner's tokens in a game with specific settings
+      filterResult = await viewerTokensOfOwnerByGameAndSettings(
+        viewerContract,
+        owner,
+        gameAddress,
+        settingsId,
+        offset,
+        limit,
+      );
+    } else if (owner && gameAddress && objectiveId !== undefined) {
+      // Owner's tokens in a game with specific objective
+      filterResult = await viewerTokensOfOwnerByGameAndObjective(
+        viewerContract,
+        owner,
+        gameAddress,
+        objectiveId,
+        offset,
+        limit,
+      );
+    } else if (owner && gameAddress && gameOver === true) {
+      // Owner's completed tokens in a game
+      filterResult = await viewerTokensOfOwnerByGameAndGameOver(
+        viewerContract,
+        owner,
+        gameAddress,
+        offset,
+        limit,
+      );
+    } else if (owner && gameAddress && playable === true) {
       // Owner's playable tokens in a game
       filterResult = await viewerTokensOfOwnerByGameAndPlayable(
         viewerContract,
@@ -432,6 +467,15 @@ export class DenshokanClient {
         viewerContract,
         owner,
         gameAddress,
+        offset,
+        limit,
+      );
+    } else if (owner && minterAddress) {
+      // Owner's tokens from a specific minter
+      filterResult = await viewerTokensOfOwnerByMinter(
+        viewerContract,
+        owner,
+        minterAddress,
         offset,
         limit,
       );
@@ -474,6 +518,24 @@ export class DenshokanClient {
         viewerContract,
         gameAddress,
         objectiveId,
+        offset,
+        limit,
+      );
+    } else if (gameAddress && soulbound !== undefined) {
+      // Game + Soulbound filter
+      filterResult = await viewerTokensByGameAndSoulbound(
+        viewerContract,
+        gameAddress,
+        soulbound,
+        offset,
+        limit,
+      );
+    } else if (minterAddress && gameAddress) {
+      // Minter + Game filter
+      filterResult = await viewerTokensByMinterAndGame(
+        viewerContract,
+        minterAddress,
+        gameAddress,
         offset,
         limit,
       );
