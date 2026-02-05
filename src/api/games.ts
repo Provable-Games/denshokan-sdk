@@ -2,9 +2,6 @@ import type { FetchConfig } from "../types/config.js";
 import type {
   Game,
   GameStats,
-  LeaderboardEntry,
-  LeaderboardPosition,
-  LeaderboardParams,
   GameObjective,
   GameObjectiveDetails,
   GameSetting,
@@ -17,8 +14,6 @@ import {
   mapGame,
   mapGames,
   mapGameStats,
-  mapLeaderboardEntries,
-  mapLeaderboardPosition,
   mapObjectiveDetails,
   mapObjectivesDetails,
   mapSettingDetails,
@@ -50,12 +45,12 @@ export async function apiGetGames(
 
 export async function apiGetGame(
   ctx: ApiContext,
-  gameId: number,
+  gameAddress: string,
   signal?: AbortSignal,
 ): Promise<Game> {
   const result = await apiFetch<{ data: Record<string, unknown> }>({
     baseUrl: ctx.baseUrl,
-    path: `/games/${gameId}`,
+    path: `/games/${gameAddress}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
@@ -64,62 +59,26 @@ export async function apiGetGame(
 
 export async function apiGetGameStats(
   ctx: ApiContext,
-  gameId: number,
+  gameAddress: string,
   signal?: AbortSignal,
 ): Promise<GameStats> {
   const result = await apiFetch<{ data: Record<string, unknown> }>({
     baseUrl: ctx.baseUrl,
-    path: `/games/${gameId}/stats`,
+    path: `/games/${gameAddress}/stats`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
   return mapGameStats(result.data);
 }
 
-export async function apiGetGameLeaderboard(
-  ctx: ApiContext,
-  gameId: number,
-  params?: LeaderboardParams,
-  signal?: AbortSignal,
-): Promise<PaginatedResult<LeaderboardEntry>> {
-  const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
-  const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
-    baseUrl: ctx.baseUrl,
-    path: `/games/${gameId}/leaderboard${qs}`,
-    signal,
-    fetchConfig: ctx.fetchConfig,
-  });
-  return {
-    data: mapLeaderboardEntries(result.data),
-    total: result.total,
-  };
-}
-
-export async function apiGetLeaderboardPosition(
-  ctx: ApiContext,
-  gameId: number,
-  tokenId: string,
-  context?: number,
-  signal?: AbortSignal,
-): Promise<LeaderboardPosition> {
-  const qs = buildQueryString({ context });
-  const result = await apiFetch<{ data: Record<string, unknown> }>({
-    baseUrl: ctx.baseUrl,
-    path: `/games/${gameId}/leaderboard/position/${tokenId}${qs}`,
-    signal,
-    fetchConfig: ctx.fetchConfig,
-  });
-  return mapLeaderboardPosition(result.data);
-}
-
 export async function apiGetGameObjectives(
   ctx: ApiContext,
-  gameId: number,
+  gameAddress: string,
   signal?: AbortSignal,
 ): Promise<GameObjective[]> {
   const result = await apiFetch<{ data: GameObjective[] }>({
     baseUrl: ctx.baseUrl,
-    path: `/games/${gameId}/objectives`,
+    path: `/games/${gameAddress}/objectives`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
@@ -128,19 +87,19 @@ export async function apiGetGameObjectives(
 
 export async function apiGetGameSettings(
   ctx: ApiContext,
-  gameId: number,
+  gameAddress: string,
   signal?: AbortSignal,
 ): Promise<GameSetting[]> {
   const result = await apiFetch<{ data: GameSetting[] }>({
     baseUrl: ctx.baseUrl,
-    path: `/games/${gameId}/settings`,
+    path: `/games/${gameAddress}/settings`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
   return result.data;
 }
 
-// === By game address ===
+// === Objectives & Settings Details (by game address) ===
 
 export async function apiGetObjectivesDetails(
   ctx: ApiContext,
@@ -151,7 +110,7 @@ export async function apiGetObjectivesDetails(
   const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
   const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,
-    path: `/contracts/${gameAddress}/objectives${qs}`,
+    path: `/games/${gameAddress}/objectives${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
@@ -169,7 +128,7 @@ export async function apiGetObjectiveDetails(
 ): Promise<GameObjectiveDetails> {
   const result = await apiFetch<{ data: Record<string, unknown> }>({
     baseUrl: ctx.baseUrl,
-    path: `/contracts/${gameAddress}/objectives/${objectiveId}`,
+    path: `/games/${gameAddress}/objectives/${objectiveId}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
@@ -185,7 +144,7 @@ export async function apiGetSettingsDetails(
   const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
   const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,
-    path: `/contracts/${gameAddress}/settings${qs}`,
+    path: `/games/${gameAddress}/settings${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
@@ -203,7 +162,7 @@ export async function apiGetSettingDetails(
 ): Promise<GameSettingDetails> {
   const result = await apiFetch<{ data: Record<string, unknown> }>({
     baseUrl: ctx.baseUrl,
-    path: `/contracts/${gameAddress}/settings/${settingsId}`,
+    path: `/games/${gameAddress}/settings/${settingsId}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });

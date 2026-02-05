@@ -41,7 +41,7 @@ export async function rpcGameAddress(
   gameId: number,
 ): Promise<string> {
   return wrapRpcCall(async () => {
-    const result = await contract.call("game_address", [gameId]);
+    const result = await contract.call("game_address_from_id", [gameId]);
     return toHexAddress(result);
   }, contract.address);
 }

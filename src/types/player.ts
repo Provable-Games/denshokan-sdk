@@ -1,9 +1,10 @@
 export interface PlayerStats {
   address: string;
   totalTokens: number;
-  activeTokens: number;
   gamesPlayed: number;
-  highestScore: number;
+  completedGames: number;
+  activeGames: number;
+  totalScore: string;
 }
 
 export interface PlayerTokensParams {

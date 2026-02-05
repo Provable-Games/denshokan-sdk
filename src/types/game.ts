@@ -10,29 +10,9 @@ export interface Game {
 export interface GameStats {
   gameId: number;
   totalTokens: number;
-  activeTokens: number;
-  totalPlayers: number;
-  highestScore: number;
-}
-
-export interface LeaderboardEntry {
-  tokenId: string;
-  owner: string;
-  score: number;
-  playerName: string;
-  rank: number;
-}
-
-export interface LeaderboardPosition {
-  tokenId: string;
-  rank: number;
-  score: number;
-  surrounding: LeaderboardEntry[];
-}
-
-export interface LeaderboardParams {
-  limit?: number;
-  offset?: number;
+  completedGames: number;
+  activeGames: number;
+  uniquePlayers: number;
 }
 
 export interface GameDetail {

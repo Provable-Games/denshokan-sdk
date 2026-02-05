@@ -4,9 +4,6 @@ import type {
   ResolvedConfig,
   Game,
   GameStats,
-  LeaderboardEntry,
-  LeaderboardPosition,
-  LeaderboardParams,
   GameObjective,
   GameObjectiveDetails,
   GameSetting,
@@ -38,9 +35,9 @@ import type {
 import { getChainConfig } from "./chains/constants.js";
 import { DEFAULT_FETCH_CONFIG } from "./utils/retry.js";
 import { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
-import { toHexTokenId } from "./utils/address.js";
+import { toHexTokenId, normalizeAddress } from "./utils/address.js";
 import { mintParamsToSnake, playerNameUpdateToSnake } from "./utils/mappers.js";
-import { InvalidChainError } from "./errors/index.js";
+import { InvalidChainError, GameNotFoundError } from "./errors/index.js";
 import { ConnectionStatus } from "./datasource/health.js";
 import { withFallback } from "./datasource/resolver.js";
 import { WebSocketManager } from "./ws/manager.js";
@@ -50,8 +47,6 @@ import {
   apiGetGames,
   apiGetGame,
   apiGetGameStats,
-  apiGetGameLeaderboard,
-  apiGetLeaderboardPosition,
   apiGetGameObjectives,
   apiGetGameSettings,
   apiGetObjectivesDetails,
@@ -178,6 +173,7 @@ export class DenshokanClient {
   private _viewerContract: Contract | null = null;
   private _gameContracts = new Map<string, Contract>();
   private _gameAddressCache = new Map<number, string>();
+  private _gameIdByAddress = new Map<string, number>();
 
   constructor(config: DenshokanClientConfig) {
     this.config = this.resolveConfig(config);
@@ -274,12 +270,33 @@ export class DenshokanClient {
     const registryContract = await this.getRegistryContract();
     const address = await rpcGameAddress(registryContract, gameId);
     this._gameAddressCache.set(gameId, address);
+    this._gameIdByAddress.set(normalizeAddress(address), gameId);
     return address;
   }
 
   private async resolveGameAddressForToken(tokenId: string): Promise<string> {
     const decoded = decodePackedTokenId(tokenId);
     return this.resolveGameAddress(decoded.gameId);
+  }
+
+  /**
+   * Resolve a gameAddress to a numeric gameId.
+   * Uses cache first, then fetches games list from API to populate cache.
+   */
+  private async resolveGameId(gameAddress: string): Promise<number> {
+    const normalized = normalizeAddress(gameAddress);
+    const cached = this._gameIdByAddress.get(normalized);
+    if (cached !== undefined) return cached;
+    // Populate cache from games list
+    const games = await this.getGames();
+    for (const game of games.data) {
+      const addr = normalizeAddress(game.contractAddress);
+      this._gameIdByAddress.set(addr, game.gameId);
+      this._gameAddressCache.set(game.gameId, addr);
+    }
+    const resolved = this._gameIdByAddress.get(normalized);
+    if (resolved === undefined) throw new GameNotFoundError(gameAddress);
+    return resolved;
   }
 
   // =========================================================================
@@ -290,11 +307,12 @@ export class DenshokanClient {
     return apiGetGames(this.apiCtx, params);
   }
 
-  async getGame(gameId: number): Promise<Game> {
+  async getGame(gameAddress: string): Promise<Game> {
     if (this.config.primarySource === "api") {
       return withFallback(
-        () => apiGetGame(this.apiCtx, gameId),
+        () => apiGetGame(this.apiCtx, gameAddress),
         async () => {
+          const gameId = await this.resolveGameId(gameAddress);
           const contract = await this.getRegistryContract();
           const meta = await rpcGameMetadata(contract, gameId);
           return {
@@ -309,6 +327,7 @@ export class DenshokanClient {
         this.connectionStatus,
       );
     }
+    const gameId = await this.resolveGameId(gameAddress);
     const contract = await this.getRegistryContract();
     const meta = await rpcGameMetadata(contract, gameId);
     return {
@@ -321,24 +340,16 @@ export class DenshokanClient {
     };
   }
 
-  async getGameStats(gameId: number): Promise<GameStats> {
-    return apiGetGameStats(this.apiCtx, gameId);
+  async getGameStats(gameAddress: string): Promise<GameStats> {
+    return apiGetGameStats(this.apiCtx, gameAddress);
   }
 
-  async getGameLeaderboard(gameId: number, opts?: LeaderboardParams): Promise<PaginatedResult<LeaderboardEntry>> {
-    return apiGetGameLeaderboard(this.apiCtx, gameId, opts);
+  async getGameObjectives(gameAddress: string): Promise<GameObjective[]> {
+    return apiGetGameObjectives(this.apiCtx, gameAddress);
   }
 
-  async getLeaderboardPosition(gameId: number, tokenId: string, context?: number): Promise<LeaderboardPosition> {
-    return apiGetLeaderboardPosition(this.apiCtx, gameId, tokenId, context);
-  }
-
-  async getGameObjectives(gameId: number): Promise<GameObjective[]> {
-    return apiGetGameObjectives(this.apiCtx, gameId);
-  }
-
-  async getGameSettings(gameId: number): Promise<GameSetting[]> {
-    return apiGetGameSettings(this.apiCtx, gameId);
+  async getGameSettings(gameAddress: string): Promise<GameSetting[]> {
+    return apiGetGameSettings(this.apiCtx, gameAddress);
   }
 
   // =========================================================================

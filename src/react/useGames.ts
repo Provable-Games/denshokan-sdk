@@ -46,22 +46,22 @@ export interface UseGameResult {
   refetch: () => void;
 }
 
-export function useGame(gameId: number | undefined): UseGameResult {
+export function useGame(gameAddress: string | undefined): UseGameResult {
   const client = useDenshokanClient();
   const [data, setData] = useState<Game | null>(null);
-  const [isLoading, setIsLoading] = useState(!!gameId);
+  const [isLoading, setIsLoading] = useState(!!gameAddress);
   const [error, setError] = useState<Error | null>(null);
 
   const fetch = useCallback(() => {
-    if (gameId === undefined) return;
+    if (gameAddress === undefined) return;
     setIsLoading(true);
     setError(null);
     client
-      .getGame(gameId)
+      .getGame(gameAddress)
       .then(setData)
       .catch(setError)
       .finally(() => setIsLoading(false));
-  }, [client, gameId]);
+  }, [client, gameAddress]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
@@ -75,22 +75,22 @@ export interface UseGameStatsResult {
   refetch: () => void;
 }
 
-export function useGameStats(gameId: number | undefined): UseGameStatsResult {
+export function useGameStats(gameAddress: string | undefined): UseGameStatsResult {
   const client = useDenshokanClient();
   const [data, setData] = useState<GameStats | null>(null);
-  const [isLoading, setIsLoading] = useState(!!gameId);
+  const [isLoading, setIsLoading] = useState(!!gameAddress);
   const [error, setError] = useState<Error | null>(null);
 
   const fetch = useCallback(() => {
-    if (gameId === undefined) return;
+    if (gameAddress === undefined) return;
     setIsLoading(true);
     setError(null);
     client
-      .getGameStats(gameId)
+      .getGameStats(gameAddress)
       .then(setData)
       .catch(setError)
       .finally(() => setIsLoading(false));
-  }, [client, gameId]);
+  }, [client, gameAddress]);
 
   useEffect(() => { fetch(); }, [fetch]);
 

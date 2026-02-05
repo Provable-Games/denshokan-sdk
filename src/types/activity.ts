@@ -15,6 +15,9 @@ export interface ActivityParams {
 }
 
 export interface ActivityStats {
-  totalEvents: number;
-  eventsByType: Record<string, number>;
+  gameId: number;
+  totalTokens: number;
+  completedGames: number;
+  activeGames: number;
+  uniquePlayers: number;
 }

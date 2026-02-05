@@ -12,9 +12,6 @@ export type {
 export type {
   Game,
   GameStats,
-  LeaderboardEntry,
-  LeaderboardPosition,
-  LeaderboardParams,
   GameDetail,
   GameObjective,
   GameObjectiveDetails,

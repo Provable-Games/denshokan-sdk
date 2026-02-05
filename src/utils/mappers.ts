@@ -4,8 +4,6 @@ import { toHexTokenId } from "./address.js";
 import type {
   Game,
   GameStats,
-  LeaderboardEntry,
-  LeaderboardPosition,
   GameObjective,
   GameObjectiveDetails,
   GameSetting,
@@ -84,32 +82,9 @@ export function mapGameStats(raw: Record<string, unknown>): GameStats {
   return {
     gameId: Number(raw.gameId ?? raw.game_id ?? 0),
     totalTokens: Number(raw.totalTokens ?? raw.total_tokens ?? 0),
-    activeTokens: Number(raw.activeGames ?? raw.active_games ?? raw.activeTokens ?? raw.active_tokens ?? 0),
-    totalPlayers: Number(raw.uniquePlayers ?? raw.unique_players ?? raw.totalPlayers ?? raw.total_players ?? 0),
-    highestScore: Number(raw.highestScore ?? raw.highest_score ?? 0),
-  };
-}
-
-export function mapLeaderboardEntry(raw: Record<string, unknown>): LeaderboardEntry {
-  return {
-    tokenId: toHexTokenId(raw.tokenId ?? raw.token_id ?? "0"),
-    owner: String(raw.ownerAddress ?? raw.owner_address ?? raw.owner ?? ""),
-    score: Number(raw.score ?? 0),
-    playerName: String(raw.playerName ?? raw.player_name ?? ""),
-    rank: Number(raw.rank ?? 0),
-  };
-}
-
-export function mapLeaderboardEntries(raw: Record<string, unknown>[]): LeaderboardEntry[] {
-  return raw.map(mapLeaderboardEntry);
-}
-
-export function mapLeaderboardPosition(raw: Record<string, unknown>): LeaderboardPosition {
-  return {
-    tokenId: toHexTokenId(raw.tokenId ?? raw.token_id ?? "0"),
-    rank: Number(raw.rank ?? 0),
-    score: Number(raw.score ?? 0),
-    surrounding: ((raw.surrounding as Record<string, unknown>[]) ?? []).map(mapLeaderboardEntry),
+    completedGames: Number(raw.completedGames ?? raw.completed_games ?? 0),
+    activeGames: Number(raw.activeGames ?? raw.active_games ?? 0),
+    uniquePlayers: Number(raw.uniquePlayers ?? raw.unique_players ?? 0),
   };
 }
 
@@ -117,19 +92,21 @@ export function mapPlayerStats(raw: Record<string, unknown>): PlayerStats {
   return {
     address: String(raw.address ?? ""),
     totalTokens: Number(raw.totalTokens ?? raw.total_tokens ?? 0),
-    activeTokens: Number(raw.activeTokens ?? raw.active_tokens ?? 0),
     gamesPlayed: Number(raw.gamesPlayed ?? raw.games_played ?? 0),
-    highestScore: Number(raw.highestScore ?? raw.highest_score ?? 0),
+    completedGames: Number(raw.completedGames ?? raw.completed_games ?? 0),
+    activeGames: Number(raw.activeGames ?? raw.active_games ?? 0),
+    totalScore: String(raw.totalScore ?? raw.total_score ?? "0"),
   };
 }
 
 export function mapMinter(raw: Record<string, unknown>): Minter {
   return {
     id: String(raw.id ?? ""),
+    minterId: String(raw.minterId ?? raw.minter_id ?? ""),
     name: String(raw.name ?? ""),
-    address: String(raw.contractAddress ?? raw.contract_address ?? raw.address ?? ""),
-    gameId: Number(raw.gameId ?? raw.game_id ?? 0),
-    active: Boolean(raw.active),
+    contractAddress: String(raw.contractAddress ?? raw.contract_address ?? ""),
+    createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
+    blockNumber: String(raw.blockNumber ?? raw.block_number ?? ""),
   };
 }
 
@@ -155,8 +132,11 @@ export function mapActivityEvents(raw: Record<string, unknown>[]): ActivityEvent
 
 export function mapActivityStats(raw: Record<string, unknown>): ActivityStats {
   return {
-    totalEvents: Number(raw.totalEvents ?? raw.total_events ?? 0),
-    eventsByType: (raw.eventsByType ?? raw.events_by_type) as Record<string, number> ?? {},
+    gameId: Number(raw.gameId ?? raw.game_id ?? 0),
+    totalTokens: Number(raw.totalTokens ?? raw.total_tokens ?? 0),
+    completedGames: Number(raw.completedGames ?? raw.completed_games ?? 0),
+    activeGames: Number(raw.activeGames ?? raw.active_games ?? 0),
+    uniquePlayers: Number(raw.uniquePlayers ?? raw.unique_players ?? 0),
   };
 }
 

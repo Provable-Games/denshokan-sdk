@@ -60,9 +60,9 @@ export class TokenNotFoundError extends DenshokanError {
 }
 
 export class GameNotFoundError extends DenshokanError {
-  readonly gameId: number;
+  readonly gameId: string | number;
 
-  constructor(gameId: number) {
+  constructor(gameId: string | number) {
     super(`Game not found: ${gameId}`);
     this.name = "GameNotFoundError";
     this.gameId = gameId;

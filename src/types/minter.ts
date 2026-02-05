@@ -1,7 +1,8 @@
 export interface Minter {
   id: string;
+  minterId: string;
   name: string;
-  address: string;
-  gameId: number;
-  active: boolean;
+  contractAddress: string;
+  createdAt: string;
+  blockNumber: string;
 }
