@@ -120,6 +120,7 @@ import {
 
 // ABI
 import denshokanAbi from "./rpc/abis/denshokan.json";
+import minigameRegistryAbi from "./rpc/abis/minigameRegistry.json";
 import viewerAbi from "./rpc/abis/denshokanViewer.json";
 
 // Viewer RPC imports
@@ -224,9 +225,8 @@ export class DenshokanClient {
   private async getRegistryContract(): Promise<Contract> {
     if (!this._registryContract) {
       const provider = await this.getProvider();
-      // Registry uses same ABI structure — at minimum it has game_metadata and game_address
       this._registryContract = await createContract(
-        denshokanAbi as unknown[],
+        minigameRegistryAbi as unknown[],
         this.config.registryAddress,
         provider,
       );
