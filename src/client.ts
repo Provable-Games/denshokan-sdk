@@ -8,9 +8,11 @@ import type {
   LeaderboardPosition,
   LeaderboardParams,
   GameObjective,
+  GameObjectiveDetails,
   GameSetting,
   GameSettingDetails,
   GameDetail,
+  DetailsParams,
   Token,
   TokenMetadata,
   TokenMutableState,
@@ -36,6 +38,7 @@ import type {
 import { getChainConfig } from "./chains/constants.js";
 import { DEFAULT_FETCH_CONFIG } from "./utils/retry.js";
 import { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
+import { toHexTokenId } from "./utils/address.js";
 import { mintParamsToSnake, playerNameUpdateToSnake } from "./utils/mappers.js";
 import { InvalidChainError } from "./errors/index.js";
 import { ConnectionStatus } from "./datasource/health.js";
@@ -51,6 +54,10 @@ import {
   apiGetLeaderboardPosition,
   apiGetGameObjectives,
   apiGetGameSettings,
+  apiGetObjectivesDetails,
+  apiGetObjectiveDetails,
+  apiGetSettingsDetails,
+  apiGetSettingDetails,
 } from "./api/games.js";
 import { apiGetTokens, apiGetToken, apiGetTokenScores } from "./api/tokens.js";
 import { apiGetPlayerTokens, apiGetPlayerStats } from "./api/players.js";
@@ -108,10 +115,14 @@ import {
   rpcTokenDescriptionBatch,
   rpcGameDetails,
   rpcGameDetailsBatch,
+  rpcObjectivesCount,
   rpcObjectiveExists,
   rpcObjectiveExistsBatch,
+  rpcCompletedObjective,
+  rpcCompletedObjectiveBatch,
   rpcObjectivesDetails,
   rpcObjectivesDetailsBatch,
+  rpcSettingsCount,
   rpcSettingsExists,
   rpcSettingsExistsBatch,
   rpcSettingsDetail,
@@ -122,6 +133,7 @@ import {
 import denshokanAbi from "./rpc/abis/denshokan.json";
 import minigameRegistryAbi from "./rpc/abis/minigameRegistry.json";
 import viewerAbi from "./rpc/abis/denshokanViewer.json";
+import minigameAbi from "./rpc/abis/minigame.json";
 
 // Viewer RPC imports
 import {
@@ -250,7 +262,7 @@ export class DenshokanClient {
     let contract = this._gameContracts.get(gameAddress);
     if (!contract) {
       const provider = await this.getProvider();
-      contract = await createContract(denshokanAbi as unknown[], gameAddress, provider);
+      contract = await createContract(minigameAbi as unknown[], gameAddress, provider);
       this._gameContracts.set(gameAddress, contract);
     }
     return contract;
@@ -274,8 +286,8 @@ export class DenshokanClient {
   // Games (API, with RPC fallback where noted)
   // =========================================================================
 
-  async getGames(): Promise<Game[]> {
-    return apiGetGames(this.apiCtx);
+  async getGames(params?: { limit?: number; offset?: number }): Promise<PaginatedResult<Game>> {
+    return apiGetGames(this.apiCtx, params);
   }
 
   async getGame(gameId: number): Promise<Game> {
@@ -288,8 +300,9 @@ export class DenshokanClient {
           return {
             gameId: meta.gameId,
             name: meta.name,
-            description: "",
+            description: meta.description,
             contractAddress: meta.contractAddress,
+            imageUrl: meta.image || undefined,
             createdAt: "",
           };
         },
@@ -301,8 +314,9 @@ export class DenshokanClient {
     return {
       gameId: meta.gameId,
       name: meta.name,
-      description: "",
+      description: meta.description,
       contractAddress: meta.contractAddress,
+      imageUrl: meta.image || undefined,
       createdAt: "",
     };
   }
@@ -311,7 +325,7 @@ export class DenshokanClient {
     return apiGetGameStats(this.apiCtx, gameId);
   }
 
-  async getGameLeaderboard(gameId: number, opts?: LeaderboardParams): Promise<LeaderboardEntry[]> {
+  async getGameLeaderboard(gameId: number, opts?: LeaderboardParams): Promise<PaginatedResult<LeaderboardEntry>> {
     return apiGetGameLeaderboard(this.apiCtx, gameId, opts);
   }
 
@@ -325,6 +339,110 @@ export class DenshokanClient {
 
   async getGameSettings(gameId: number): Promise<GameSetting[]> {
     return apiGetGameSettings(this.apiCtx, gameId);
+  }
+
+  // =========================================================================
+  // Objectives & Settings Details (API with RPC fallback, by gameAddress)
+  // =========================================================================
+
+  async getObjectivesDetails(
+    gameAddress: string,
+    params?: DetailsParams,
+  ): Promise<PaginatedResult<GameObjectiveDetails>> {
+    if (this.config.primarySource === "api") {
+      return withFallback(
+        () => apiGetObjectivesDetails(this.apiCtx, gameAddress, params),
+        () => this.fetchObjectivesDetailsFromRpc(gameAddress, params),
+        this.connectionStatus,
+      );
+    }
+    return this.fetchObjectivesDetailsFromRpc(gameAddress, params);
+  }
+
+  async getObjectiveDetails(objectiveId: number, gameAddress: string): Promise<GameObjectiveDetails> {
+    if (this.config.primarySource === "api") {
+      return withFallback(
+        () => apiGetObjectiveDetails(this.apiCtx, gameAddress, objectiveId),
+        async () => {
+          const contract = await this.getGameContract(gameAddress);
+          return rpcObjectivesDetails(contract, objectiveId);
+        },
+        this.connectionStatus,
+      );
+    }
+    const contract = await this.getGameContract(gameAddress);
+    return rpcObjectivesDetails(contract, objectiveId);
+  }
+
+  async getSettingsDetails(
+    gameAddress: string,
+    params?: DetailsParams,
+  ): Promise<PaginatedResult<GameSettingDetails>> {
+    if (this.config.primarySource === "api") {
+      return withFallback(
+        () => apiGetSettingsDetails(this.apiCtx, gameAddress, params),
+        () => this.fetchSettingsDetailsFromRpc(gameAddress, params),
+        this.connectionStatus,
+      );
+    }
+    return this.fetchSettingsDetailsFromRpc(gameAddress, params);
+  }
+
+  async getSettingDetails(settingsId: number, gameAddress: string): Promise<GameSettingDetails> {
+    if (this.config.primarySource === "api") {
+      return withFallback(
+        () => apiGetSettingDetails(this.apiCtx, gameAddress, settingsId),
+        async () => {
+          const contract = await this.getGameContract(gameAddress);
+          return rpcSettingsDetail(contract, settingsId);
+        },
+        this.connectionStatus,
+      );
+    }
+    const contract = await this.getGameContract(gameAddress);
+    return rpcSettingsDetail(contract, settingsId);
+  }
+
+  private async fetchObjectivesDetailsFromRpc(
+    gameAddress: string,
+    params?: DetailsParams,
+  ): Promise<PaginatedResult<GameObjectiveDetails>> {
+    const contract = await this.getGameContract(gameAddress);
+    const total = await rpcObjectivesCount(contract);
+    if (total === 0) return { data: [], total: 0 };
+
+    const offset = params?.offset ?? 0;
+    const limit = params?.limit ?? total;
+    const start = offset + 1; // IDs are 1-indexed
+    const end = Math.min(offset + limit, total);
+    const count = end - offset;
+
+    if (count <= 0) return { data: [], total };
+
+    const ids = Array.from({ length: count }, (_, i) => start + i);
+    const data = await rpcObjectivesDetailsBatch(contract, ids);
+    return { data, total };
+  }
+
+  private async fetchSettingsDetailsFromRpc(
+    gameAddress: string,
+    params?: DetailsParams,
+  ): Promise<PaginatedResult<GameSettingDetails>> {
+    const contract = await this.getGameContract(gameAddress);
+    const total = await rpcSettingsCount(contract);
+    if (total === 0) return { data: [], total: 0 };
+
+    const offset = params?.offset ?? 0;
+    const limit = params?.limit ?? total;
+    const start = offset + 1; // IDs are 1-indexed
+    const end = Math.min(offset + limit, total);
+    const count = end - offset;
+
+    if (count <= 0) return { data: [], total };
+
+    const ids = Array.from({ length: count }, (_, i) => start + i);
+    const data = await rpcSettingsDetailsBatch(contract, ids);
+    return { data, total };
   }
 
   // =========================================================================
@@ -372,7 +490,7 @@ export class DenshokanClient {
     ]);
 
     return {
-      tokenId,
+      tokenId: toHexTokenId(tokenId),
       // FROM DECODED TOKEN ID (no RPC needed for these)
       gameId: decoded.gameId,
       settingsId: decoded.settingsId,
@@ -658,8 +776,8 @@ export class DenshokanClient {
   // Minters (API only)
   // =========================================================================
 
-  async getMinters(): Promise<Minter[]> {
-    return apiGetMinters(this.apiCtx);
+  async getMinters(params?: { limit?: number; offset?: number }): Promise<PaginatedResult<Minter>> {
+    return apiGetMinters(this.apiCtx, params);
   }
 
   async getMinter(minterId: string): Promise<Minter> {
@@ -670,7 +788,7 @@ export class DenshokanClient {
   // Activity (API only)
   // =========================================================================
 
-  async getActivity(params?: ActivityParams): Promise<ActivityEvent[]> {
+  async getActivity(params?: ActivityParams): Promise<PaginatedResult<ActivityEvent>> {
     return apiGetActivity(this.apiCtx, params);
   }
 
@@ -957,6 +1075,11 @@ export class DenshokanClient {
   // RPC: Game Contract (objectives, batch-first)
   // =========================================================================
 
+  async objectivesCount(gameAddress: string): Promise<number> {
+    const contract = await this.getGameContract(gameAddress);
+    return rpcObjectivesCount(contract);
+  }
+
   async objectiveExists(objectiveId: number, gameAddress: string): Promise<boolean> {
     const contract = await this.getGameContract(gameAddress);
     return rpcObjectiveExists(contract, objectiveId);
@@ -967,19 +1090,34 @@ export class DenshokanClient {
     return rpcObjectiveExistsBatch(contract, objectiveIds);
   }
 
-  async objectivesDetails(tokenId: string, gameAddress: string): Promise<GameObjective[]> {
+  async completedObjective(tokenId: string, objectiveId: number, gameAddress: string): Promise<boolean> {
     const contract = await this.getGameContract(gameAddress);
-    return rpcObjectivesDetails(contract, tokenId);
+    return rpcCompletedObjective(contract, tokenId, objectiveId);
   }
 
-  async objectivesDetailsBatch(tokenIds: string[], gameAddress: string): Promise<GameObjective[][]> {
+  async completedObjectiveBatch(tokenIds: string[], objectiveId: number, gameAddress: string): Promise<boolean[]> {
     const contract = await this.getGameContract(gameAddress);
-    return rpcObjectivesDetailsBatch(contract, tokenIds);
+    return rpcCompletedObjectiveBatch(contract, tokenIds, objectiveId);
+  }
+
+  async objectivesDetails(objectiveId: number, gameAddress: string): Promise<GameObjectiveDetails> {
+    const contract = await this.getGameContract(gameAddress);
+    return rpcObjectivesDetails(contract, objectiveId);
+  }
+
+  async objectivesDetailsBatch(objectiveIds: number[], gameAddress: string): Promise<GameObjectiveDetails[]> {
+    const contract = await this.getGameContract(gameAddress);
+    return rpcObjectivesDetailsBatch(contract, objectiveIds);
   }
 
   // =========================================================================
   // RPC: Game Contract (settings, batch-first)
   // =========================================================================
+
+  async settingsCount(gameAddress: string): Promise<number> {
+    const contract = await this.getGameContract(gameAddress);
+    return rpcSettingsCount(contract);
+  }
 
   async settingsExists(settingsId: number, gameAddress: string): Promise<boolean> {
     const contract = await this.getGameContract(gameAddress);

@@ -17,8 +17,10 @@ export type {
   LeaderboardParams,
   GameDetail,
   GameObjective,
+  GameObjectiveDetails,
   GameSettingDetails,
   GameSetting,
+  DetailsParams,
 } from "./game.js";
 export type { PlayerStats, PlayerTokensParams } from "./player.js";
 export type { Minter } from "./minter.js";

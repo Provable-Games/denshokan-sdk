@@ -57,7 +57,7 @@ export {
 
 // Utils
 export { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
-export { normalizeAddress } from "./utils/address.js";
+export { normalizeAddress, toHexTokenId } from "./utils/address.js";
 
 // Datasource
 export { ConnectionStatus } from "./datasource/health.js";

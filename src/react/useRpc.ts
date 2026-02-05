@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import type { TokenMetadata } from "../types/token.js";
+import type { TokenMetadata, PaginatedResult } from "../types/token.js";
+import type { GameObjectiveDetails, GameSettingDetails, DetailsParams } from "../types/game.js";
 import { useDenshokanClient } from "./context.js";
 
 interface UseAsyncResult<T> {
@@ -101,5 +102,83 @@ export function useGameOverBatch(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client, key, gameAddress],
     !!tokenIds && tokenIds.length > 0 && !!gameAddress,
+  );
+}
+
+// === Objectives (API with RPC fallback) ===
+
+export function useObjectivesCount(
+  gameAddress: string | undefined,
+): UseAsyncResult<number> {
+  const client = useDenshokanClient();
+  return useAsync(
+    () => client.objectivesCount(gameAddress!),
+    [client, gameAddress],
+    !!gameAddress,
+  );
+}
+
+export function useObjectiveDetails(
+  objectiveId: number | undefined,
+  gameAddress: string | undefined,
+): UseAsyncResult<GameObjectiveDetails> {
+  const client = useDenshokanClient();
+  return useAsync(
+    () => client.getObjectiveDetails(objectiveId!, gameAddress!),
+    [client, objectiveId, gameAddress],
+    objectiveId !== undefined && !!gameAddress,
+  );
+}
+
+export function useObjectivesDetails(
+  gameAddress: string | undefined,
+  params?: DetailsParams,
+): UseAsyncResult<PaginatedResult<GameObjectiveDetails>> {
+  const client = useDenshokanClient();
+  const paramsKey = JSON.stringify(params);
+  return useAsync(
+    () => client.getObjectivesDetails(gameAddress!, params),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [client, gameAddress, paramsKey],
+    !!gameAddress,
+  );
+}
+
+// === Settings (API with RPC fallback) ===
+
+export function useSettingsCount(
+  gameAddress: string | undefined,
+): UseAsyncResult<number> {
+  const client = useDenshokanClient();
+  return useAsync(
+    () => client.settingsCount(gameAddress!),
+    [client, gameAddress],
+    !!gameAddress,
+  );
+}
+
+export function useSettingDetails(
+  settingsId: number | undefined,
+  gameAddress: string | undefined,
+): UseAsyncResult<GameSettingDetails> {
+  const client = useDenshokanClient();
+  return useAsync(
+    () => client.getSettingDetails(settingsId!, gameAddress!),
+    [client, settingsId, gameAddress],
+    settingsId !== undefined && !!gameAddress,
+  );
+}
+
+export function useSettingsDetails(
+  gameAddress: string | undefined,
+  params?: DetailsParams,
+): UseAsyncResult<PaginatedResult<GameSettingDetails>> {
+  const client = useDenshokanClient();
+  const paramsKey = JSON.stringify(params);
+  return useAsync(
+    () => client.getSettingsDetails(gameAddress!, params),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [client, gameAddress, paramsKey],
+    !!gameAddress,
   );
 }

@@ -1,0 +1,344 @@
+[
+  {
+    "type": "struct",
+    "name": "core::byte_array::ByteArray",
+    "members": [
+      { "name": "data", "type": "core::array::Array::<core::bytes_31::bytes31>" },
+      { "name": "pending_word", "type": "core::felt252" },
+      { "name": "pending_word_len", "type": "core::internal::bounded_int::BoundedInt::<0, 30>" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<core::felt252>",
+    "members": [
+      { "name": "snapshot", "type": "@core::array::Array::<core::felt252>" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<core::integer::u32>",
+    "members": [
+      { "name": "snapshot", "type": "@core::array::Array::<core::integer::u32>" }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::bool",
+    "variants": [
+      { "name": "False", "type": "()" },
+      { "name": "True", "type": "()" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::minigame::GameDetail",
+    "members": [
+      { "name": "name", "type": "core::byte_array::ByteArray" },
+      { "name": "value", "type": "core::byte_array::ByteArray" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<game_components_interfaces::structs::minigame::GameDetail>",
+    "members": [
+      { "name": "snapshot", "type": "@core::array::Array::<game_components_interfaces::structs::minigame::GameDetail>" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::minigame::GameObjective",
+    "members": [
+      { "name": "name", "type": "core::byte_array::ByteArray" },
+      { "name": "value", "type": "core::byte_array::ByteArray" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<game_components_interfaces::structs::minigame::GameObjective>",
+    "members": [
+      { "name": "snapshot", "type": "@core::array::Array::<game_components_interfaces::structs::minigame::GameObjective>" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::minigame::GameObjectiveDetails",
+    "members": [
+      { "name": "name", "type": "core::byte_array::ByteArray" },
+      { "name": "description", "type": "core::byte_array::ByteArray" },
+      { "name": "objectives", "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameObjective>" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::minigame::GameSetting",
+    "members": [
+      { "name": "name", "type": "core::byte_array::ByteArray" },
+      { "name": "value", "type": "core::byte_array::ByteArray" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<game_components_interfaces::structs::minigame::GameSetting>",
+    "members": [
+      { "name": "snapshot", "type": "@core::array::Array::<game_components_interfaces::structs::minigame::GameSetting>" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::minigame::GameSettingDetails",
+    "members": [
+      { "name": "name", "type": "core::byte_array::ByteArray" },
+      { "name": "description", "type": "core::byte_array::ByteArray" },
+      { "name": "settings", "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameSetting>" }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "MinigameImpl",
+    "interface_name": "game_components_interfaces::minigame::core::IMinigame"
+  },
+  {
+    "type": "interface",
+    "name": "game_components_interfaces::minigame::core::IMinigame",
+    "items": [
+      {
+        "type": "function",
+        "name": "token_address",
+        "inputs": [],
+        "outputs": [{ "type": "core::starknet::contract_address::ContractAddress" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "settings_address",
+        "inputs": [],
+        "outputs": [{ "type": "core::starknet::contract_address::ContractAddress" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "objectives_address",
+        "inputs": [],
+        "outputs": [{ "type": "core::starknet::contract_address::ContractAddress" }],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "MinigameTokenDataImpl",
+    "interface_name": "game_components_interfaces::minigame::core::IMinigameTokenData"
+  },
+  {
+    "type": "interface",
+    "name": "game_components_interfaces::minigame::core::IMinigameTokenData",
+    "items": [
+      {
+        "type": "function",
+        "name": "score",
+        "inputs": [{ "name": "token_id", "type": "core::felt252" }],
+        "outputs": [{ "type": "core::integer::u64" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "game_over",
+        "inputs": [{ "name": "token_id", "type": "core::felt252" }],
+        "outputs": [{ "type": "core::bool" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "score_batch",
+        "inputs": [{ "name": "token_ids", "type": "core::array::Span::<core::felt252>" }],
+        "outputs": [{ "type": "core::array::Array::<core::integer::u64>" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "game_over_batch",
+        "inputs": [{ "name": "token_ids", "type": "core::array::Span::<core::felt252>" }],
+        "outputs": [{ "type": "core::array::Array::<core::bool>" }],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "MinigameDetailsImpl",
+    "interface_name": "game_components_interfaces::minigame::core::IMinigameDetails"
+  },
+  {
+    "type": "interface",
+    "name": "game_components_interfaces::minigame::core::IMinigameDetails",
+    "items": [
+      {
+        "type": "function",
+        "name": "token_name",
+        "inputs": [{ "name": "token_id", "type": "core::felt252" }],
+        "outputs": [{ "type": "core::byte_array::ByteArray" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "token_description",
+        "inputs": [{ "name": "token_id", "type": "core::felt252" }],
+        "outputs": [{ "type": "core::byte_array::ByteArray" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "game_details",
+        "inputs": [{ "name": "token_id", "type": "core::felt252" }],
+        "outputs": [{ "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameDetail>" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "token_name_batch",
+        "inputs": [{ "name": "token_ids", "type": "core::array::Span::<core::felt252>" }],
+        "outputs": [{ "type": "core::array::Array::<core::byte_array::ByteArray>" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "token_description_batch",
+        "inputs": [{ "name": "token_ids", "type": "core::array::Span::<core::felt252>" }],
+        "outputs": [{ "type": "core::array::Array::<core::byte_array::ByteArray>" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "game_details_batch",
+        "inputs": [{ "name": "token_ids", "type": "core::array::Span::<core::felt252>" }],
+        "outputs": [{ "type": "core::array::Array::<core::array::Span::<game_components_interfaces::structs::minigame::GameDetail>>" }],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "MinigameObjectivesImpl",
+    "interface_name": "game_components_interfaces::minigame::objectives::IMinigameObjectives"
+  },
+  {
+    "type": "interface",
+    "name": "game_components_interfaces::minigame::objectives::IMinigameObjectives",
+    "items": [
+      {
+        "type": "function",
+        "name": "objective_exists",
+        "inputs": [{ "name": "objective_id", "type": "core::integer::u32" }],
+        "outputs": [{ "type": "core::bool" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "completed_objective",
+        "inputs": [
+          { "name": "token_id", "type": "core::felt252" },
+          { "name": "objective_id", "type": "core::integer::u32" }
+        ],
+        "outputs": [{ "type": "core::bool" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "objective_exists_batch",
+        "inputs": [{ "name": "objective_ids", "type": "core::array::Span::<core::integer::u32>" }],
+        "outputs": [{ "type": "core::array::Array::<core::bool>" }],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "MinigameObjectivesDetailsImpl",
+    "interface_name": "game_components_interfaces::minigame::objectives::IMinigameObjectivesDetails"
+  },
+  {
+    "type": "interface",
+    "name": "game_components_interfaces::minigame::objectives::IMinigameObjectivesDetails",
+    "items": [
+      {
+        "type": "function",
+        "name": "objectives_count",
+        "inputs": [],
+        "outputs": [{ "type": "core::integer::u32" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "objectives_details",
+        "inputs": [{ "name": "objective_id", "type": "core::integer::u32" }],
+        "outputs": [{ "type": "game_components_interfaces::structs::minigame::GameObjectiveDetails" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "objectives_details_batch",
+        "inputs": [{ "name": "objective_ids", "type": "core::array::Span::<core::integer::u32>" }],
+        "outputs": [{ "type": "core::array::Array::<game_components_interfaces::structs::minigame::GameObjectiveDetails>" }],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "MinigameSettingsImpl",
+    "interface_name": "game_components_interfaces::minigame::settings::IMinigameSettings"
+  },
+  {
+    "type": "interface",
+    "name": "game_components_interfaces::minigame::settings::IMinigameSettings",
+    "items": [
+      {
+        "type": "function",
+        "name": "settings_exist",
+        "inputs": [{ "name": "settings_id", "type": "core::integer::u32" }],
+        "outputs": [{ "type": "core::bool" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "settings_exist_batch",
+        "inputs": [{ "name": "settings_ids", "type": "core::array::Span::<core::integer::u32>" }],
+        "outputs": [{ "type": "core::array::Array::<core::bool>" }],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "MinigameSettingsDetailsImpl",
+    "interface_name": "game_components_interfaces::minigame::settings::IMinigameSettingsDetails"
+  },
+  {
+    "type": "interface",
+    "name": "game_components_interfaces::minigame::settings::IMinigameSettingsDetails",
+    "items": [
+      {
+        "type": "function",
+        "name": "settings_count",
+        "inputs": [],
+        "outputs": [{ "type": "core::integer::u32" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "settings_details",
+        "inputs": [{ "name": "settings_id", "type": "core::integer::u32" }],
+        "outputs": [{ "type": "game_components_interfaces::structs::minigame::GameSettingDetails" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "settings_details_batch",
+        "inputs": [{ "name": "settings_ids", "type": "core::array::Span::<core::integer::u32>" }],
+        "outputs": [{ "type": "core::array::Array::<game_components_interfaces::structs::minigame::GameSettingDetails>" }],
+        "state_mutability": "view"
+      }
+    ]
+  }
+]

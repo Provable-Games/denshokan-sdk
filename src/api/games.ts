@@ -6,8 +6,12 @@ import type {
   LeaderboardPosition,
   LeaderboardParams,
   GameObjective,
+  GameObjectiveDetails,
   GameSetting,
+  GameSettingDetails,
+  DetailsParams,
 } from "../types/game.js";
+import type { PaginatedResult } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
 import {
   mapGame,
@@ -15,6 +19,10 @@ import {
   mapGameStats,
   mapLeaderboardEntries,
   mapLeaderboardPosition,
+  mapObjectiveDetails,
+  mapObjectivesDetails,
+  mapSettingDetails,
+  mapSettingsDetails,
 } from "../utils/mappers.js";
 
 interface ApiContext {
@@ -26,15 +34,18 @@ export async function apiGetGames(
   ctx: ApiContext,
   params?: { limit?: number; offset?: number },
   signal?: AbortSignal,
-): Promise<Game[]> {
+): Promise<PaginatedResult<Game>> {
   const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
-  const result = await apiFetch<{ data: Record<string, unknown>[] }>({
+  const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,
     path: `/games${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return mapGames(result.data);
+  return {
+    data: mapGames(result.data),
+    total: result.total,
+  };
 }
 
 export async function apiGetGame(
@@ -70,15 +81,18 @@ export async function apiGetGameLeaderboard(
   gameId: number,
   params?: LeaderboardParams,
   signal?: AbortSignal,
-): Promise<LeaderboardEntry[]> {
+): Promise<PaginatedResult<LeaderboardEntry>> {
   const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
-  const result = await apiFetch<{ data: Record<string, unknown>[] }>({
+  const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,
     path: `/games/${gameId}/leaderboard${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return mapLeaderboardEntries(result.data);
+  return {
+    data: mapLeaderboardEntries(result.data),
+    total: result.total,
+  };
 }
 
 export async function apiGetLeaderboardPosition(
@@ -124,4 +138,74 @@ export async function apiGetGameSettings(
     fetchConfig: ctx.fetchConfig,
   });
   return result.data;
+}
+
+// === By game address ===
+
+export async function apiGetObjectivesDetails(
+  ctx: ApiContext,
+  gameAddress: string,
+  params?: DetailsParams,
+  signal?: AbortSignal,
+): Promise<PaginatedResult<GameObjectiveDetails>> {
+  const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
+  const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
+    baseUrl: ctx.baseUrl,
+    path: `/contracts/${gameAddress}/objectives${qs}`,
+    signal,
+    fetchConfig: ctx.fetchConfig,
+  });
+  return {
+    data: mapObjectivesDetails(result.data),
+    total: result.total,
+  };
+}
+
+export async function apiGetObjectiveDetails(
+  ctx: ApiContext,
+  gameAddress: string,
+  objectiveId: number,
+  signal?: AbortSignal,
+): Promise<GameObjectiveDetails> {
+  const result = await apiFetch<{ data: Record<string, unknown> }>({
+    baseUrl: ctx.baseUrl,
+    path: `/contracts/${gameAddress}/objectives/${objectiveId}`,
+    signal,
+    fetchConfig: ctx.fetchConfig,
+  });
+  return mapObjectiveDetails(result.data);
+}
+
+export async function apiGetSettingsDetails(
+  ctx: ApiContext,
+  gameAddress: string,
+  params?: DetailsParams,
+  signal?: AbortSignal,
+): Promise<PaginatedResult<GameSettingDetails>> {
+  const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
+  const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
+    baseUrl: ctx.baseUrl,
+    path: `/contracts/${gameAddress}/settings${qs}`,
+    signal,
+    fetchConfig: ctx.fetchConfig,
+  });
+  return {
+    data: mapSettingsDetails(result.data),
+    total: result.total,
+  };
+}
+
+export async function apiGetSettingDetails(
+  ctx: ApiContext,
+  gameAddress: string,
+  settingsId: number,
+  signal?: AbortSignal,
+): Promise<GameSettingDetails> {
+  const result = await apiFetch<{ data: Record<string, unknown> }>({
+    baseUrl: ctx.baseUrl,
+    path: `/contracts/${gameAddress}/settings/${settingsId}`,
+    signal,
+    fetchConfig: ctx.fetchConfig,
+  });
+  return mapSettingDetails(result.data);
 }

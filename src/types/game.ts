@@ -41,19 +41,30 @@ export interface GameDetail {
 }
 
 export interface GameObjective {
+  name: string;
+  value: string;
+}
+
+export interface GameObjectiveDetails {
   id: number;
   name: string;
   description: string;
+  objectives: GameObjective[];
+}
+
+export interface GameSetting {
+  name: string;
+  value: string;
 }
 
 export interface GameSettingDetails {
   id: number;
   name: string;
   description: string;
+  settings: GameSetting[];
 }
 
-export interface GameSetting {
-  id: number;
-  name: string;
-  description: string;
+export interface DetailsParams {
+  limit?: number;
+  offset?: number;
 }

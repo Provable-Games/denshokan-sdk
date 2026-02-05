@@ -1,5 +1,6 @@
 import type { FetchConfig } from "../types/config.js";
 import type { ActivityEvent, ActivityParams, ActivityStats } from "../types/activity.js";
+import type { PaginatedResult } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
 import { mapActivityEvents, mapActivityStats } from "../utils/mappers.js";
 
@@ -12,19 +13,22 @@ export async function apiGetActivity(
   ctx: ApiContext,
   params?: ActivityParams,
   signal?: AbortSignal,
-): Promise<ActivityEvent[]> {
+): Promise<PaginatedResult<ActivityEvent>> {
   const qs = buildQueryString({
     type: params?.type,
     limit: params?.limit,
     offset: params?.offset,
   });
-  const result = await apiFetch<{ data: Record<string, unknown>[] }>({
+  const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,
     path: `/activity${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return mapActivityEvents(result.data);
+  return {
+    data: mapActivityEvents(result.data),
+    total: result.total,
+  };
 }
 
 export async function apiGetActivityStats(

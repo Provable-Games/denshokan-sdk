@@ -2,6 +2,7 @@ import type { Contract } from "starknet";
 import type { TokenMetadata, TokenMutableState } from "../types/token.js";
 import type { RoyaltyInfo, FilterResult } from "../types/rpc.js";
 import { RpcError } from "../errors/index.js";
+import { toHexTokenId } from "../utils/address.js";
 
 let starknetModule: typeof import("starknet") | null = null;
 
@@ -134,7 +135,7 @@ export async function rpcTotalSupply(contract: Contract): Promise<bigint> {
 export async function rpcTokenByIndex(contract: Contract, index: bigint): Promise<string> {
   return wrapRpcCall(async () => {
     const result = await contract.call("token_by_index", [index]);
-    return result.toString();
+    return toHexTokenId(result);
   }, contract.address);
 }
 
@@ -145,7 +146,7 @@ export async function rpcTokenOfOwnerByIndex(
 ): Promise<string> {
   return wrapRpcCall(async () => {
     const result = await contract.call("token_of_owner_by_index", [owner, index]);
-    return result.toString();
+    return toHexTokenId(result);
   }, contract.address);
 }
 

@@ -1,6 +1,7 @@
 import type { FetchConfig } from "../types/config.js";
 import type { Minter } from "../types/minter.js";
-import { apiFetch } from "./base.js";
+import type { PaginatedResult } from "../types/token.js";
+import { apiFetch, buildQueryString } from "./base.js";
 import { mapMinter, mapMinters } from "../utils/mappers.js";
 
 interface ApiContext {
@@ -8,17 +9,27 @@ interface ApiContext {
   fetchConfig?: Partial<FetchConfig>;
 }
 
+interface MintersParams {
+  limit?: number;
+  offset?: number;
+}
+
 export async function apiGetMinters(
   ctx: ApiContext,
+  params?: MintersParams,
   signal?: AbortSignal,
-): Promise<Minter[]> {
-  const result = await apiFetch<{ data: Record<string, unknown>[] }>({
+): Promise<PaginatedResult<Minter>> {
+  const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
+  const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,
-    path: "/minters",
+    path: `/minters${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return mapMinters(result.data);
+  return {
+    data: mapMinters(result.data),
+    total: result.total,
+  };
 }
 
 export async function apiGetMinter(

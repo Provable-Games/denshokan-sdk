@@ -1,7 +1,7 @@
 import type { Contract } from "starknet";
 import type { GameMetadata } from "../types/rpc.js";
 import { RpcError } from "../errors/index.js";
-import { normalizeAddress } from "../utils/address.js";
+import { toHexAddress } from "../utils/address.js";
 
 function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise<T> {
   return fn().catch((error: unknown) => {
@@ -20,9 +20,18 @@ export async function rpcGameMetadata(
     const result = await contract.call("game_metadata", [gameId]);
     const obj = result as Record<string, unknown>;
     return {
-      gameId: Number(obj.game_id ?? gameId),
+      gameId,
+      contractAddress: toHexAddress(obj.contract_address ?? 0),
       name: obj.name?.toString() ?? "",
-      contractAddress: normalizeAddress(obj.contract_address?.toString() ?? "0"),
+      description: obj.description?.toString() ?? "",
+      developer: obj.developer?.toString() ?? "",
+      publisher: obj.publisher?.toString() ?? "",
+      genre: obj.genre?.toString() ?? "",
+      image: obj.image?.toString() ?? "",
+      color: obj.color?.toString() ?? "",
+      clientUrl: obj.client_url?.toString() ?? "",
+      rendererAddress: toHexAddress(obj.renderer_address ?? 0),
+      royaltyFraction: BigInt(obj.royalty_fraction?.toString() ?? "0"),
     };
   }, contract.address);
 }
@@ -33,6 +42,6 @@ export async function rpcGameAddress(
 ): Promise<string> {
   return wrapRpcCall(async () => {
     const result = await contract.call("game_address", [gameId]);
-    return normalizeAddress(result.toString());
+    return toHexAddress(result);
   }, contract.address);
 }

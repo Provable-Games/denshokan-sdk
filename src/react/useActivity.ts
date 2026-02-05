@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import type { ActivityEvent, ActivityParams } from "../types/activity.js";
+import type { PaginatedResult } from "../types/token.js";
 import { useDenshokanClient } from "./context.js";
 
 export interface UseActivityResult {
-  data: ActivityEvent[] | null;
+  data: PaginatedResult<ActivityEvent> | null;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -11,7 +12,7 @@ export interface UseActivityResult {
 
 export function useActivity(params?: ActivityParams): UseActivityResult {
   const client = useDenshokanClient();
-  const [data, setData] = useState<ActivityEvent[] | null>(null);
+  const [data, setData] = useState<PaginatedResult<ActivityEvent> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

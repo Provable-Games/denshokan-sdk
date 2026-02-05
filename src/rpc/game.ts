@@ -1,5 +1,5 @@
 import type { Contract } from "starknet";
-import type { GameDetail, GameObjective, GameSettingDetails } from "../types/game.js";
+import type { GameDetail, GameObjective, GameObjectiveDetails, GameSetting, GameSettingDetails } from "../types/game.js";
 import { RpcError } from "../errors/index.js";
 
 function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise<T> {
@@ -97,6 +97,13 @@ export async function rpcGameDetails(
 
 // === Objectives (batch-first) ===
 
+export async function rpcObjectivesCount(contract: Contract): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("objectives_count", []);
+    return Number(result ?? 0);
+  }, contract.address);
+}
+
 export async function rpcObjectiveExistsBatch(
   contract: Contract,
   objectiveIds: number[],
@@ -115,27 +122,60 @@ export async function rpcObjectiveExists(
   return result;
 }
 
-export async function rpcObjectivesDetailsBatch(
+export async function rpcCompletedObjectiveBatch(
   contract: Contract,
   tokenIds: string[],
-): Promise<GameObjective[][]> {
+  objectiveId: number,
+): Promise<boolean[]> {
   return wrapRpcCall(async () => {
-    const result = await contract.call("objectives_details_batch", [tokenIds]);
-    return (result as unknown as unknown[]).map((span) =>
-      ((span as unknown[]) ?? []).map(parseGameObjective),
+    // Call completed_objective for each token in sequence since the contract
+    // doesn't have a batch version for this
+    const results = await Promise.all(
+      tokenIds.map((tokenId) => contract.call("completed_objective", [tokenId, objectiveId])),
+    );
+    return results.map((v) => Boolean(v));
+  }, contract.address);
+}
+
+export async function rpcCompletedObjective(
+  contract: Contract,
+  tokenId: string,
+  objectiveId: number,
+): Promise<boolean> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("completed_objective", [tokenId, objectiveId]);
+    return Boolean(result);
+  }, contract.address);
+}
+
+export async function rpcObjectivesDetailsBatch(
+  contract: Contract,
+  objectiveIds: number[],
+): Promise<GameObjectiveDetails[]> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("objectives_details_batch", [objectiveIds]);
+    return (result as unknown as unknown[]).map((raw, index) =>
+      parseGameObjectiveDetails(raw, objectiveIds[index]),
     );
   }, contract.address);
 }
 
 export async function rpcObjectivesDetails(
   contract: Contract,
-  tokenId: string,
-): Promise<GameObjective[]> {
-  const [result] = await rpcObjectivesDetailsBatch(contract, [tokenId]);
+  objectiveId: number,
+): Promise<GameObjectiveDetails> {
+  const [result] = await rpcObjectivesDetailsBatch(contract, [objectiveId]);
   return result;
 }
 
 // === Settings (batch-first) ===
+
+export async function rpcSettingsCount(contract: Contract): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("settings_count", []);
+    return Number(result ?? 0);
+  }, contract.address);
+}
 
 export async function rpcSettingsExistsBatch(
   contract: Contract,
@@ -161,7 +201,9 @@ export async function rpcSettingsDetailsBatch(
 ): Promise<GameSettingDetails[]> {
   return wrapRpcCall(async () => {
     const result = await contract.call("settings_details_batch", [settingsIds]);
-    return (result as unknown as unknown[]).map(parseGameSettingDetails);
+    return (result as unknown as unknown[]).map((raw, index) =>
+      parseGameSettingDetails(raw, settingsIds[index]),
+    );
   }, contract.address);
 }
 
@@ -186,17 +228,35 @@ function parseGameDetail(raw: unknown): GameDetail {
 function parseGameObjective(raw: unknown): GameObjective {
   const obj = raw as Record<string, unknown>;
   return {
-    id: Number(obj.id ?? 0),
     name: obj.name?.toString() ?? "",
-    description: obj.description?.toString() ?? "",
+    value: obj.value?.toString() ?? "",
   };
 }
 
-function parseGameSettingDetails(raw: unknown): GameSettingDetails {
+function parseGameObjectiveDetails(raw: unknown, id: number): GameObjectiveDetails {
   const obj = raw as Record<string, unknown>;
   return {
-    id: Number(obj.id ?? 0),
+    id,
     name: obj.name?.toString() ?? "",
     description: obj.description?.toString() ?? "",
+    objectives: ((obj.objectives as unknown[]) ?? []).map(parseGameObjective),
+  };
+}
+
+function parseGameSetting(raw: unknown): GameSetting {
+  const obj = raw as Record<string, unknown>;
+  return {
+    name: obj.name?.toString() ?? "",
+    value: obj.value?.toString() ?? "",
+  };
+}
+
+function parseGameSettingDetails(raw: unknown, id: number): GameSettingDetails {
+  const obj = raw as Record<string, unknown>;
+  return {
+    id,
+    name: obj.name?.toString() ?? "",
+    description: obj.description?.toString() ?? "",
+    settings: ((obj.settings as unknown[]) ?? []).map(parseGameSetting),
   };
 }

@@ -3,8 +3,8 @@ export { DenshokanProvider, useDenshokanClient } from "./context.js";
 export type { DenshokanProviderProps } from "./context.js";
 
 // Data hooks
-export { useGames } from "./useGames.js";
-export { useTokens, useToken } from "./useTokens.js";
+export { useGames, useGame, useGameStats } from "./useGames.js";
+export { useTokens, useToken, useTokenScores } from "./useTokens.js";
 export { useDecodeToken } from "./useDecodeToken.js";
 export { useLeaderboard } from "./useLeaderboard.js";
 export { usePlayerStats, usePlayerTokens } from "./usePlayer.js";
@@ -22,4 +22,10 @@ export {
   useTokenMetadataBatch,
   useScoreBatch,
   useGameOverBatch,
+  useObjectivesCount,
+  useObjectiveDetails,
+  useObjectivesDetails,
+  useSettingsCount,
+  useSettingDetails,
+  useSettingsDetails,
 } from "./useRpc.js";

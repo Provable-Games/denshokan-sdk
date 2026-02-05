@@ -1,6 +1,16 @@
 import type { Token, PaginatedResult, DecodedTokenId } from "../types/token.js";
 import { decodePackedTokenId } from "./token-id.js";
-import type { Game, GameStats, LeaderboardEntry, LeaderboardPosition } from "../types/game.js";
+import { toHexTokenId } from "./address.js";
+import type {
+  Game,
+  GameStats,
+  LeaderboardEntry,
+  LeaderboardPosition,
+  GameObjective,
+  GameObjectiveDetails,
+  GameSetting,
+  GameSettingDetails,
+} from "../types/game.js";
 import type { PlayerStats } from "../types/player.js";
 import type { Minter } from "../types/minter.js";
 import type { ActivityEvent, ActivityStats } from "../types/activity.js";
@@ -11,12 +21,12 @@ import type { GameMetadata, MintParams, PlayerNameUpdate } from "../types/rpc.js
 // =========================================================================
 
 export function mapToken(raw: Record<string, unknown>): Token {
-  const tokenId = String(raw.tokenId ?? raw.token_id ?? "");
+  const tokenId = toHexTokenId(raw.tokenId ?? raw.token_id ?? "0");
 
   // Decode token ID for immutable fields - fallback when API doesn't provide them
   let decoded: DecodedTokenId | null = null;
   try {
-    if (tokenId) decoded = decodePackedTokenId(tokenId);
+    if (tokenId && tokenId !== "0x0") decoded = decodePackedTokenId(tokenId);
   } catch {
     // Invalid or missing tokenId - proceed without decoded fallback
   }
@@ -82,7 +92,7 @@ export function mapGameStats(raw: Record<string, unknown>): GameStats {
 
 export function mapLeaderboardEntry(raw: Record<string, unknown>): LeaderboardEntry {
   return {
-    tokenId: String(raw.tokenId ?? raw.token_id ?? ""),
+    tokenId: toHexTokenId(raw.tokenId ?? raw.token_id ?? "0"),
     owner: String(raw.ownerAddress ?? raw.owner_address ?? raw.owner ?? ""),
     score: Number(raw.score ?? 0),
     playerName: String(raw.playerName ?? raw.player_name ?? ""),
@@ -96,7 +106,7 @@ export function mapLeaderboardEntries(raw: Record<string, unknown>[]): Leaderboa
 
 export function mapLeaderboardPosition(raw: Record<string, unknown>): LeaderboardPosition {
   return {
-    tokenId: String(raw.tokenId ?? raw.token_id ?? ""),
+    tokenId: toHexTokenId(raw.tokenId ?? raw.token_id ?? "0"),
     rank: Number(raw.rank ?? 0),
     score: Number(raw.score ?? 0),
     surrounding: ((raw.surrounding as Record<string, unknown>[]) ?? []).map(mapLeaderboardEntry),
@@ -131,7 +141,7 @@ export function mapActivityEvent(raw: Record<string, unknown>): ActivityEvent {
   return {
     id: String(raw.id ?? ""),
     type: String(raw.eventType ?? raw.event_type ?? raw.type ?? ""),
-    tokenId: String(raw.tokenId ?? raw.token_id ?? ""),
+    tokenId: toHexTokenId(raw.tokenId ?? raw.token_id ?? "0"),
     gameId: Number(raw.gameId ?? raw.game_id ?? 0),
     player: String(raw.player ?? raw.ownerAddress ?? raw.owner_address ?? ""),
     data: (raw.eventData ?? raw.event_data ?? raw.data) as Record<string, unknown> ?? {},
@@ -153,9 +163,58 @@ export function mapActivityStats(raw: Record<string, unknown>): ActivityStats {
 export function mapGameMetadata(raw: Record<string, unknown>): GameMetadata {
   return {
     gameId: Number(raw.game_id ?? 0),
-    name: String(raw.name ?? ""),
     contractAddress: String(raw.contract_address ?? ""),
+    name: String(raw.name ?? ""),
+    description: String(raw.description ?? ""),
+    developer: String(raw.developer ?? ""),
+    publisher: String(raw.publisher ?? ""),
+    genre: String(raw.genre ?? ""),
+    image: String(raw.image ?? ""),
+    color: String(raw.color ?? ""),
+    clientUrl: String(raw.client_url ?? ""),
+    rendererAddress: String(raw.renderer_address ?? ""),
+    royaltyFraction: BigInt(String(raw.royalty_fraction ?? 0)),
   };
+}
+
+export function mapGameObjective(raw: Record<string, unknown>): GameObjective {
+  return {
+    name: String(raw.name ?? ""),
+    value: String(raw.value ?? ""),
+  };
+}
+
+export function mapObjectiveDetails(raw: Record<string, unknown>): GameObjectiveDetails {
+  return {
+    id: Number(raw.id ?? raw.objective_id ?? 0),
+    name: String(raw.name ?? ""),
+    description: String(raw.description ?? ""),
+    objectives: ((raw.objectives as Record<string, unknown>[]) ?? []).map(mapGameObjective),
+  };
+}
+
+export function mapObjectivesDetails(raw: Record<string, unknown>[]): GameObjectiveDetails[] {
+  return raw.map(mapObjectiveDetails);
+}
+
+export function mapGameSetting(raw: Record<string, unknown>): GameSetting {
+  return {
+    name: String(raw.name ?? ""),
+    value: String(raw.value ?? ""),
+  };
+}
+
+export function mapSettingDetails(raw: Record<string, unknown>): GameSettingDetails {
+  return {
+    id: Number(raw.id ?? raw.settings_id ?? 0),
+    name: String(raw.name ?? ""),
+    description: String(raw.description ?? ""),
+    settings: ((raw.settings as Record<string, unknown>[]) ?? []).map(mapGameSetting),
+  };
+}
+
+export function mapSettingsDetails(raw: Record<string, unknown>[]): GameSettingDetails[] {
+  return raw.map(mapSettingDetails);
 }
 
 // =========================================================================

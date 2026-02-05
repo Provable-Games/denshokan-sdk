@@ -2,6 +2,7 @@ import type { Contract } from "starknet";
 import type { FilterResult, TokenFullState } from "../types/rpc.js";
 import { RpcError } from "../errors/index.js";
 import { num } from "starknet";
+import { toHexTokenId } from "../utils/address.js";
 
 function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise<T> {
   return fn().catch((error: unknown) => {
@@ -14,7 +15,7 @@ function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise
 
 function parseFilterResult(raw: unknown): FilterResult {
   const obj = raw as Record<string, unknown>;
-  const tokenIds = (obj.token_ids as unknown[])?.map((v) => String(v)) ?? [];
+  const tokenIds = (obj.token_ids as unknown[])?.map((v) => toHexTokenId(v)) ?? [];
   const total = Number(obj.total ?? 0);
   return { tokenIds, total };
 }
@@ -23,7 +24,7 @@ function parseTokenFullState(raw: unknown): TokenFullState {
   const obj = raw as Record<string, unknown>;
   const lifecycle = obj.lifecycle as Record<string, unknown>;
   return {
-    tokenId: String(obj.token_id),
+    tokenId: toHexTokenId(obj.token_id),
     owner: num.toHex(obj.owner as bigint),
     playerName: decodeShortString(obj.player_name),
     isPlayable: Boolean(obj.is_playable),

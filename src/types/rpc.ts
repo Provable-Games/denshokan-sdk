@@ -5,8 +5,17 @@ export interface RoyaltyInfo {
 
 export interface GameMetadata {
   gameId: number;
-  name: string;
   contractAddress: string;
+  name: string;
+  description: string;
+  developer: string;
+  publisher: string;
+  genre: string;
+  image: string;
+  color: string;
+  clientUrl: string;
+  rendererAddress: string;
+  royaltyFraction: bigint;
 }
 
 export interface MintParams {
