@@ -10,8 +10,18 @@ export { usePlayerStats, usePlayerTokens } from "./usePlayer.js";
 export { useMinters } from "./useMinters.js";
 export { useActivity } from "./useActivity.js";
 
-// WebSocket hook
+// WebSocket hooks
 export { useSubscription } from "./useSubscription.js";
+export {
+  useScoreUpdates,
+  useGameOverEvents,
+  useMintEvents,
+  useTokenUpdates,
+  useNewGames,
+  useNewMinters,
+} from "./useChannelSubscription.js";
+export type { UseChannelOptions, UseChannelResult } from "./useChannelSubscription.js";
+export { useConnectionStatus } from "./useConnectionStatus.js";
 
 // RPC hooks
 export {

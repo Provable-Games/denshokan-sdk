@@ -225,3 +225,90 @@ export function playerNameUpdateToSnake(u: PlayerNameUpdate): { token_id: string
     name: u.name,
   };
 }
+
+// =========================================================================
+// WebSocket event mappers (snake_case WS payload → camelCase event types)
+// =========================================================================
+
+import type {
+  ScoreEvent,
+  GameOverEvent,
+  MintEvent,
+  TokenUpdateEvent,
+  NewGameEvent,
+  NewMinterEvent,
+  WSChannel,
+} from "../types/websocket.js";
+
+export function mapScoreEvent(raw: Record<string, unknown>): ScoreEvent {
+  return {
+    tokenId: String(raw.token_id ?? ""),
+    gameId: Number(raw.game_id ?? 0),
+    score: Number(raw.score ?? 0),
+    ownerAddress: String(raw.owner_address ?? ""),
+    playerName: String(raw.player_name ?? ""),
+  };
+}
+
+export function mapGameOverEvent(raw: Record<string, unknown>): GameOverEvent {
+  return {
+    tokenId: String(raw.token_id ?? ""),
+    gameId: Number(raw.game_id ?? 0),
+    score: Number(raw.score ?? 0),
+    ownerAddress: String(raw.owner_address ?? ""),
+    playerName: String(raw.player_name ?? ""),
+    completedAllObjectives: Boolean(raw.completed_all_objectives),
+  };
+}
+
+export function mapMintEvent(raw: Record<string, unknown>): MintEvent {
+  return {
+    tokenId: String(raw.token_id ?? ""),
+    gameId: Number(raw.game_id ?? 0),
+    ownerAddress: String(raw.owner_address ?? ""),
+    mintedBy: String(raw.minted_by ?? ""),
+    settingsId: Number(raw.settings_id ?? 0),
+  };
+}
+
+export function mapTokenUpdateEvent(raw: Record<string, unknown>): TokenUpdateEvent {
+  const type = String(raw.type ?? "");
+  const tokenId = String(raw.token_id ?? "");
+  const gameId = Number(raw.game_id ?? 0);
+
+  if (type === "game_over") {
+    return { type: "gameOver", tokenId, gameId, score: Number(raw.score ?? 0) };
+  }
+  if (type === "minted") {
+    return { type: "minted", tokenId, gameId, ownerAddress: String(raw.owner_address ?? "") };
+  }
+  // Default to scoreUpdate
+  return { type: "scoreUpdate", tokenId, gameId, score: Number(raw.score ?? 0) };
+}
+
+export function mapNewGameEvent(raw: Record<string, unknown>): NewGameEvent {
+  return {
+    gameId: Number(raw.game_id ?? 0),
+    contractAddress: String(raw.contract_address ?? ""),
+    name: String(raw.name ?? ""),
+  };
+}
+
+export function mapNewMinterEvent(raw: Record<string, unknown>): NewMinterEvent {
+  return {
+    minterId: String(raw.minter_id ?? ""),
+    contractAddress: String(raw.contract_address ?? ""),
+    name: String(raw.name ?? ""),
+    blockNumber: String(raw.block_number ?? ""),
+  };
+}
+
+// Lookup record keyed by channel name
+export const WS_EVENT_MAPPERS: Record<WSChannel, (raw: Record<string, unknown>) => unknown> = {
+  scores: mapScoreEvent,
+  game_over: mapGameOverEvent,
+  mints: mapMintEvent,
+  tokens: mapTokenUpdateEvent,
+  games: mapNewGameEvent,
+  minters: mapNewMinterEvent,
+};

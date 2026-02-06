@@ -19,6 +19,7 @@ export class WebSocketManager {
   private subscriptions = new Map<string, { options: WSSubscribeOptions; handler: WSEventHandler }>();
   private nextSubId = 1;
   private connected = false;
+  private connectionListeners = new Set<(connected: boolean) => void>();
 
   constructor(wsUrl: string, config?: Partial<WSConfig>) {
     this.wsUrl = wsUrl;
@@ -34,6 +35,7 @@ export class WebSocketManager {
       this.ws.onopen = () => {
         this.connected = true;
         this.reconnectAttempts = 0;
+        this.notifyConnectionChange(true);
         // Re-subscribe all active subscriptions
         for (const [, sub] of this.subscriptions) {
           this.sendSubscribe(sub.options);
@@ -53,6 +55,7 @@ export class WebSocketManager {
 
       this.ws.onclose = () => {
         this.connected = false;
+        this.notifyConnectionChange(false);
         this.ws = null;
         this.attemptReconnect();
       };
@@ -76,6 +79,7 @@ export class WebSocketManager {
       this.ws = null;
     }
     this.connected = false;
+    this.notifyConnectionChange(false);
     this.reconnectAttempts = 0;
   }
 
@@ -100,6 +104,23 @@ export class WebSocketManager {
 
   get isConnected(): boolean {
     return this.connected;
+  }
+
+  onConnectionChange(listener: (connected: boolean) => void): () => void {
+    this.connectionListeners.add(listener);
+    return () => {
+      this.connectionListeners.delete(listener);
+    };
+  }
+
+  private notifyConnectionChange(connected: boolean): void {
+    for (const listener of this.connectionListeners) {
+      try {
+        listener(connected);
+      } catch {
+        // Ignore listener errors
+      }
+    }
   }
 
   private sendSubscribe(options: WSSubscribeOptions): void {

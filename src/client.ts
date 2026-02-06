@@ -190,10 +190,15 @@ export class DenshokanClient {
     const chainConfig = getChainConfig(chain);
     if (!chainConfig) throw new InvalidChainError(chain);
 
+    const apiUrl = config.apiUrl ?? chainConfig.apiUrl;
+    const wsUrl = config.wsUrl ?? (config.apiUrl
+      ? config.apiUrl.replace(/^http/, "ws").replace(/\/$/, "") + "/ws"
+      : chainConfig.wsUrl);
+
     return {
       chain,
-      apiUrl: config.apiUrl ?? chainConfig.apiUrl,
-      wsUrl: config.wsUrl ?? chainConfig.wsUrl,
+      apiUrl,
+      wsUrl,
       rpcUrl: config.rpcUrl ?? chainConfig.rpcUrl,
       provider: config.provider ?? null,
       denshokanAddress: config.denshokanAddress ?? chainConfig.denshokanAddress,
@@ -1216,6 +1221,14 @@ export class DenshokanClient {
 
   subscribe(options: WSSubscribeOptions, handler: WSEventHandler): () => void {
     return this.wsManager.subscribe(options, handler);
+  }
+
+  get wsConnected(): boolean {
+    return this.wsManager.isConnected;
+  }
+
+  onWsConnectionChange(listener: (connected: boolean) => void): () => void {
+    return this.wsManager.onConnectionChange(listener);
   }
 
   connect(): void {
