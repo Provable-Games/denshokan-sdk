@@ -351,20 +351,15 @@ export class DenshokanClient {
   // =========================================================================
 
   async getSettings(params?: SettingsParams): Promise<PaginatedResult<GameSettingDetails>> {
+    const gameAddress = params?.gameAddress ?? "0x0";
     if (this.config.primarySource === "api") {
-      return params?.gameAddress
-        ? withFallback(
-            () => apiGetSettings(this.apiCtx, params),
-            () => this.fetchSettingsFromRpc(params!.gameAddress!, params),
-            this.connectionStatus,
-          )
-        : apiGetSettings(this.apiCtx, params);
+      return withFallback(
+        () => apiGetSettings(this.apiCtx, params),
+        () => this.fetchSettingsFromRpc(gameAddress, params),
+        this.connectionStatus,
+      );
     }
-    if (params?.gameAddress) {
-      return this.fetchSettingsFromRpc(params.gameAddress, params);
-    }
-    // No gameAddress → can't use RPC, fall through to API
-    return apiGetSettings(this.apiCtx, params);
+    return this.fetchSettingsFromRpc(gameAddress, params);
   }
 
   async getSetting(settingsId: number, gameAddress: string): Promise<GameSettingDetails> {
@@ -383,20 +378,15 @@ export class DenshokanClient {
   }
 
   async getObjectives(params?: ObjectivesParams): Promise<PaginatedResult<GameObjectiveDetails>> {
+    const gameAddress = params?.gameAddress ?? "0x0";
     if (this.config.primarySource === "api") {
-      return params?.gameAddress
-        ? withFallback(
-            () => apiGetObjectives(this.apiCtx, params),
-            () => this.fetchObjectivesFromRpc(params!.gameAddress!, params),
-            this.connectionStatus,
-          )
-        : apiGetObjectives(this.apiCtx, params);
+      return withFallback(
+        () => apiGetObjectives(this.apiCtx, params),
+        () => this.fetchObjectivesFromRpc(gameAddress, params),
+        this.connectionStatus,
+      );
     }
-    if (params?.gameAddress) {
-      return this.fetchObjectivesFromRpc(params.gameAddress, params);
-    }
-    // No gameAddress → can't use RPC, fall through to API
-    return apiGetObjectives(this.apiCtx, params);
+    return this.fetchObjectivesFromRpc(gameAddress, params);
   }
 
   async getObjective(objectiveId: number, gameAddress: string): Promise<GameObjectiveDetails> {
