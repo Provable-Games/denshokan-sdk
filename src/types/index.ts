@@ -13,11 +13,10 @@ export type {
   Game,
   GameStats,
   GameDetail,
-  GameObjective,
   GameObjectiveDetails,
   GameSettingDetails,
-  GameSetting,
-  DetailsParams,
+  SettingsParams,
+  ObjectivesParams,
 } from "./game.js";
 export type { PlayerStats, PlayerTokensParams } from "./player.js";
 export type { Minter } from "./minter.js";
@@ -33,6 +32,8 @@ export type {
   TokenUpdateEvent,
   NewGameEvent,
   NewMinterEvent,
+  NewSettingEvent,
+  NewObjectiveEvent,
   WSChannelPayloadMap,
 } from "./websocket.js";
 export type { RoyaltyInfo, GameMetadata, MintParams, PlayerNameUpdate, FilterResult, TokenFullState, Lifecycle } from "./rpc.js";

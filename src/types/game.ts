@@ -20,31 +20,38 @@ export interface GameDetail {
   value: string;
 }
 
-export interface GameObjective {
-  name: string;
-  value: string;
-}
-
 export interface GameObjectiveDetails {
   id: number;
+  settingsId: number;
+  gameAddress: string;
+  creatorAddress: string;
   name: string;
   description: string;
-  objectives: GameObjective[];
-}
-
-export interface GameSetting {
-  name: string;
-  value: string;
+  objectives: Record<string, string>;
+  blockNumber: string;
+  createdAt: string;
 }
 
 export interface GameSettingDetails {
   id: number;
+  gameAddress: string;
+  creatorAddress: string;
   name: string;
   description: string;
-  settings: GameSetting[];
+  settings: Record<string, string>;
+  blockNumber: string;
+  createdAt: string;
 }
 
-export interface DetailsParams {
+export interface SettingsParams {
   limit?: number;
   offset?: number;
+  gameAddress?: string;
+}
+
+export interface ObjectivesParams {
+  limit?: number;
+  offset?: number;
+  gameAddress?: string;
+  settingsId?: number;
 }

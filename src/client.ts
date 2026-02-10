@@ -4,12 +4,11 @@ import type {
   ResolvedConfig,
   Game,
   GameStats,
-  GameObjective,
   GameObjectiveDetails,
-  GameSetting,
   GameSettingDetails,
   GameDetail,
-  DetailsParams,
+  SettingsParams,
+  ObjectivesParams,
   Token,
   TokenMetadata,
   TokenMutableState,
@@ -47,12 +46,10 @@ import {
   apiGetGames,
   apiGetGame,
   apiGetGameStats,
-  apiGetGameObjectives,
-  apiGetGameSettings,
-  apiGetObjectivesDetails,
-  apiGetObjectiveDetails,
-  apiGetSettingsDetails,
-  apiGetSettingDetails,
+  apiGetSettings,
+  apiGetSetting,
+  apiGetObjectives,
+  apiGetObjective,
 } from "./api/games.js";
 import { apiGetTokens, apiGetToken, apiGetTokenScores } from "./api/tokens.js";
 import { apiGetPlayerTokens, apiGetPlayerStats } from "./api/players.js";
@@ -349,116 +346,24 @@ export class DenshokanClient {
     return apiGetGameStats(this.apiCtx, gameAddress);
   }
 
-  async getGameObjectives(gameAddress: string): Promise<GameObjective[]> {
-    return apiGetGameObjectives(this.apiCtx, gameAddress);
-  }
-
-  async getGameSettings(gameAddress: string): Promise<GameSetting[]> {
-    return apiGetGameSettings(this.apiCtx, gameAddress);
-  }
-
   // =========================================================================
-  // Objectives & Settings Details (API with RPC fallback, by gameAddress)
+  // Settings & Objectives (unified API)
   // =========================================================================
 
-  async getObjectivesDetails(
-    gameAddress: string,
-    params?: DetailsParams,
-  ): Promise<PaginatedResult<GameObjectiveDetails>> {
-    if (this.config.primarySource === "api") {
-      return withFallback(
-        () => apiGetObjectivesDetails(this.apiCtx, gameAddress, params),
-        () => this.fetchObjectivesDetailsFromRpc(gameAddress, params),
-        this.connectionStatus,
-      );
-    }
-    return this.fetchObjectivesDetailsFromRpc(gameAddress, params);
+  async getSettings(params?: SettingsParams): Promise<PaginatedResult<GameSettingDetails>> {
+    return apiGetSettings(this.apiCtx, params);
   }
 
-  async getObjectiveDetails(objectiveId: number, gameAddress: string): Promise<GameObjectiveDetails> {
-    if (this.config.primarySource === "api") {
-      return withFallback(
-        () => apiGetObjectiveDetails(this.apiCtx, gameAddress, objectiveId),
-        async () => {
-          const contract = await this.getGameContract(gameAddress);
-          return rpcObjectivesDetails(contract, objectiveId);
-        },
-        this.connectionStatus,
-      );
-    }
-    const contract = await this.getGameContract(gameAddress);
-    return rpcObjectivesDetails(contract, objectiveId);
+  async getSetting(settingsId: number, gameAddress: string): Promise<GameSettingDetails> {
+    return apiGetSetting(this.apiCtx, gameAddress, settingsId);
   }
 
-  async getSettingsDetails(
-    gameAddress: string,
-    params?: DetailsParams,
-  ): Promise<PaginatedResult<GameSettingDetails>> {
-    if (this.config.primarySource === "api") {
-      return withFallback(
-        () => apiGetSettingsDetails(this.apiCtx, gameAddress, params),
-        () => this.fetchSettingsDetailsFromRpc(gameAddress, params),
-        this.connectionStatus,
-      );
-    }
-    return this.fetchSettingsDetailsFromRpc(gameAddress, params);
+  async getObjectives(params?: ObjectivesParams): Promise<PaginatedResult<GameObjectiveDetails>> {
+    return apiGetObjectives(this.apiCtx, params);
   }
 
-  async getSettingDetails(settingsId: number, gameAddress: string): Promise<GameSettingDetails> {
-    if (this.config.primarySource === "api") {
-      return withFallback(
-        () => apiGetSettingDetails(this.apiCtx, gameAddress, settingsId),
-        async () => {
-          const contract = await this.getGameContract(gameAddress);
-          return rpcSettingsDetail(contract, settingsId);
-        },
-        this.connectionStatus,
-      );
-    }
-    const contract = await this.getGameContract(gameAddress);
-    return rpcSettingsDetail(contract, settingsId);
-  }
-
-  private async fetchObjectivesDetailsFromRpc(
-    gameAddress: string,
-    params?: DetailsParams,
-  ): Promise<PaginatedResult<GameObjectiveDetails>> {
-    const contract = await this.getGameContract(gameAddress);
-    const total = await rpcObjectivesCount(contract);
-    if (total === 0) return { data: [], total: 0 };
-
-    const offset = params?.offset ?? 0;
-    const limit = params?.limit ?? total;
-    const start = offset + 1; // IDs are 1-indexed
-    const end = Math.min(offset + limit, total);
-    const count = end - offset;
-
-    if (count <= 0) return { data: [], total };
-
-    const ids = Array.from({ length: count }, (_, i) => start + i);
-    const data = await rpcObjectivesDetailsBatch(contract, ids);
-    return { data, total };
-  }
-
-  private async fetchSettingsDetailsFromRpc(
-    gameAddress: string,
-    params?: DetailsParams,
-  ): Promise<PaginatedResult<GameSettingDetails>> {
-    const contract = await this.getGameContract(gameAddress);
-    const total = await rpcSettingsCount(contract);
-    if (total === 0) return { data: [], total: 0 };
-
-    const offset = params?.offset ?? 0;
-    const limit = params?.limit ?? total;
-    const start = offset + 1; // IDs are 1-indexed
-    const end = Math.min(offset + limit, total);
-    const count = end - offset;
-
-    if (count <= 0) return { data: [], total };
-
-    const ids = Array.from({ length: count }, (_, i) => start + i);
-    const data = await rpcSettingsDetailsBatch(contract, ids);
-    return { data, total };
+  async getObjective(objectiveId: number, gameAddress: string): Promise<GameObjectiveDetails> {
+    return apiGetObjective(this.apiCtx, gameAddress, objectiveId);
   }
 
   // =========================================================================

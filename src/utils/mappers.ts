@@ -4,9 +4,7 @@ import { toHexTokenId } from "./address.js";
 import type {
   Game,
   GameStats,
-  GameObjective,
   GameObjectiveDetails,
-  GameSetting,
   GameSettingDetails,
 } from "../types/game.js";
 import type { PlayerStats } from "../types/player.js";
@@ -157,19 +155,17 @@ export function mapGameMetadata(raw: Record<string, unknown>): GameMetadata {
   };
 }
 
-export function mapGameObjective(raw: Record<string, unknown>): GameObjective {
-  return {
-    name: String(raw.name ?? ""),
-    value: String(raw.value ?? ""),
-  };
-}
-
 export function mapObjectiveDetails(raw: Record<string, unknown>): GameObjectiveDetails {
   return {
-    id: Number(raw.id ?? raw.objective_id ?? 0),
+    id: Number(raw.objectiveId ?? raw.objective_id ?? raw.id ?? 0),
+    settingsId: Number(raw.settingsId ?? raw.settings_id ?? 0),
+    gameAddress: String(raw.gameAddress ?? raw.game_address ?? ""),
+    creatorAddress: String(raw.creatorAddress ?? raw.creator_address ?? ""),
     name: String(raw.name ?? ""),
     description: String(raw.description ?? ""),
-    objectives: ((raw.objectives as Record<string, unknown>[]) ?? []).map(mapGameObjective),
+    objectives: (raw.objectives as Record<string, string>) ?? {},
+    blockNumber: String(raw.blockNumber ?? raw.block_number ?? ""),
+    createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
   };
 }
 
@@ -177,19 +173,16 @@ export function mapObjectivesDetails(raw: Record<string, unknown>[]): GameObject
   return raw.map(mapObjectiveDetails);
 }
 
-export function mapGameSetting(raw: Record<string, unknown>): GameSetting {
-  return {
-    name: String(raw.name ?? ""),
-    value: String(raw.value ?? ""),
-  };
-}
-
 export function mapSettingDetails(raw: Record<string, unknown>): GameSettingDetails {
   return {
-    id: Number(raw.id ?? raw.settings_id ?? 0),
+    id: Number(raw.settingsId ?? raw.settings_id ?? raw.id ?? 0),
+    gameAddress: String(raw.gameAddress ?? raw.game_address ?? ""),
+    creatorAddress: String(raw.creatorAddress ?? raw.creator_address ?? ""),
     name: String(raw.name ?? ""),
     description: String(raw.description ?? ""),
-    settings: ((raw.settings as Record<string, unknown>[]) ?? []).map(mapGameSetting),
+    settings: (raw.settings as Record<string, string>) ?? {},
+    blockNumber: String(raw.blockNumber ?? raw.block_number ?? ""),
+    createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
   };
 }
 
@@ -237,6 +230,8 @@ import type {
   TokenUpdateEvent,
   NewGameEvent,
   NewMinterEvent,
+  NewSettingEvent,
+  NewObjectiveEvent,
   WSChannel,
 } from "../types/websocket.js";
 
@@ -303,6 +298,25 @@ export function mapNewMinterEvent(raw: Record<string, unknown>): NewMinterEvent 
   };
 }
 
+export function mapNewSettingEvent(raw: Record<string, unknown>): NewSettingEvent {
+  return {
+    gameAddress: String(raw.game_address ?? ""),
+    settingsId: Number(raw.settings_id ?? 0),
+    creatorAddress: String(raw.creator_address ?? ""),
+    settingsData: raw.settings_data != null ? String(raw.settings_data) : null,
+  };
+}
+
+export function mapNewObjectiveEvent(raw: Record<string, unknown>): NewObjectiveEvent {
+  return {
+    gameAddress: String(raw.game_address ?? ""),
+    objectiveId: Number(raw.objective_id ?? 0),
+    settingsId: Number(raw.settings_id ?? 0),
+    creatorAddress: String(raw.creator_address ?? ""),
+    objectiveData: raw.objective_data != null ? String(raw.objective_data) : null,
+  };
+}
+
 // Lookup record keyed by channel name
 export const WS_EVENT_MAPPERS: Record<WSChannel, (raw: Record<string, unknown>) => unknown> = {
   scores: mapScoreEvent,
@@ -311,4 +325,6 @@ export const WS_EVENT_MAPPERS: Record<WSChannel, (raw: Record<string, unknown>) 
   tokens: mapTokenUpdateEvent,
   games: mapNewGameEvent,
   minters: mapNewMinterEvent,
+  settings: mapNewSettingEvent,
+  objectives: mapNewObjectiveEvent,
 };
