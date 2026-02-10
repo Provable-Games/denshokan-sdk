@@ -1252,6 +1252,34 @@
     ]
   },
   {
+    "type": "struct",
+    "name": "core::array::Span::<game_components_interfaces::structs::minigame::GameObjective>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<game_components_interfaces::structs::minigame::GameObjective>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::minigame::GameObjectiveDetails",
+    "members": [
+      {
+        "name": "name",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "description",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "objectives",
+        "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameObjective>"
+      }
+    ]
+  },
+  {
     "type": "interface",
     "name": "game_components_interfaces::token::objectives::IMinigameTokenObjectives",
     "items": [
@@ -1272,8 +1300,8 @@
             "type": "core::integer::u32"
           },
           {
-            "name": "objective_data",
-            "type": "game_components_interfaces::structs::minigame::GameObjective"
+            "name": "objective_details",
+            "type": "game_components_interfaces::structs::minigame::GameObjectiveDetails"
           }
         ],
         "outputs": [],
@@ -1311,6 +1339,24 @@
     ]
   },
   {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::minigame::GameSettingDetails",
+    "members": [
+      {
+        "name": "name",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "description",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "settings",
+        "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameSetting>"
+      }
+    ]
+  },
+  {
     "type": "interface",
     "name": "game_components_interfaces::token::settings::IMinigameTokenSettings",
     "items": [
@@ -1331,16 +1377,8 @@
             "type": "core::integer::u32"
           },
           {
-            "name": "name",
-            "type": "core::byte_array::ByteArray"
-          },
-          {
-            "name": "description",
-            "type": "core::byte_array::ByteArray"
-          },
-          {
-            "name": "settings_data",
-            "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameSetting>"
+            "name": "settings_details",
+            "type": "game_components_interfaces::structs::minigame::GameSettingDetails"
           }
         ],
         "outputs": [],
@@ -1738,8 +1776,18 @@
         "kind": "data"
       },
       {
-        "name": "objective_data",
+        "name": "name",
         "type": "core::byte_array::ByteArray",
+        "kind": "data"
+      },
+      {
+        "name": "description",
+        "type": "core::byte_array::ByteArray",
+        "kind": "data"
+      },
+      {
+        "name": "objectives",
+        "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameObjective>",
         "kind": "data"
       }
     ]
@@ -1777,8 +1825,18 @@
         "kind": "data"
       },
       {
-        "name": "settings_data",
+        "name": "name",
         "type": "core::byte_array::ByteArray",
+        "kind": "data"
+      },
+      {
+        "name": "description",
+        "type": "core::byte_array::ByteArray",
+        "kind": "data"
+      },
+      {
+        "name": "settings",
+        "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameSetting>",
         "kind": "data"
       }
     ]

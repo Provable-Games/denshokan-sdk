@@ -1,5 +1,5 @@
 import type { Contract } from "starknet";
-import type { GameDetail, GameObjective, GameObjectiveDetails, GameSetting, GameSettingDetails } from "../types/game.js";
+import type { GameDetail, GameObjectiveDetails, GameSettingDetails } from "../types/game.js";
 import { RpcError } from "../errors/index.js";
 
 function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise<T> {
@@ -225,29 +225,29 @@ function parseGameDetail(raw: unknown): GameDetail {
   };
 }
 
-function parseGameObjective(raw: unknown): GameObjective {
-  const obj = raw as Record<string, unknown>;
-  return {
-    name: obj.name?.toString() ?? "",
-    value: obj.value?.toString() ?? "",
-  };
+function parseKeyValuePairs(raw: unknown[]): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const item of raw) {
+    const obj = item as Record<string, unknown>;
+    const name = obj.name?.toString() ?? "";
+    const value = obj.value?.toString() ?? "";
+    if (name) result[name] = value;
+  }
+  return result;
 }
 
 function parseGameObjectiveDetails(raw: unknown, id: number): GameObjectiveDetails {
   const obj = raw as Record<string, unknown>;
   return {
     id,
+    settingsId: Number(obj.settings_id ?? obj.settingsId ?? 0),
+    gameAddress: "",
+    creatorAddress: "",
     name: obj.name?.toString() ?? "",
     description: obj.description?.toString() ?? "",
-    objectives: ((obj.objectives as unknown[]) ?? []).map(parseGameObjective),
-  };
-}
-
-function parseGameSetting(raw: unknown): GameSetting {
-  const obj = raw as Record<string, unknown>;
-  return {
-    name: obj.name?.toString() ?? "",
-    value: obj.value?.toString() ?? "",
+    objectives: parseKeyValuePairs((obj.objectives as unknown[]) ?? []),
+    blockNumber: "",
+    createdAt: "",
   };
 }
 
@@ -255,8 +255,12 @@ function parseGameSettingDetails(raw: unknown, id: number): GameSettingDetails {
   const obj = raw as Record<string, unknown>;
   return {
     id,
+    gameAddress: "",
+    creatorAddress: "",
     name: obj.name?.toString() ?? "",
     description: obj.description?.toString() ?? "",
-    settings: ((obj.settings as unknown[]) ?? []).map(parseGameSetting),
+    settings: parseKeyValuePairs((obj.settings as unknown[]) ?? []),
+    blockNumber: "",
+    createdAt: "",
   };
 }

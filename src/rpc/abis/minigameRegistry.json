@@ -460,6 +460,10 @@
       {
         "name": "royalty_fraction",
         "type": "core::integer::u128"
+      },
+      {
+        "name": "created_at",
+        "type": "core::integer::u64"
       }
     ]
   },
@@ -916,7 +920,7 @@
   },
   {
     "type": "event",
-    "name": "game_components_registry::component::MinigameRegistryComponent::GameMetadataUpdate",
+    "name": "game_components_registry::registry::MinigameRegistryComponent::GameMetadataUpdate",
     "kind": "struct",
     "members": [
       {
@@ -983,7 +987,7 @@
   },
   {
     "type": "event",
-    "name": "game_components_registry::component::MinigameRegistryComponent::GameRegistryUpdate",
+    "name": "game_components_registry::registry::MinigameRegistryComponent::GameRegistryUpdate",
     "kind": "struct",
     "members": [
       {
@@ -1000,7 +1004,7 @@
   },
   {
     "type": "event",
-    "name": "game_components_registry::component::MinigameRegistryComponent::GameRoyaltyUpdate",
+    "name": "game_components_registry::registry::MinigameRegistryComponent::GameRoyaltyUpdate",
     "kind": "struct",
     "members": [
       {
@@ -1017,22 +1021,22 @@
   },
   {
     "type": "event",
-    "name": "game_components_registry::component::MinigameRegistryComponent::Event",
+    "name": "game_components_registry::registry::MinigameRegistryComponent::Event",
     "kind": "enum",
     "variants": [
       {
         "name": "GameMetadataUpdate",
-        "type": "game_components_registry::component::MinigameRegistryComponent::GameMetadataUpdate",
+        "type": "game_components_registry::registry::MinigameRegistryComponent::GameMetadataUpdate",
         "kind": "nested"
       },
       {
         "name": "GameRegistryUpdate",
-        "type": "game_components_registry::component::MinigameRegistryComponent::GameRegistryUpdate",
+        "type": "game_components_registry::registry::MinigameRegistryComponent::GameRegistryUpdate",
         "kind": "nested"
       },
       {
         "name": "GameRoyaltyUpdate",
-        "type": "game_components_registry::component::MinigameRegistryComponent::GameRoyaltyUpdate",
+        "type": "game_components_registry::registry::MinigameRegistryComponent::GameRoyaltyUpdate",
         "kind": "nested"
       }
     ]
@@ -1054,7 +1058,7 @@
       },
       {
         "name": "MinigameRegistryEvent",
-        "type": "game_components_registry::component::MinigameRegistryComponent::Event",
+        "type": "game_components_registry::registry::MinigameRegistryComponent::Event",
         "kind": "flat"
       }
     ]

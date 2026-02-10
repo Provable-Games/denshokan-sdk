@@ -1088,6 +1088,271 @@
   },
   {
     "type": "impl",
+    "name": "DenshokanSettingsObjectivesImpl",
+    "interface_name": "denshokan::filter::IDenshokanSettingsObjectives"
+  },
+  {
+    "type": "struct",
+    "name": "core::byte_array::ByteArray",
+    "members": [
+      {
+        "name": "data",
+        "type": "core::array::Array::<core::bytes_31::bytes31>"
+      },
+      {
+        "name": "pending_word",
+        "type": "core::felt252"
+      },
+      {
+        "name": "pending_word_len",
+        "type": "core::internal::bounded_int::BoundedInt::<0, 30>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::minigame::GameSetting",
+    "members": [
+      {
+        "name": "name",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "value",
+        "type": "core::byte_array::ByteArray"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<game_components_interfaces::structs::minigame::GameSetting>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<game_components_interfaces::structs::minigame::GameSetting>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::minigame::GameSettingDetails",
+    "members": [
+      {
+        "name": "name",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "description",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "settings",
+        "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameSetting>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "denshokan::filter::SettingsEntry",
+    "members": [
+      {
+        "name": "game_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "settings_id",
+        "type": "core::integer::u32"
+      },
+      {
+        "name": "details",
+        "type": "game_components_interfaces::structs::minigame::GameSettingDetails"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "denshokan::filter::SettingsResult",
+    "members": [
+      {
+        "name": "entries",
+        "type": "core::array::Array::<denshokan::filter::SettingsEntry>"
+      },
+      {
+        "name": "total",
+        "type": "core::integer::u32"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::minigame::GameObjective",
+    "members": [
+      {
+        "name": "name",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "value",
+        "type": "core::byte_array::ByteArray"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<game_components_interfaces::structs::minigame::GameObjective>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<game_components_interfaces::structs::minigame::GameObjective>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::minigame::GameObjectiveDetails",
+    "members": [
+      {
+        "name": "name",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "description",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "objectives",
+        "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameObjective>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "denshokan::filter::ObjectiveEntry",
+    "members": [
+      {
+        "name": "game_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "objective_id",
+        "type": "core::integer::u32"
+      },
+      {
+        "name": "settings_id",
+        "type": "core::integer::u32"
+      },
+      {
+        "name": "details",
+        "type": "game_components_interfaces::structs::minigame::GameObjectiveDetails"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "denshokan::filter::ObjectivesResult",
+    "members": [
+      {
+        "name": "entries",
+        "type": "core::array::Array::<denshokan::filter::ObjectiveEntry>"
+      },
+      {
+        "name": "total",
+        "type": "core::integer::u32"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "denshokan::filter::IDenshokanSettingsObjectives",
+    "items": [
+      {
+        "type": "function",
+        "name": "all_settings",
+        "inputs": [
+          {
+            "name": "game_address",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "offset",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "limit",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "denshokan::filter::SettingsResult"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "all_objectives",
+        "inputs": [
+          {
+            "name": "game_address",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "settings_id",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "offset",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "limit",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "denshokan::filter::ObjectivesResult"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "count_settings",
+        "inputs": [
+          {
+            "name": "game_address",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "count_objectives",
+        "inputs": [
+          {
+            "name": "game_address",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
     "name": "OwnableImpl",
     "interface_name": "openzeppelin_interfaces::access::ownable::IOwnable"
   },

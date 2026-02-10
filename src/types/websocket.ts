@@ -1,4 +1,4 @@
-export type WSChannel = "tokens" | "scores" | "game_over" | "mints" | "games" | "minters";
+export type WSChannel = "tokens" | "scores" | "game_over" | "mints" | "games" | "minters" | "settings" | "objectives";
 
 export interface WSMessage {
   channel: string;
@@ -58,6 +58,21 @@ export interface NewMinterEvent {
   blockNumber: string;
 }
 
+export interface NewSettingEvent {
+  gameAddress: string;
+  settingsId: number;
+  creatorAddress: string;
+  settingsData: string | null;
+}
+
+export interface NewObjectiveEvent {
+  gameAddress: string;
+  objectiveId: number;
+  settingsId: number;
+  creatorAddress: string;
+  objectiveData: string | null;
+}
+
 // Channel → payload type map
 export interface WSChannelPayloadMap {
   scores: ScoreEvent;
@@ -66,4 +81,6 @@ export interface WSChannelPayloadMap {
   tokens: TokenUpdateEvent;
   games: NewGameEvent;
   minters: NewMinterEvent;
+  settings: NewSettingEvent;
+  objectives: NewObjectiveEvent;
 }

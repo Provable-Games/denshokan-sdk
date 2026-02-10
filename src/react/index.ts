@@ -9,6 +9,8 @@ export { useDecodeToken } from "./useDecodeToken.js";
 export { usePlayerStats, usePlayerTokens } from "./usePlayer.js";
 export { useMinters } from "./useMinters.js";
 export { useActivity } from "./useActivity.js";
+export { useSettings } from "./useSettings.js";
+export { useObjectives } from "./useObjectives.js";
 
 // WebSocket hooks
 export { useSubscription } from "./useSubscription.js";
@@ -19,6 +21,8 @@ export {
   useTokenUpdates,
   useNewGames,
   useNewMinters,
+  useNewSettings,
+  useNewObjectives,
 } from "./useChannelSubscription.js";
 export type { UseChannelOptions, UseChannelResult } from "./useChannelSubscription.js";
 export { useConnectionStatus } from "./useConnectionStatus.js";
@@ -32,9 +36,5 @@ export {
   useScoreBatch,
   useGameOverBatch,
   useObjectivesCount,
-  useObjectiveDetails,
-  useObjectivesDetails,
   useSettingsCount,
-  useSettingDetails,
-  useSettingsDetails,
 } from "./useRpc.js";
