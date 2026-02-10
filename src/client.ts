@@ -151,6 +151,8 @@ import {
   viewerTokensOfOwnerByPlayable,
   viewerTokensOfOwnerByGameOver,
   viewerTokensFullStateBatch,
+  viewerAllSettings,
+  viewerAllObjectives,
 } from "./rpc/viewer.js";
 
 const DEFAULT_WS_CONFIG = {
@@ -408,42 +410,20 @@ export class DenshokanClient {
     gameAddress: string,
     params?: SettingsParams,
   ): Promise<PaginatedResult<GameSettingDetails>> {
-    const contract = await this.getGameContract(gameAddress);
-    const total = await rpcSettingsCount(contract);
-    if (total === 0) return { data: [], total: 0 };
-
+    const viewerContract = await this.getViewerContract();
     const offset = params?.offset ?? 0;
-    const limit = params?.limit ?? total;
-    const start = offset + 1; // IDs are 1-indexed
-    const end = Math.min(offset + limit, total);
-    const count = end - offset;
-
-    if (count <= 0) return { data: [], total };
-
-    const ids = Array.from({ length: count }, (_, i) => start + i);
-    const data = await rpcSettingsDetailsBatch(contract, ids);
-    return { data, total };
+    const limit = params?.limit ?? 50;
+    return viewerAllSettings(viewerContract, gameAddress, offset, limit);
   }
 
   private async fetchObjectivesFromRpc(
     gameAddress: string,
     params?: ObjectivesParams,
   ): Promise<PaginatedResult<GameObjectiveDetails>> {
-    const contract = await this.getGameContract(gameAddress);
-    const total = await rpcObjectivesCount(contract);
-    if (total === 0) return { data: [], total: 0 };
-
+    const viewerContract = await this.getViewerContract();
     const offset = params?.offset ?? 0;
-    const limit = params?.limit ?? total;
-    const start = offset + 1; // IDs are 1-indexed
-    const end = Math.min(offset + limit, total);
-    const count = end - offset;
-
-    if (count <= 0) return { data: [], total };
-
-    const ids = Array.from({ length: count }, (_, i) => start + i);
-    const data = await rpcObjectivesDetailsBatch(contract, ids);
-    return { data, total };
+    const limit = params?.limit ?? 50;
+    return viewerAllObjectives(viewerContract, gameAddress, offset, limit);
   }
 
   // =========================================================================

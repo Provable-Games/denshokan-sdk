@@ -1,5 +1,7 @@
 import type { Contract } from "starknet";
 import type { FilterResult, TokenFullState } from "../types/rpc.js";
+import type { GameSettingDetails, GameObjectiveDetails } from "../types/game.js";
+import type { PaginatedResult } from "../types/token.js";
 import { RpcError } from "../errors/index.js";
 import { num } from "starknet";
 import { toHexTokenId } from "../utils/address.js";
@@ -678,5 +680,105 @@ export async function viewerTokensFullStateBatch(
   return wrapRpcCall(async () => {
     const result = await contract.call("tokens_full_state_batch", [tokenIds]);
     return (result as unknown[]).map(parseTokenFullState);
+  }, contract.address);
+}
+
+// =========================================================================
+// Settings & Objectives (via viewer contract)
+// =========================================================================
+
+function parseKeyValuePairs(raw: unknown[]): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const item of raw) {
+    const obj = item as Record<string, unknown>;
+    const name = obj.name?.toString() ?? "";
+    const value = obj.value?.toString() ?? "";
+    if (name) result[name] = value;
+  }
+  return result;
+}
+
+function parseSettingsEntry(raw: unknown): GameSettingDetails {
+  const entry = raw as Record<string, unknown>;
+  const details = entry.details as Record<string, unknown>;
+  return {
+    id: Number(entry.settings_id ?? 0),
+    gameAddress: num.toHex(entry.game_address as bigint),
+    creatorAddress: "",
+    name: details.name?.toString() ?? "",
+    description: details.description?.toString() ?? "",
+    settings: parseKeyValuePairs((details.settings as unknown[]) ?? []),
+    blockNumber: "",
+    createdAt: "",
+  };
+}
+
+function parseObjectiveEntry(raw: unknown): GameObjectiveDetails {
+  const entry = raw as Record<string, unknown>;
+  const details = entry.details as Record<string, unknown>;
+  return {
+    id: Number(entry.objective_id ?? 0),
+    settingsId: 0,
+    gameAddress: num.toHex(entry.game_address as bigint),
+    creatorAddress: "",
+    name: details.name?.toString() ?? "",
+    description: details.description?.toString() ?? "",
+    objectives: parseKeyValuePairs((details.objectives as unknown[]) ?? []),
+    blockNumber: "",
+    createdAt: "",
+  };
+}
+
+export async function viewerAllSettings(
+  contract: Contract,
+  gameAddress: string,
+  offset: number,
+  limit: number,
+): Promise<PaginatedResult<GameSettingDetails>> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("all_settings", [gameAddress, offset, limit]) as Record<string, unknown>;
+    const entries = (result.entries as unknown[]) ?? [];
+    const total = Number(result.total ?? 0);
+    return {
+      data: entries.map(parseSettingsEntry),
+      total,
+    };
+  }, contract.address);
+}
+
+export async function viewerAllObjectives(
+  contract: Contract,
+  gameAddress: string,
+  offset: number,
+  limit: number,
+): Promise<PaginatedResult<GameObjectiveDetails>> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("all_objectives", [gameAddress, offset, limit]) as Record<string, unknown>;
+    const entries = (result.entries as unknown[]) ?? [];
+    const total = Number(result.total ?? 0);
+    return {
+      data: entries.map(parseObjectiveEntry),
+      total,
+    };
+  }, contract.address);
+}
+
+export async function viewerCountSettings(
+  contract: Contract,
+  gameAddress: string,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_settings", [gameAddress]);
+    return Number(result);
+  }, contract.address);
+}
+
+export async function viewerCountObjectives(
+  contract: Contract,
+  gameAddress: string,
+): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("count_objectives", [gameAddress]);
+    return Number(result);
   }, contract.address);
 }
