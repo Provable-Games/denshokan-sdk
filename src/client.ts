@@ -347,23 +347,113 @@ export class DenshokanClient {
   }
 
   // =========================================================================
-  // Settings & Objectives (unified API)
+  // Settings & Objectives (API with RPC fallback)
   // =========================================================================
 
   async getSettings(params?: SettingsParams): Promise<PaginatedResult<GameSettingDetails>> {
+    if (this.config.primarySource === "api") {
+      return params?.gameAddress
+        ? withFallback(
+            () => apiGetSettings(this.apiCtx, params),
+            () => this.fetchSettingsFromRpc(params!.gameAddress!, params),
+            this.connectionStatus,
+          )
+        : apiGetSettings(this.apiCtx, params);
+    }
+    if (params?.gameAddress) {
+      return this.fetchSettingsFromRpc(params.gameAddress, params);
+    }
+    // No gameAddress → can't use RPC, fall through to API
     return apiGetSettings(this.apiCtx, params);
   }
 
   async getSetting(settingsId: number, gameAddress: string): Promise<GameSettingDetails> {
-    return apiGetSetting(this.apiCtx, gameAddress, settingsId);
+    if (this.config.primarySource === "api") {
+      return withFallback(
+        () => apiGetSetting(this.apiCtx, gameAddress, settingsId),
+        async () => {
+          const contract = await this.getGameContract(gameAddress);
+          return rpcSettingsDetail(contract, settingsId);
+        },
+        this.connectionStatus,
+      );
+    }
+    const contract = await this.getGameContract(gameAddress);
+    return rpcSettingsDetail(contract, settingsId);
   }
 
   async getObjectives(params?: ObjectivesParams): Promise<PaginatedResult<GameObjectiveDetails>> {
+    if (this.config.primarySource === "api") {
+      return params?.gameAddress
+        ? withFallback(
+            () => apiGetObjectives(this.apiCtx, params),
+            () => this.fetchObjectivesFromRpc(params!.gameAddress!, params),
+            this.connectionStatus,
+          )
+        : apiGetObjectives(this.apiCtx, params);
+    }
+    if (params?.gameAddress) {
+      return this.fetchObjectivesFromRpc(params.gameAddress, params);
+    }
+    // No gameAddress → can't use RPC, fall through to API
     return apiGetObjectives(this.apiCtx, params);
   }
 
   async getObjective(objectiveId: number, gameAddress: string): Promise<GameObjectiveDetails> {
-    return apiGetObjective(this.apiCtx, gameAddress, objectiveId);
+    if (this.config.primarySource === "api") {
+      return withFallback(
+        () => apiGetObjective(this.apiCtx, gameAddress, objectiveId),
+        async () => {
+          const contract = await this.getGameContract(gameAddress);
+          return rpcObjectivesDetails(contract, objectiveId);
+        },
+        this.connectionStatus,
+      );
+    }
+    const contract = await this.getGameContract(gameAddress);
+    return rpcObjectivesDetails(contract, objectiveId);
+  }
+
+  private async fetchSettingsFromRpc(
+    gameAddress: string,
+    params?: SettingsParams,
+  ): Promise<PaginatedResult<GameSettingDetails>> {
+    const contract = await this.getGameContract(gameAddress);
+    const total = await rpcSettingsCount(contract);
+    if (total === 0) return { data: [], total: 0 };
+
+    const offset = params?.offset ?? 0;
+    const limit = params?.limit ?? total;
+    const start = offset + 1; // IDs are 1-indexed
+    const end = Math.min(offset + limit, total);
+    const count = end - offset;
+
+    if (count <= 0) return { data: [], total };
+
+    const ids = Array.from({ length: count }, (_, i) => start + i);
+    const data = await rpcSettingsDetailsBatch(contract, ids);
+    return { data, total };
+  }
+
+  private async fetchObjectivesFromRpc(
+    gameAddress: string,
+    params?: ObjectivesParams,
+  ): Promise<PaginatedResult<GameObjectiveDetails>> {
+    const contract = await this.getGameContract(gameAddress);
+    const total = await rpcObjectivesCount(contract);
+    if (total === 0) return { data: [], total: 0 };
+
+    const offset = params?.offset ?? 0;
+    const limit = params?.limit ?? total;
+    const start = offset + 1; // IDs are 1-indexed
+    const end = Math.min(offset + limit, total);
+    const count = end - offset;
+
+    if (count <= 0) return { data: [], total };
+
+    const ids = Array.from({ length: count }, (_, i) => start + i);
+    const data = await rpcObjectivesDetailsBatch(contract, ids);
+    return { data, total };
   }
 
   // =========================================================================
