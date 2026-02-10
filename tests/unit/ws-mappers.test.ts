@@ -6,6 +6,8 @@ import {
   mapTokenUpdateEvent,
   mapNewGameEvent,
   mapNewMinterEvent,
+  mapNewSettingEvent,
+  mapNewObjectiveEvent,
   WS_EVENT_MAPPERS,
 } from "../../src/utils/mappers.js";
 
@@ -170,7 +172,7 @@ describe("mapNewMinterEvent", () => {
 });
 
 describe("WS_EVENT_MAPPERS", () => {
-  it("should have all 6 channels mapped", () => {
+  it("should have all 8 channels mapped", () => {
     expect(Object.keys(WS_EVENT_MAPPERS)).toEqual([
       "scores",
       "game_over",
@@ -178,6 +180,8 @@ describe("WS_EVENT_MAPPERS", () => {
       "tokens",
       "games",
       "minters",
+      "settings",
+      "objectives",
     ]);
   });
 
@@ -188,5 +192,7 @@ describe("WS_EVENT_MAPPERS", () => {
     expect(WS_EVENT_MAPPERS.tokens).toBe(mapTokenUpdateEvent);
     expect(WS_EVENT_MAPPERS.games).toBe(mapNewGameEvent);
     expect(WS_EVENT_MAPPERS.minters).toBe(mapNewMinterEvent);
+    expect(WS_EVENT_MAPPERS.settings).toBe(mapNewSettingEvent);
+    expect(WS_EVENT_MAPPERS.objectives).toBe(mapNewObjectiveEvent);
   });
 });

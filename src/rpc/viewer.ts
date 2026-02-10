@@ -718,7 +718,7 @@ function parseObjectiveEntry(raw: unknown): GameObjectiveDetails {
   const details = entry.details as Record<string, unknown>;
   return {
     id: Number(entry.objective_id ?? 0),
-    settingsId: 0,
+    settingsId: Number(entry.settings_id ?? 0),
     gameAddress: num.toHex(entry.game_address as bigint),
     creatorAddress: "",
     name: details.name?.toString() ?? "",
@@ -749,11 +749,12 @@ export async function viewerAllSettings(
 export async function viewerAllObjectives(
   contract: Contract,
   gameAddress: string,
+  settingsId: number,
   offset: number,
   limit: number,
 ): Promise<PaginatedResult<GameObjectiveDetails>> {
   return wrapRpcCall(async () => {
-    const result = await contract.call("all_objectives", [gameAddress, offset, limit]) as Record<string, unknown>;
+    const result = await contract.call("all_objectives", [gameAddress, settingsId, offset, limit]) as Record<string, unknown>;
     const entries = (result.entries as unknown[]) ?? [];
     const total = Number(result.total ?? 0);
     return {

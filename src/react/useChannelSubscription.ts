@@ -115,3 +115,15 @@ export function useNewMinters(
 ): UseChannelResult<"minters"> {
   return useChannelSubscription("minters", options);
 }
+
+export function useNewSettings(
+  options?: UseChannelOptions<"settings">,
+): UseChannelResult<"settings"> {
+  return useChannelSubscription("settings", options);
+}
+
+export function useNewObjectives(
+  options?: UseChannelOptions<"objectives">,
+): UseChannelResult<"objectives"> {
+  return useChannelSubscription("objectives", options);
+}

@@ -28,11 +28,11 @@ const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     apiUrl: "https://localhost:3001",
     wsUrl: "ws://localhost:3001/ws",
     denshokanAddress:
-      "0x05344f629104fc19f06b7fc315b66a18587ebd7e0bb5613493ab2db1f4fbccb8",
+      "0x067626f8c403a70dbc6730460e5a20a360d289fc10fd9f0fcfad5872ec17eb11",
     registryAddress:
-      "0x0170df39066ff5a0624cea97ca489e21ec876158b31f4479beca8946b50c0ccf",
+      "0x01ec3e75aba8a290991008b0752ead1ae9f1327cb16b2a1b074ec66c15c7dc13",
     viewerAddress:
-      "0x07d2270e389d3500ca4993455e3f3fe5667ce62bd5ec5342c76cb6f5730a71bf",
+      "0x0462de524c0bedc5048660358d82e073985c144c7973dcd2c3ebb0a483472ec5",
   },
 };
 

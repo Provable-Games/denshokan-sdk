@@ -423,7 +423,7 @@ export class DenshokanClient {
     const viewerContract = await this.getViewerContract();
     const offset = params?.offset ?? 0;
     const limit = params?.limit ?? 50;
-    return viewerAllObjectives(viewerContract, gameAddress, offset, limit);
+    return viewerAllObjectives(viewerContract, gameAddress, params?.settingsId ?? 0, offset, limit);
   }
 
   // =========================================================================
