@@ -31,28 +31,28 @@ describe("decodePackedTokenId", () => {
     expect(decoded.gameId).toBe(0);
   });
 
-  it("should decode soulbound flag from bit 215", () => {
-    const packed = 1n << 215n;
+  it("should decode soulbound flag from bit 125", () => {
+    const packed = 1n << 125n;
     const decoded = decodePackedTokenId(packed);
     expect(decoded.soulbound).toBe(true);
   });
 
-  it("should decode hasContext flag from bit 216", () => {
-    const packed = 1n << 216n;
+  it("should decode hasContext flag from bit 126", () => {
+    const packed = 1n << 126n;
     const decoded = decodePackedTokenId(packed);
     expect(decoded.hasContext).toBe(true);
     expect(decoded.soulbound).toBe(false);
   });
 
-  it("should decode paymaster flag from bit 217", () => {
-    const packed = 1n << 217n;
+  it("should decode paymaster flag from bit 127", () => {
+    const packed = 1n << 127n;
     const decoded = decodePackedTokenId(packed);
     expect(decoded.paymaster).toBe(true);
   });
 
-  it("should decode objectiveId from bits 185-214", () => {
+  it("should decode objectiveId from bits 188-217", () => {
     const objectiveId = 100;
-    const packed = BigInt(objectiveId) << 185n;
+    const packed = BigInt(objectiveId) << 188n;
     const decoded = decodePackedTokenId(packed);
     expect(decoded.objectiveId).toBe(objectiveId);
   });
@@ -65,7 +65,7 @@ describe("decodePackedTokenId", () => {
 
   it("should decode mintedAt as a Date", () => {
     const timestamp = 1700000000;
-    const packed = BigInt(timestamp) << 100n;
+    const packed = BigInt(timestamp) << 128n;
     const decoded = decodePackedTokenId(packed);
     expect(decoded.mintedAt.getTime()).toBe(timestamp * 1000);
   });
@@ -75,8 +75,8 @@ describe("decodePackedTokenId", () => {
     const packed =
       5n |
       (3n << 70n) |
-      (10n << 185n) |
-      (1n << 215n);
+      (10n << 188n) |
+      (1n << 125n);
     const decoded = decodePackedTokenId(packed);
     expect(decoded.gameId).toBe(5);
     expect(decoded.settingsId).toBe(3);
