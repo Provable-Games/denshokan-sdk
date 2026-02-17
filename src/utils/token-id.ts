@@ -1,5 +1,29 @@
 import type { DecodedTokenId, CoreToken } from "../types/token.js";
 
+/**
+ * u128-aligned packed token ID layout (251 bits)
+ *
+ * Fields are arranged so the low u128 (bits 0–127) and high u128 (bits 128–250)
+ * each form a contiguous block, enabling efficient DivRem unpacking on-chain.
+ *
+ * Bit range  Width  Field
+ * ─────────  ─────  ──────────────
+ *   0 – 29    30    game_id
+ *  30 – 69    40    minted_by
+ *  70 – 99    30    settings_id
+ * 100 –124    25    start_delay
+ * 125         1     soulbound
+ * 126         1     has_context
+ * 127         1     paymaster
+ * ── u128 boundary ──────────────
+ * 128 –162    35    minted_at
+ * 163 –187    25    end_delay
+ * 188 –217    30    objective_id
+ * 218 –227    10    tx_hash
+ * 228 –237    10    salt
+ * 238 –250    13    metadata
+ */
+
 const MASKS = {
   GAME_ID: 0x3FFFFFFFn,
   MINTED_BY: 0xFFFFFFFFFFn,
@@ -18,13 +42,13 @@ const OFFSETS = {
   GAME_ID: 0n,
   MINTED_BY: 30n,
   SETTINGS_ID: 70n,
-  MINTED_AT: 100n,
-  START_DELAY: 135n,
-  END_DELAY: 160n,
-  OBJECTIVE_ID: 185n,
-  SOULBOUND: 215n,
-  HAS_CONTEXT: 216n,
-  PAYMASTER: 217n,
+  START_DELAY: 100n,
+  SOULBOUND: 125n,
+  HAS_CONTEXT: 126n,
+  PAYMASTER: 127n,
+  MINTED_AT: 128n,
+  END_DELAY: 163n,
+  OBJECTIVE_ID: 188n,
   TX_HASH: 218n,
   SALT: 228n,
   METADATA: 238n,
