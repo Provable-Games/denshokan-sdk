@@ -12,6 +12,15 @@ export interface WSConfig {
   reconnectBaseDelay?: number;
 }
 
+export interface HealthConfig {
+  /** Delay before first health check in ms (default: 1000) */
+  initialCheckDelay?: number;
+  /** Interval between health checks in ms (default: 30000) */
+  checkInterval?: number;
+  /** Timeout for each health check in ms (default: 5000) */
+  checkTimeout?: number;
+}
+
 export interface DenshokanClientConfig {
   chain?: "mainnet" | "sepolia";
   apiUrl?: string;
@@ -27,6 +36,7 @@ export interface DenshokanClientConfig {
   primarySource?: DataSource;
   fetch?: FetchConfig;
   ws?: WSConfig;
+  health?: HealthConfig;
 }
 
 export interface ResolvedConfig {
@@ -42,4 +52,5 @@ export interface ResolvedConfig {
   primarySource: DataSource;
   fetch: Required<FetchConfig>;
   ws: Required<WSConfig>;
+  health: Required<HealthConfig>;
 }

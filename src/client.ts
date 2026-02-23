@@ -176,7 +176,7 @@ export class DenshokanClient {
 
   constructor(config: DenshokanClientConfig) {
     this.config = this.resolveConfig(config);
-    this.connectionStatus = new ConnectionStatus(this.config.apiUrl, this.config.rpcUrl);
+    this.connectionStatus = new ConnectionStatus(this.config.apiUrl, this.config.rpcUrl, this.config.health);
     this.wsManager = new WebSocketManager(this.config.wsUrl, {
       maxReconnectAttempts: this.config.ws.maxReconnectAttempts,
       reconnectBaseDelay: this.config.ws.reconnectBaseDelay,
@@ -206,6 +206,7 @@ export class DenshokanClient {
       primarySource: config.primarySource ?? "api",
       fetch: { ...DEFAULT_FETCH_CONFIG, ...config.fetch },
       ws: { ...DEFAULT_WS_CONFIG, ...config.ws },
+      health: { initialCheckDelay: 1000, checkInterval: 30000, checkTimeout: 5000, ...config.health },
     };
   }
 
@@ -284,6 +285,20 @@ export class DenshokanClient {
   }
 
   /**
+   * If input looks like a numeric game ID (not a hex address), resolve it to
+   * a contract address using the registry. This ensures the RPC fallback path
+   * receives a proper contract address.
+   */
+  private async maybeResolveNumericId(input: string): Promise<string> {
+    if (input.startsWith("0x")) return input;
+    const numericId = parseInt(input, 10);
+    if (!isNaN(numericId) && numericId > 0) {
+      return this.resolveGameAddress(numericId);
+    }
+    return input;
+  }
+
+  /**
    * Resolve a gameAddress to a numeric gameId.
    * Uses cache first, then fetches games list from API to populate cache.
    */
@@ -316,7 +331,8 @@ export class DenshokanClient {
       return withFallback(
         () => apiGetGame(this.apiCtx, gameAddress),
         async () => {
-          const gameId = await this.resolveGameId(gameAddress);
+          const resolved = await this.maybeResolveNumericId(gameAddress);
+          const gameId = await this.resolveGameId(resolved);
           const contract = await this.getRegistryContract();
           const meta = await rpcGameMetadata(contract, gameId);
           return {
@@ -331,7 +347,8 @@ export class DenshokanClient {
         this.connectionStatus,
       );
     }
-    const gameId = await this.resolveGameId(gameAddress);
+    const resolved = await this.maybeResolveNumericId(gameAddress);
+    const gameId = await this.resolveGameId(resolved);
     const contract = await this.getRegistryContract();
     const meta = await rpcGameMetadata(contract, gameId);
     return {
