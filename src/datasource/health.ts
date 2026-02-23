@@ -42,9 +42,9 @@ export class ConnectionStatus {
   constructor(apiUrl: string, rpcUrl: string, config?: HealthTimingConfig) {
     this.apiUrl = apiUrl;
     this.rpcUrl = rpcUrl;
-    this.initialCheckDelay = config?.initialCheckDelay ?? 1_000;
-    this.checkIntervalMs = config?.checkInterval ?? 30_000;
-    this.checkTimeoutMs = config?.checkTimeout ?? 5_000;
+    this.initialCheckDelay = Math.max(config?.initialCheckDelay ?? 1_000, 100);
+    this.checkIntervalMs = Math.max(config?.checkInterval ?? 30_000, 1_000);
+    this.checkTimeoutMs = Math.max(config?.checkTimeout ?? 5_000, 1_000);
   }
 
   getStatus(): ConnectionStatusState {

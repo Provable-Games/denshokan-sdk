@@ -291,9 +291,11 @@ export class DenshokanClient {
    */
   private async maybeResolveNumericId(input: string): Promise<string> {
     if (input.startsWith("0x")) return input;
-    const numericId = parseInt(input, 10);
-    if (!isNaN(numericId) && numericId > 0) {
-      return this.resolveGameAddress(numericId);
+    if (/^[0-9]+$/.test(input)) {
+      const numericId = Number(input);
+      if (numericId > 0 && numericId <= Number.MAX_SAFE_INTEGER) {
+        return this.resolveGameAddress(numericId);
+      }
     }
     return input;
   }

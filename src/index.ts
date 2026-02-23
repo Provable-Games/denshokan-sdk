@@ -6,6 +6,7 @@ export type {
   DataSource,
   FetchConfig,
   WSConfig,
+  HealthConfig,
   DenshokanClientConfig,
   ResolvedConfig,
   Token,
