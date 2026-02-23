@@ -16,9 +16,11 @@ export interface ConnectionStatusState {
 
 type StatusListener = (status: ConnectionStatusState) => void;
 
-const CHECK_INTERVAL_MS = 30_000;
-const CHECK_TIMEOUT_MS = 5_000;
-const INITIAL_CHECK_DELAY_MS = 1_000;
+export interface HealthTimingConfig {
+  initialCheckDelay?: number;
+  checkInterval?: number;
+  checkTimeout?: number;
+}
 
 export class ConnectionStatus {
   private status: ConnectionStatusState = {
@@ -33,10 +35,16 @@ export class ConnectionStatus {
   private initialCheckTimeout: ReturnType<typeof setTimeout> | null = null;
   private apiUrl: string;
   private rpcUrl: string;
+  private readonly initialCheckDelay: number;
+  private readonly checkIntervalMs: number;
+  private readonly checkTimeoutMs: number;
 
-  constructor(apiUrl: string, rpcUrl: string) {
+  constructor(apiUrl: string, rpcUrl: string, config?: HealthTimingConfig) {
     this.apiUrl = apiUrl;
     this.rpcUrl = rpcUrl;
+    this.initialCheckDelay = Math.max(config?.initialCheckDelay ?? 1_000, 100);
+    this.checkIntervalMs = Math.max(config?.checkInterval ?? 30_000, 1_000);
+    this.checkTimeoutMs = Math.max(config?.checkTimeout ?? 5_000, 1_000);
   }
 
   getStatus(): ConnectionStatusState {
@@ -57,8 +65,8 @@ export class ConnectionStatus {
     if (this.checkInterval) return;
     this.initialCheckTimeout = setTimeout(() => {
       this.performHealthCheck();
-      this.checkInterval = setInterval(() => this.performHealthCheck(), CHECK_INTERVAL_MS);
-    }, INITIAL_CHECK_DELAY_MS);
+      this.checkInterval = setInterval(() => this.performHealthCheck(), this.checkIntervalMs);
+    }, this.initialCheckDelay);
   }
 
   stopMonitoring(): void {
@@ -105,7 +113,7 @@ export class ConnectionStatus {
     const startTime = Date.now();
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS);
+      const timeoutId = setTimeout(() => controller.abort(), this.checkTimeoutMs);
       const response = await fetch(`${this.apiUrl}/health`, { signal: controller.signal });
       clearTimeout(timeoutId);
       const latency = Date.now() - startTime;
@@ -124,7 +132,7 @@ export class ConnectionStatus {
     const startTime = Date.now();
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS);
+      const timeoutId = setTimeout(() => controller.abort(), this.checkTimeoutMs);
       const response = await fetch(this.rpcUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
