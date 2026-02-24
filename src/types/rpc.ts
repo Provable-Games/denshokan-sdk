@@ -25,6 +25,8 @@ export interface MintParams {
   playerName: string;
   soulbound: boolean;
   to: string;
+  salt?: number;
+  metadata?: number;
 }
 
 export interface PlayerNameUpdate {
