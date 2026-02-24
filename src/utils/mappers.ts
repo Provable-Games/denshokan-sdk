@@ -201,6 +201,8 @@ export function mintParamsToSnake(p: MintParams): {
   player_name: string;
   soulbound: boolean;
   to: string;
+  salt: number;
+  metadata: number;
 } {
   return {
     game_id: p.gameId,
@@ -209,6 +211,8 @@ export function mintParamsToSnake(p: MintParams): {
     player_name: p.playerName,
     soulbound: p.soulbound,
     to: p.to,
+    salt: p.salt ?? 0,
+    metadata: p.metadata ?? 0,
   };
 }
 

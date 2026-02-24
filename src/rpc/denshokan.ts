@@ -530,6 +530,8 @@ export async function rpcMintBatch(
     player_name: string;
     soulbound: boolean;
     to: string;
+    salt: number;
+    metadata: number;
   }>,
 ): Promise<string[]> {
   return wrapRpcCall(async () => {
@@ -547,6 +549,8 @@ export async function rpcMint(
     player_name: string;
     soulbound: boolean;
     to: string;
+    salt: number;
+    metadata: number;
   },
 ): Promise<string> {
   const [result] = await rpcMintBatch(contract, [params]);

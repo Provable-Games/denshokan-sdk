@@ -36,6 +36,7 @@ import { DEFAULT_FETCH_CONFIG } from "./utils/retry.js";
 import { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
 import { toHexTokenId, normalizeAddress } from "./utils/address.js";
 import { mintParamsToSnake, playerNameUpdateToSnake } from "./utils/mappers.js";
+import { assignSalts } from "./utils/salt.js";
 import { InvalidChainError, GameNotFoundError } from "./errors/index.js";
 import { ConnectionStatus } from "./datasource/health.js";
 import { withFallback } from "./datasource/resolver.js";
@@ -1152,7 +1153,7 @@ export class DenshokanClient {
     const contract = await this.getDenshokanContract();
     return rpcMintBatch(
       contract,
-      params.map(mintParamsToSnake),
+      assignSalts(params).map(mintParamsToSnake),
     );
   }
 
