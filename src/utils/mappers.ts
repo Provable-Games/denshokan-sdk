@@ -11,6 +11,8 @@ import type { PlayerStats } from "../types/player.js";
 import type { Minter } from "../types/minter.js";
 import type { ActivityEvent, ActivityStats } from "../types/activity.js";
 import type { GameMetadata, MintParams, PlayerNameUpdate } from "../types/rpc.js";
+import { DenshokanError } from "../errors/index.js";
+import { MAX_SALT } from "./salt.js";
 
 // =========================================================================
 // API response mappers (snake_case API JSON → camelCase types)
@@ -204,6 +206,14 @@ export function mintParamsToSnake(p: MintParams): {
   salt: number;
   metadata: number;
 } {
+  const salt = p.salt ?? 0;
+  const metadata = p.metadata ?? 0;
+  if (!Number.isInteger(salt) || salt < 0 || salt > MAX_SALT) {
+    throw new DenshokanError(`Invalid salt: ${salt} (must be an integer 0–${MAX_SALT})`);
+  }
+  if (!Number.isInteger(metadata) || metadata < 0) {
+    throw new DenshokanError(`Invalid metadata: ${metadata} (must be a non-negative integer)`);
+  }
   return {
     game_id: p.gameId,
     settings_id: p.settingsId,
@@ -211,8 +221,8 @@ export function mintParamsToSnake(p: MintParams): {
     player_name: p.playerName,
     soulbound: p.soulbound,
     to: p.to,
-    salt: p.salt ?? 0,
-    metadata: p.metadata ?? 0,
+    salt,
+    metadata,
   };
 }
 

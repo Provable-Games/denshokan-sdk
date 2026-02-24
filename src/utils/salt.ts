@@ -53,7 +53,7 @@ export class MintSaltCounter {
  *
  * ```ts
  * assignSalts([{ name: "a" }, { name: "b", salt: 99 }, { name: "c" }]);
- * // → [{ name: "a", salt: 0 }, { name: "b", salt: 99 }, { name: "c", salt: 1 }]
+ * // → [{ name: "a", salt: 0 }, { name: "b", salt: 99 }, { name: "c", salt: 2 }]
  * ```
  */
 export function assignSalts<T extends { salt?: number }>(
@@ -61,8 +61,9 @@ export function assignSalts<T extends { salt?: number }>(
   startSalt = 0,
 ): (T & { salt: number })[] {
   const counter = new MintSaltCounter(startSalt);
-  return items.map((item) => ({
-    ...item,
-    salt: item.salt !== undefined ? item.salt : counter.next(),
-  }));
+  return items.map((item) => {
+    const salt = item.salt !== undefined ? item.salt : counter.peek();
+    counter.next(); // Always advance to prevent collisions
+    return { ...item, salt };
+  });
 }

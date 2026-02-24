@@ -83,7 +83,7 @@ describe("assignSalts", () => {
     ]);
   });
 
-  it("should preserve explicit salt values", () => {
+  it("should preserve explicit salt values but advance counter", () => {
     const items = [
       { name: "a" },
       { name: "b", salt: 99 },
@@ -93,7 +93,7 @@ describe("assignSalts", () => {
     expect(result).toEqual([
       { name: "a", salt: 0 },
       { name: "b", salt: 99 },
-      { name: "c", salt: 1 },
+      { name: "c", salt: 2 },
     ]);
   });
 
@@ -123,12 +123,12 @@ describe("assignSalts", () => {
     ]);
   });
 
-  it("should treat salt: 0 as explicit", () => {
+  it("should not collide when explicit salt matches an upcoming automatic salt", () => {
     const items = [{ name: "a", salt: 0 }, { name: "b" }];
     const result = assignSalts(items);
     expect(result).toEqual([
       { name: "a", salt: 0 },
-      { name: "b", salt: 0 },
+      { name: "b", salt: 1 },
     ]);
   });
 });
