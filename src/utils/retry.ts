@@ -6,6 +6,7 @@ export const DEFAULT_FETCH_CONFIG: Required<FetchConfig> = {
   maxRetries: 3,
   baseBackoff: 1000,
   maxBackoff: 5000,
+  tokenUriConcurrency: 0,
 };
 
 export function calculateBackoff(

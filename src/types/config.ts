@@ -5,6 +5,8 @@ export interface FetchConfig {
   maxRetries?: number;
   baseBackoff?: number;
   maxBackoff?: number;
+  /** Max concurrent token URI RPC calls in tokenUriBatch (0 = unlimited, default: 0) */
+  tokenUriConcurrency?: number;
 }
 
 export interface WSConfig {

@@ -152,7 +152,6 @@ import {
   viewerTokensOfOwnerByPlayable,
   viewerTokensOfOwnerByGameOver,
   viewerTokensFullStateBatch,
-  viewerTokenUriBatch,
   viewerAllSettings,
   viewerAllObjectives,
 } from "./rpc/viewer.js";
@@ -879,27 +878,28 @@ export class DenshokanClient {
 
   async tokenUriBatch(tokenIds: string[]): Promise<string[]> {
     if (tokenIds.length === 0) return [];
-    const contract = await this.getViewerContract();
-    const CHUNK_SIZE = 50;
-    if (tokenIds.length <= CHUNK_SIZE) {
-      return viewerTokenUriBatch(contract, tokenIds);
+    const contract = await this.getDenshokanContract();
+    const concurrency = this.config.fetch.tokenUriConcurrency;
+
+    if (!concurrency || concurrency >= tokenIds.length) {
+      const results = await Promise.allSettled(
+        tokenIds.map((id) => rpcTokenUri(contract, id)),
+      );
+      return results.map((r) => (r.status === "fulfilled" ? r.value : ""));
     }
-    const chunks: string[][] = [];
-    for (let i = 0; i < tokenIds.length; i += CHUNK_SIZE) {
-      chunks.push(tokenIds.slice(i, i + CHUNK_SIZE));
+
+    // Throttled: process in chunks of `concurrency`
+    const output: string[] = new Array(tokenIds.length).fill("");
+    for (let i = 0; i < tokenIds.length; i += concurrency) {
+      const chunk = tokenIds.slice(i, i + concurrency);
+      const results = await Promise.allSettled(
+        chunk.map((id) => rpcTokenUri(contract, id)),
+      );
+      results.forEach((r, j) => {
+        if (r.status === "fulfilled") output[i + j] = r.value;
+      });
     }
-    const results = await Promise.allSettled(
-      chunks.map((chunk) => viewerTokenUriBatch(contract, chunk)),
-    );
-    const fulfilled: string[][] = [];
-    for (const r of results) {
-      if (r.status === "fulfilled") {
-        fulfilled.push(r.value);
-      } else {
-        fulfilled.push([]); // placeholder so indices stay aligned
-      }
-    }
-    return fulfilled.flat();
+    return output;
   }
 
   async name(): Promise<string> {
