@@ -17,6 +17,8 @@ export interface Token {
   endDelay: number;
   hasContext: boolean;
   paymaster: boolean;
+  /** Token URI (only populated when explicitly requested via includeUri option) */
+  tokenUri?: string;
 }
 
 /**
@@ -114,4 +116,6 @@ export interface TokensFilterParams {
   /** Pagination */
   limit?: number;
   offset?: number;
+  /** When true, fetches token URIs via batch RPC and populates Token.tokenUri */
+  includeUri?: boolean;
 }

@@ -11,4 +11,6 @@ export interface PlayerTokensParams {
   gameId?: number;
   limit?: number;
   offset?: number;
+  /** When true, fetches token URIs via batch RPC and populates Token.tokenUri */
+  includeUri?: boolean;
 }

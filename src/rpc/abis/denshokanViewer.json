@@ -25,7 +25,7 @@
   {
     "type": "impl",
     "name": "DenshokanFilterImpl",
-    "interface_name": "denshokan::filter::IDenshokanFilter"
+    "interface_name": "denshokan_interfaces::filter::IDenshokanFilter"
   },
   {
     "type": "struct",
@@ -43,7 +43,7 @@
   },
   {
     "type": "struct",
-    "name": "denshokan::filter::FilterResult",
+    "name": "denshokan_interfaces::filter::FilterResult",
     "members": [
       {
         "name": "token_ids",
@@ -85,7 +85,7 @@
   },
   {
     "type": "struct",
-    "name": "denshokan::filter::TokenFullState",
+    "name": "denshokan_interfaces::filter::TokenFullState",
     "members": [
       {
         "name": "token_id",
@@ -122,8 +122,26 @@
     ]
   },
   {
+    "type": "struct",
+    "name": "core::byte_array::ByteArray",
+    "members": [
+      {
+        "name": "data",
+        "type": "core::array::Array::<core::bytes_31::bytes31>"
+      },
+      {
+        "name": "pending_word",
+        "type": "core::felt252"
+      },
+      {
+        "name": "pending_word_len",
+        "type": "core::internal::bounded_int::BoundedInt::<0, 30>"
+      }
+    ]
+  },
+  {
     "type": "interface",
-    "name": "denshokan::filter::IDenshokanFilter",
+    "name": "denshokan_interfaces::filter::IDenshokanFilter",
     "items": [
       {
         "type": "function",
@@ -144,7 +162,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -172,7 +190,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -200,7 +218,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -224,7 +242,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -252,7 +270,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -276,7 +294,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -304,7 +322,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -328,7 +346,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -352,7 +370,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -380,7 +398,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -400,7 +418,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -428,7 +446,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -456,7 +474,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -484,7 +502,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -516,7 +534,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -548,7 +566,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -576,7 +594,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -604,7 +622,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -967,7 +985,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -1007,7 +1025,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -1031,7 +1049,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::FilterResult"
+            "type": "denshokan_interfaces::filter::FilterResult"
           }
         ],
         "state_mutability": "view"
@@ -1079,7 +1097,23 @@
         ],
         "outputs": [
           {
-            "type": "core::array::Array::<denshokan::filter::TokenFullState>"
+            "type": "core::array::Array::<denshokan_interfaces::filter::TokenFullState>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "token_uri_batch",
+        "inputs": [
+          {
+            "name": "token_ids",
+            "type": "core::array::Array::<core::felt252>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::byte_array::ByteArray>"
           }
         ],
         "state_mutability": "view"
@@ -1089,25 +1123,7 @@
   {
     "type": "impl",
     "name": "DenshokanSettingsObjectivesImpl",
-    "interface_name": "denshokan::filter::IDenshokanSettingsObjectives"
-  },
-  {
-    "type": "struct",
-    "name": "core::byte_array::ByteArray",
-    "members": [
-      {
-        "name": "data",
-        "type": "core::array::Array::<core::bytes_31::bytes31>"
-      },
-      {
-        "name": "pending_word",
-        "type": "core::felt252"
-      },
-      {
-        "name": "pending_word_len",
-        "type": "core::internal::bounded_int::BoundedInt::<0, 30>"
-      }
-    ]
+    "interface_name": "denshokan_interfaces::filter::IDenshokanSettingsObjectives"
   },
   {
     "type": "struct",
@@ -1153,7 +1169,7 @@
   },
   {
     "type": "struct",
-    "name": "denshokan::filter::SettingsEntry",
+    "name": "denshokan_interfaces::filter::SettingsEntry",
     "members": [
       {
         "name": "game_address",
@@ -1171,11 +1187,11 @@
   },
   {
     "type": "struct",
-    "name": "denshokan::filter::SettingsResult",
+    "name": "denshokan_interfaces::filter::SettingsResult",
     "members": [
       {
         "name": "entries",
-        "type": "core::array::Array::<denshokan::filter::SettingsEntry>"
+        "type": "core::array::Array::<denshokan_interfaces::filter::SettingsEntry>"
       },
       {
         "name": "total",
@@ -1227,7 +1243,7 @@
   },
   {
     "type": "struct",
-    "name": "denshokan::filter::ObjectiveEntry",
+    "name": "denshokan_interfaces::filter::ObjectiveEntry",
     "members": [
       {
         "name": "game_address",
@@ -1249,11 +1265,11 @@
   },
   {
     "type": "struct",
-    "name": "denshokan::filter::ObjectivesResult",
+    "name": "denshokan_interfaces::filter::ObjectivesResult",
     "members": [
       {
         "name": "entries",
-        "type": "core::array::Array::<denshokan::filter::ObjectiveEntry>"
+        "type": "core::array::Array::<denshokan_interfaces::filter::ObjectiveEntry>"
       },
       {
         "name": "total",
@@ -1263,7 +1279,7 @@
   },
   {
     "type": "interface",
-    "name": "denshokan::filter::IDenshokanSettingsObjectives",
+    "name": "denshokan_interfaces::filter::IDenshokanSettingsObjectives",
     "items": [
       {
         "type": "function",
@@ -1284,7 +1300,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::SettingsResult"
+            "type": "denshokan_interfaces::filter::SettingsResult"
           }
         ],
         "state_mutability": "view"
@@ -1312,7 +1328,7 @@
         ],
         "outputs": [
           {
-            "type": "denshokan::filter::ObjectivesResult"
+            "type": "denshokan_interfaces::filter::ObjectivesResult"
           }
         ],
         "state_mutability": "view"
@@ -1513,7 +1529,7 @@
   },
   {
     "type": "event",
-    "name": "denshokan::denshokan_viewer::DenshokanViewer::Event",
+    "name": "denshokan_viewer::denshokan_viewer::DenshokanViewer::Event",
     "kind": "enum",
     "variants": [
       {

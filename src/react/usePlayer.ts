@@ -41,7 +41,7 @@ export interface UsePlayerTokensResult {
 
 export function usePlayerTokens(
   address: string | undefined,
-  params?: PlayerTokensParams,
+  params?: PlayerTokensParams & { includeUri?: boolean },
 ): UsePlayerTokensResult {
   const client = useDenshokanClient();
   const [data, setData] = useState<PaginatedResult<Token> | null>(null);

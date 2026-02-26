@@ -32,6 +32,7 @@ export {
   useBalanceOf,
   useOwnerOf,
   useTokenUri,
+  useTokenUriBatch,
   useTokenMetadataBatch,
   useScoreBatch,
   useGameOverBatch,
