@@ -451,14 +451,32 @@ export class DenshokanClient {
   // =========================================================================
 
   async getTokens(params?: TokensFilterParams): Promise<PaginatedResult<Token>> {
+    let result: PaginatedResult<Token>;
     if (this.config.primarySource === "api") {
-      return withFallback(
+      result = await withFallback(
         () => apiGetTokens(this.apiCtx, params),
         async () => this.buildTokensFromRpc(params),
         this.connectionStatus,
       );
+    } else {
+      result = await this.buildTokensFromRpc(params);
     }
-    return this.buildTokensFromRpc(params);
+
+    // Enrich with token URIs if requested and not already populated (RPC path populates inline)
+    if (params?.includeUri && result.data.length > 0 && result.data[0].tokenUri === undefined) {
+      const tokenIds = result.data.map((t) => t.tokenId);
+      try {
+        const uris = await this.tokenUriBatch(tokenIds);
+        result = {
+          ...result,
+          data: result.data.map((token, i) => ({ ...token, tokenUri: uris[i] })),
+        };
+      } catch {
+        // URI fetch is best-effort; return tokens without URIs
+      }
+    }
+
+    return result;
   }
 
   async getToken(tokenId: string): Promise<Token> {
@@ -528,6 +546,7 @@ export class DenshokanClient {
       mintedBefore,
       limit = 100,
       offset = 0,
+      includeUri,
     } = params ?? {};
 
     const denshokanContract = await this.getDenshokanContract();
@@ -706,7 +725,7 @@ export class DenshokanClient {
 
     // Build full Token objects for the results using batch method (1 RPC call for all tokens)
     const tokens = tokenIds.length > 0
-      ? await this.buildTokensFromFullStateBatch(viewerContract, tokenIds)
+      ? await this.buildTokensFromFullStateBatch(viewerContract, tokenIds, includeUri)
       : [];
 
     return { data: tokens, total };
@@ -715,13 +734,34 @@ export class DenshokanClient {
   private async buildTokensFromFullStateBatch(
     viewerContract: Contract,
     tokenIds: string[],
+    includeUri?: boolean,
   ): Promise<Token[]> {
-    const fullStates = await viewerTokensFullStateBatch(viewerContract, tokenIds);
-    return fullStates.map((state) => {
+    const CHUNK_SIZE = 50;
+
+    // Chunk the full state batch calls
+    const chunks: string[][] = [];
+    for (let i = 0; i < tokenIds.length; i += CHUNK_SIZE) {
+      chunks.push(tokenIds.slice(i, i + CHUNK_SIZE));
+    }
+    const stateResults = await Promise.all(
+      chunks.map((chunk) => viewerTokensFullStateBatch(viewerContract, chunk)),
+    );
+    const fullStates = stateResults.flat();
+
+    // Optionally fetch URIs (chunked, non-fatal)
+    let uris: string[] | undefined;
+    if (includeUri) {
+      try {
+        uris = await this.tokenUriBatch(tokenIds);
+      } catch {
+        // URI fetch is best-effort; don't fail the whole token load
+      }
+    }
+
+    return fullStates.map((state, i) => {
       const decoded = decodePackedTokenId(state.tokenId);
       return {
         tokenId: state.tokenId,
-        // FROM DECODED TOKEN ID (no RPC needed)
         gameId: decoded.gameId,
         settingsId: decoded.settingsId,
         objectiveId: decoded.objectiveId,
@@ -732,13 +772,13 @@ export class DenshokanClient {
         hasContext: decoded.hasContext,
         paymaster: decoded.paymaster,
         mintedBy: Number(decoded.mintedBy),
-        // FROM FULL STATE BATCH (single RPC call)
         owner: state.owner,
         score: 0,
         gameOver: state.gameOver,
         playerName: state.playerName,
         isPlayable: state.isPlayable,
         gameAddress: state.gameAddress,
+        ...(uris ? { tokenUri: uris[i] } : {}),
       };
     });
   }
@@ -748,8 +788,9 @@ export class DenshokanClient {
   // =========================================================================
 
   async getPlayerTokens(address: string, params?: PlayerTokensParams): Promise<PaginatedResult<Token>> {
+    let result: PaginatedResult<Token>;
     if (this.config.primarySource === "api") {
-      return withFallback(
+      result = await withFallback(
         () => apiGetPlayerTokens(this.apiCtx, address, params),
         () =>
           this.buildTokensFromRpc({
@@ -757,16 +798,35 @@ export class DenshokanClient {
             gameId: params?.gameId,
             limit: params?.limit,
             offset: params?.offset,
+            includeUri: params?.includeUri,
           }),
         this.connectionStatus,
       );
+    } else {
+      result = await this.buildTokensFromRpc({
+        owner: address,
+        gameId: params?.gameId,
+        limit: params?.limit,
+        offset: params?.offset,
+        includeUri: params?.includeUri,
+      });
     }
-    return this.buildTokensFromRpc({
-      owner: address,
-      gameId: params?.gameId,
-      limit: params?.limit,
-      offset: params?.offset,
-    });
+
+    // Enrich with token URIs if requested and not already populated
+    if (params?.includeUri && result.data.length > 0 && result.data[0].tokenUri === undefined) {
+      const tokenIds = result.data.map((t) => t.tokenId);
+      try {
+        const uris = await this.tokenUriBatch(tokenIds);
+        result = {
+          ...result,
+          data: result.data.map((token, i) => ({ ...token, tokenUri: uris[i] })),
+        };
+      } catch {
+        // URI fetch is best-effort; don't fail the whole token load
+      }
+    }
+
+    return result;
   }
 
   async getPlayerStats(address: string): Promise<PlayerStats> {
@@ -814,6 +874,32 @@ export class DenshokanClient {
   async tokenUri(tokenId: string): Promise<string> {
     const contract = await this.getDenshokanContract();
     return rpcTokenUri(contract, tokenId);
+  }
+
+  async tokenUriBatch(tokenIds: string[]): Promise<string[]> {
+    if (tokenIds.length === 0) return [];
+    const contract = await this.getDenshokanContract();
+    const concurrency = this.config.fetch.tokenUriConcurrency;
+
+    if (!concurrency || concurrency >= tokenIds.length) {
+      const results = await Promise.allSettled(
+        tokenIds.map((id) => rpcTokenUri(contract, id)),
+      );
+      return results.map((r) => (r.status === "fulfilled" ? r.value : ""));
+    }
+
+    // Throttled: process in chunks of `concurrency`
+    const output: string[] = new Array(tokenIds.length).fill("");
+    for (let i = 0; i < tokenIds.length; i += concurrency) {
+      const chunk = tokenIds.slice(i, i + concurrency);
+      const results = await Promise.allSettled(
+        chunk.map((id) => rpcTokenUri(contract, id)),
+      );
+      results.forEach((r, j) => {
+        if (r.status === "fulfilled") output[i + j] = r.value;
+      });
+    }
+    return output;
   }
 
   async name(): Promise<string> {

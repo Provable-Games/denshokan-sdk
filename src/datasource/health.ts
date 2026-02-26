@@ -121,7 +121,7 @@ export class ConnectionStatus {
         return { available: false, lastChecked: Date.now(), latency, error: `HTTP ${response.status}` };
       }
       const data = await response.json() as Record<string, unknown>;
-      const isAvailable = data.status === "healthy" || data.status === "degraded";
+      const isAvailable = data.status === "healthy" || data.status === "degraded" || data.status === "ok";
       return { available: isAvailable, lastChecked: Date.now(), latency, error: isAvailable ? null : `API status: ${data.status}` };
     } catch (error) {
       return { available: false, lastChecked: Date.now(), latency: null, error: error instanceof Error ? error.message : "Network error" };

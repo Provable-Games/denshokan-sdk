@@ -63,6 +63,19 @@ export function useTokenUri(tokenId: string | undefined): UseAsyncResult<string>
   );
 }
 
+export function useTokenUriBatch(
+  tokenIds: string[] | undefined,
+): UseAsyncResult<string[]> {
+  const client = useDenshokanClient();
+  const key = JSON.stringify(tokenIds);
+  return useAsync(
+    () => client.tokenUriBatch(tokenIds!),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [client, key],
+    !!tokenIds && tokenIds.length > 0,
+  );
+}
+
 export function useTokenMetadataBatch(
   tokenIds: string[] | undefined,
 ): UseAsyncResult<TokenMetadata[]> {
