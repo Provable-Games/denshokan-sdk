@@ -164,6 +164,7 @@ export function mapGameMetadata(raw: Record<string, unknown>): GameMetadata {
     rendererAddress: String(raw.renderer_address ?? ""),
     royaltyFraction: BigInt(String(raw.royalty_fraction ?? 0)),
     agentSkills: String(raw.agent_skills ?? ""),
+    createdAt: Number(raw.created_at ?? 0),
   };
 }
 

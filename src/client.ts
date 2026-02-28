@@ -348,7 +348,7 @@ export class DenshokanClient {
       rendererAddress: meta.rendererAddress || undefined,
       royaltyFraction: meta.royaltyFraction.toString(),
       agentSkills: meta.agentSkills || undefined,
-      createdAt: "",
+      createdAt: meta.createdAt ? new Date(meta.createdAt * 1000).toISOString() : "",
     };
   }
 
