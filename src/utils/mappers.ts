@@ -64,12 +64,14 @@ export function mapPaginatedTokens(raw: { data: Record<string, unknown>[]; total
 }
 
 export function mapGame(raw: Record<string, unknown>): Game {
+  const agentSkills = raw.agentSkills ?? raw.agent_skills;
   return {
     gameId: Number(raw.gameId ?? raw.game_id ?? 0),
     name: String(raw.name ?? ""),
     description: String(raw.description ?? ""),
     contractAddress: String(raw.contractAddress ?? raw.contract_address ?? ""),
     imageUrl: raw.image != null ? String(raw.image) : (raw.imageUrl != null ? String(raw.imageUrl) : undefined),
+    agentSkills: agentSkills != null ? String(agentSkills) : undefined,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
   };
 }
@@ -154,6 +156,7 @@ export function mapGameMetadata(raw: Record<string, unknown>): GameMetadata {
     clientUrl: String(raw.client_url ?? ""),
     rendererAddress: String(raw.renderer_address ?? ""),
     royaltyFraction: BigInt(String(raw.royalty_fraction ?? 0)),
+    agentSkills: String(raw.agent_skills ?? ""),
   };
 }
 

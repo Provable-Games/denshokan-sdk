@@ -32,6 +32,7 @@ export async function rpcGameMetadata(
       clientUrl: obj.client_url?.toString() ?? "",
       rendererAddress: toHexAddress(obj.renderer_address ?? 0),
       royaltyFraction: BigInt(obj.royalty_fraction?.toString() ?? "0"),
+      agentSkills: obj.agent_skills?.toString() ?? "",
     };
   }, contract.address);
 }

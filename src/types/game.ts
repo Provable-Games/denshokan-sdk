@@ -4,6 +4,7 @@ export interface Game {
   description: string;
   contractAddress: string;
   imageUrl?: string;
+  agentSkills?: string;
   createdAt: string;
 }
 

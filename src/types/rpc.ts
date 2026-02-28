@@ -16,6 +16,7 @@ export interface GameMetadata {
   clientUrl: string;
   rendererAddress: string;
   royaltyFraction: bigint;
+  agentSkills: string;
 }
 
 export interface MintParams {
