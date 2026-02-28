@@ -329,27 +329,7 @@ export class DenshokanClient {
     return apiGetGames(this.apiCtx, params);
   }
 
-  async getGame(gameAddress: string): Promise<Game> {
-    if (this.config.primarySource === "api") {
-      return withFallback(
-        () => apiGetGame(this.apiCtx, gameAddress),
-        async () => {
-          const resolved = await this.maybeResolveNumericId(gameAddress);
-          const gameId = await this.resolveGameId(resolved);
-          const contract = await this.getRegistryContract();
-          const meta = await rpcGameMetadata(contract, gameId);
-          return {
-            gameId: meta.gameId,
-            name: meta.name,
-            description: meta.description,
-            contractAddress: meta.contractAddress,
-            imageUrl: meta.image || undefined,
-            createdAt: "",
-          };
-        },
-        this.connectionStatus,
-      );
-    }
+  private async getGameViaRpc(gameAddress: string): Promise<Game> {
     const resolved = await this.maybeResolveNumericId(gameAddress);
     const gameId = await this.resolveGameId(resolved);
     const contract = await this.getRegistryContract();
@@ -360,8 +340,27 @@ export class DenshokanClient {
       description: meta.description,
       contractAddress: meta.contractAddress,
       imageUrl: meta.image || undefined,
+      developer: meta.developer || undefined,
+      publisher: meta.publisher || undefined,
+      genre: meta.genre || undefined,
+      color: meta.color || undefined,
+      clientUrl: meta.clientUrl || undefined,
+      rendererAddress: meta.rendererAddress || undefined,
+      royaltyFraction: meta.royaltyFraction.toString(),
+      agentSkills: meta.agentSkills || undefined,
       createdAt: "",
     };
+  }
+
+  async getGame(gameAddress: string): Promise<Game> {
+    if (this.config.primarySource === "api") {
+      return withFallback(
+        () => apiGetGame(this.apiCtx, gameAddress),
+        () => this.getGameViaRpc(gameAddress),
+        this.connectionStatus,
+      );
+    }
+    return this.getGameViaRpc(gameAddress);
   }
 
   async getGameStats(gameAddress: string): Promise<GameStats> {

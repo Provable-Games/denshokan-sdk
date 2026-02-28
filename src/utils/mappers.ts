@@ -71,6 +71,13 @@ export function mapGame(raw: Record<string, unknown>): Game {
     description: String(raw.description ?? ""),
     contractAddress: String(raw.contractAddress ?? raw.contract_address ?? ""),
     imageUrl: raw.image != null ? String(raw.image) : (raw.imageUrl != null ? String(raw.imageUrl) : undefined),
+    developer: raw.developer != null ? String(raw.developer) : undefined,
+    publisher: raw.publisher != null ? String(raw.publisher) : undefined,
+    genre: raw.genre != null ? String(raw.genre) : undefined,
+    color: raw.color != null ? String(raw.color) : undefined,
+    clientUrl: raw.clientUrl != null ? String(raw.clientUrl) : (raw.client_url != null ? String(raw.client_url) : undefined),
+    rendererAddress: raw.rendererAddress != null ? String(raw.rendererAddress) : (raw.renderer_address != null ? String(raw.renderer_address) : undefined),
+    royaltyFraction: raw.royaltyFraction != null ? String(raw.royaltyFraction) : (raw.royalty_fraction != null ? String(raw.royalty_fraction) : undefined),
     agentSkills: agentSkills != null ? String(agentSkills) : undefined,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
   };

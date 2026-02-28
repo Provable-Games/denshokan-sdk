@@ -4,6 +4,13 @@ export interface Game {
   description: string;
   contractAddress: string;
   imageUrl?: string;
+  developer?: string;
+  publisher?: string;
+  genre?: string;
+  color?: string;
+  clientUrl?: string;
+  rendererAddress?: string;
+  royaltyFraction?: string;
   agentSkills?: string;
   createdAt: string;
 }
