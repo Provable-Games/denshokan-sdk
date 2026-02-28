@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { PlayerStats, PlayerTokensParams } from "../types/player.js";
 import type { Token, PaginatedResult } from "../types/token.js";
 import { useDenshokanClient } from "./context.js";
@@ -35,6 +35,8 @@ export function usePlayerStats(address: string | undefined): UsePlayerStatsResul
 export interface UsePlayerTokensResult {
   data: PaginatedResult<Token> | null;
   isLoading: boolean;
+  /** True while token URIs are being fetched in the background */
+  isLoadingUri: boolean;
   error: Error | null;
   refetch: () => void;
 }
@@ -46,23 +48,62 @@ export function usePlayerTokens(
   const client = useDenshokanClient();
   const [data, setData] = useState<PaginatedResult<Token> | null>(null);
   const [isLoading, setIsLoading] = useState(!!address);
+  const [isLoadingUri, setIsLoadingUri] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const fetchIdRef = useRef(0);
 
-  const paramsKey = JSON.stringify(params);
+  const { includeUri, ...tokenParams } = params ?? {};
+  const paramsKey = JSON.stringify(tokenParams);
 
   const fetch = useCallback(() => {
     if (!address) return;
+    const id = ++fetchIdRef.current;
     setIsLoading(true);
     setError(null);
     client
-      .getPlayerTokens(address, params)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setIsLoading(false));
+      .getPlayerTokens(address, tokenParams as PlayerTokensParams)
+      .then((result) => {
+        if (id !== fetchIdRef.current) return;
+        setData(result);
+        setIsLoading(false);
+
+        // Enrich with URIs in the background
+        if (includeUri && result.data.length > 0) {
+          setIsLoadingUri(true);
+          const tokenIds = result.data.map((t) => t.tokenId);
+          client
+            .tokenUriBatch(tokenIds)
+            .then((uris) => {
+              if (id !== fetchIdRef.current) return;
+              setData((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      data: prev.data.map((token, i) => ({
+                        ...token,
+                        tokenUri: uris[i] || token.tokenUri,
+                      })),
+                    }
+                  : prev,
+              );
+            })
+            .catch(() => {
+              // URI fetch is best-effort
+            })
+            .finally(() => {
+              if (id === fetchIdRef.current) setIsLoadingUri(false);
+            });
+        }
+      })
+      .catch((err) => {
+        if (id !== fetchIdRef.current) return;
+        setError(err);
+        setIsLoading(false);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, address, paramsKey]);
+  }, [client, address, paramsKey, includeUri]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  return { data, isLoading, error, refetch: fetch };
+  return { data, isLoading, isLoadingUri, error, refetch: fetch };
 }
