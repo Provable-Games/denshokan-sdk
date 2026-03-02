@@ -1,7 +1,7 @@
 import type { FetchConfig } from "../types/config.js";
 import type { Token, TokenScoreEntry, PaginatedResult, TokensFilterParams } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
-import { mapPaginatedTokens, mapToken } from "../utils/mappers.js";
+import { mapPaginatedTokens, mapToken, mapTokenScoreEntries } from "../utils/mappers.js";
 
 interface ApiContext {
   baseUrl: string;
@@ -50,11 +50,11 @@ export async function apiGetTokenScores(
   signal?: AbortSignal,
 ): Promise<TokenScoreEntry[]> {
   const qs = buildQueryString({ limit });
-  const result = await apiFetch<{ data: TokenScoreEntry[] }>({
+  const result = await apiFetch<{ data: Record<string, unknown>[] }>({
     baseUrl: ctx.baseUrl,
     path: `/tokens/${tokenId}/scores${qs}`,
     signal,
     fetchConfig: ctx.fetchConfig,
   });
-  return result.data;
+  return mapTokenScoreEntries(result.data);
 }

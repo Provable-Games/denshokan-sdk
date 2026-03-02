@@ -1,4 +1,4 @@
-import type { Token, PaginatedResult, DecodedTokenId } from "../types/token.js";
+import type { Token, TokenScoreEntry, PaginatedResult, DecodedTokenId } from "../types/token.js";
 import { decodePackedTokenId } from "./token-id.js";
 import { toHexTokenId } from "./address.js";
 import type {
@@ -61,6 +61,18 @@ export function mapPaginatedTokens(raw: { data: Record<string, unknown>[]; total
     data: mapTokens(raw.data),
     total: raw.total,
   };
+}
+
+export function mapTokenScoreEntry(raw: Record<string, unknown>): TokenScoreEntry {
+  const ts = raw.blockTimestamp ?? raw.block_timestamp ?? raw.timestamp ?? null;
+  return {
+    score: Number(raw.score ?? 0),
+    timestamp: ts != null ? String(ts) : "",
+  };
+}
+
+export function mapTokenScoreEntries(raw: Record<string, unknown>[]): TokenScoreEntry[] {
+  return raw.map(mapTokenScoreEntry);
 }
 
 export function mapGame(raw: Record<string, unknown>): Game {
