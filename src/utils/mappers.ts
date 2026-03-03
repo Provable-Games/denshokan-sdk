@@ -52,7 +52,8 @@ export function mapToken(raw: Record<string, unknown>): Token {
     endDelay: Number(raw.endDelay ?? raw.end_delay ?? decoded?.endDelay ?? 0),
     hasContext: Boolean(raw.hasContext ?? raw.has_context ?? decoded?.hasContext),
     paymaster: Boolean(raw.paymaster ?? decoded?.paymaster),
-  };
+    tokenUri: raw.tokenUri ?? raw.token_uri ?? undefined,
+  } as Token;
 }
 
 export function mapTokens(raw: Record<string, unknown>[]): Token[] {

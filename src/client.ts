@@ -462,7 +462,7 @@ export class DenshokanClient {
     }
 
     // Enrich with token URIs if requested and not already populated (RPC path populates inline)
-    if (params?.includeUri && result.data.length > 0 && result.data[0].tokenUri === undefined) {
+    if (params?.includeUri && result.data.length > 0 && result.data.some(t => !t.tokenUri)) {
       const tokenIds = result.data.map((t) => t.tokenId);
       try {
         const uris = await this.tokenUriBatch(tokenIds);
@@ -812,7 +812,7 @@ export class DenshokanClient {
     }
 
     // Enrich with token URIs if requested and not already populated
-    if (params?.includeUri && result.data.length > 0 && result.data[0].tokenUri === undefined) {
+    if (params?.includeUri && result.data.length > 0 && result.data.some(t => !t.tokenUri)) {
       const tokenIds = result.data.map((t) => t.tokenId);
       try {
         const uris = await this.tokenUriBatch(tokenIds);
@@ -871,12 +871,60 @@ export class DenshokanClient {
   }
 
   async tokenUri(tokenId: string): Promise<string> {
+    if (this.config.primarySource === "api") {
+      return withFallback(
+        async () => {
+          const token = await apiGetToken(this.apiCtx, tokenId);
+          if (!token.tokenUri) throw new Error("tokenUri not available from API");
+          return token.tokenUri;
+        },
+        async () => {
+          const contract = await this.getDenshokanContract();
+          return rpcTokenUri(contract, tokenId);
+        },
+        this.connectionStatus,
+      );
+    }
     const contract = await this.getDenshokanContract();
     return rpcTokenUri(contract, tokenId);
   }
 
   async tokenUriBatch(tokenIds: string[]): Promise<string[]> {
     if (tokenIds.length === 0) return [];
+
+    if (this.config.primarySource === "api") {
+      const uriMap = new Map<string, string>();
+      const missingIds: string[] = [];
+
+      try {
+        const results = await Promise.allSettled(
+          tokenIds.map((id) => apiGetToken(this.apiCtx, id)),
+        );
+        results.forEach((result, i) => {
+          if (result.status === "fulfilled" && result.value.tokenUri) {
+            uriMap.set(tokenIds[i], result.value.tokenUri);
+          } else {
+            missingIds.push(tokenIds[i]);
+          }
+        });
+      } catch {
+        missingIds.push(...tokenIds);
+      }
+
+      if (missingIds.length > 0) {
+        const rpcUris = await this._fetchTokenUrisRpc(missingIds);
+        missingIds.forEach((id, i) => {
+          if (rpcUris[i]) uriMap.set(id, rpcUris[i]);
+        });
+      }
+
+      return tokenIds.map((id) => uriMap.get(id) ?? "");
+    }
+
+    return this._fetchTokenUrisRpc(tokenIds);
+  }
+
+  private async _fetchTokenUrisRpc(tokenIds: string[]): Promise<string[]> {
     const contract = await this.getDenshokanContract();
     const concurrency = this.config.fetch.tokenUriConcurrency;
 
