@@ -44,6 +44,9 @@ export function mapToken(raw: Record<string, unknown>): Token {
     soulbound: Boolean(raw.soulbound ?? decoded?.soulbound),
     isPlayable: Boolean(raw.isPlayable ?? raw.is_playable),
     gameAddress: String(raw.gameAddress ?? raw.game_address ?? ""),
+    clientUrl: raw.clientUrl != null ? String(raw.clientUrl) : (raw.client_url != null ? String(raw.client_url) : undefined),
+    rendererAddress: raw.rendererAddress != null ? String(raw.rendererAddress) : (raw.renderer_address != null ? String(raw.renderer_address) : undefined),
+    skillsAddress: raw.skillsAddress != null ? String(raw.skillsAddress) : (raw.skills_address != null ? String(raw.skills_address) : undefined),
     // New fields from decoded token ID
     startDelay: Number(raw.startDelay ?? raw.start_delay ?? decoded?.startDelay ?? 0),
     endDelay: Number(raw.endDelay ?? raw.end_delay ?? decoded?.endDelay ?? 0),
@@ -76,7 +79,7 @@ export function mapTokenScoreEntries(raw: Record<string, unknown>[]): TokenScore
 }
 
 export function mapGame(raw: Record<string, unknown>): Game {
-  const agentSkills = raw.agentSkills ?? raw.agent_skills;
+  const skillsAddress = raw.skillsAddress ?? raw.skills_address;
   return {
     gameId: Number(raw.gameId ?? raw.game_id ?? 0),
     name: String(raw.name ?? ""),
@@ -90,7 +93,7 @@ export function mapGame(raw: Record<string, unknown>): Game {
     clientUrl: raw.clientUrl != null ? String(raw.clientUrl) : (raw.client_url != null ? String(raw.client_url) : undefined),
     rendererAddress: raw.rendererAddress != null ? String(raw.rendererAddress) : (raw.renderer_address != null ? String(raw.renderer_address) : undefined),
     royaltyFraction: raw.royaltyFraction != null ? String(raw.royaltyFraction) : (raw.royalty_fraction != null ? String(raw.royalty_fraction) : undefined),
-    agentSkills: agentSkills != null ? String(agentSkills) : undefined,
+    skillsAddress: skillsAddress != null ? String(skillsAddress) : undefined,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
   };
 }
@@ -175,7 +178,7 @@ export function mapGameMetadata(raw: Record<string, unknown>): GameMetadata {
     clientUrl: String(raw.client_url ?? ""),
     rendererAddress: String(raw.renderer_address ?? ""),
     royaltyFraction: BigInt(String(raw.royalty_fraction ?? 0)),
-    agentSkills: String(raw.agent_skills ?? ""),
+    skillsAddress: String(raw.skills_address ?? ""),
     createdAt: Number(raw.created_at ?? 0),
   };
 }
@@ -183,7 +186,6 @@ export function mapGameMetadata(raw: Record<string, unknown>): GameMetadata {
 export function mapObjectiveDetails(raw: Record<string, unknown>): GameObjectiveDetails {
   return {
     id: Number(raw.objectiveId ?? raw.objective_id ?? raw.id ?? 0),
-    settingsId: Number(raw.settingsId ?? raw.settings_id ?? 0),
     gameAddress: String(raw.gameAddress ?? raw.game_address ?? ""),
     creatorAddress: String(raw.creatorAddress ?? raw.creator_address ?? ""),
     name: String(raw.name ?? ""),
@@ -224,6 +226,7 @@ export function mintParamsToSnake(p: MintParams): {
   settings_id: number;
   objective_id: number;
   player_name: string;
+  skills_address: string;
   soulbound: boolean;
   to: string;
   salt: number;
@@ -242,6 +245,7 @@ export function mintParamsToSnake(p: MintParams): {
     settings_id: p.settingsId,
     objective_id: p.objectiveId,
     player_name: p.playerName,
+    skills_address: p.skillsAddress ?? "",
     soulbound: p.soulbound,
     to: p.to,
     salt,
@@ -348,7 +352,6 @@ export function mapNewObjectiveEvent(raw: Record<string, unknown>): NewObjective
   return {
     gameAddress: String(raw.game_address ?? ""),
     objectiveId: Number(raw.objective_id ?? 0),
-    settingsId: Number(raw.settings_id ?? 0),
     creatorAddress: String(raw.creator_address ?? ""),
     objectiveData: raw.objective_data != null ? String(raw.objective_data) : null,
   };

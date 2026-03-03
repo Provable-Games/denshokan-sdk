@@ -133,7 +133,6 @@ export async function apiGetObjectives(
     const qs = buildQueryString({
       limit: params?.limit,
       offset: params?.offset,
-      settings_id: params?.settingsId,
     });
     const result = await apiFetch<{ data: Record<string, unknown>[]; total?: number }>({
       baseUrl: ctx.baseUrl,
@@ -148,7 +147,6 @@ export async function apiGetObjectives(
   const qs = buildQueryString({
     limit: params?.limit,
     offset: params?.offset,
-    settings_id: params?.settingsId,
   });
   const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,

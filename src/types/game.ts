@@ -11,7 +11,7 @@ export interface Game {
   clientUrl?: string;
   rendererAddress?: string;
   royaltyFraction?: string;
-  agentSkills?: string;
+  skillsAddress?: string;
   createdAt: string;
 }
 
@@ -30,7 +30,6 @@ export interface GameDetail {
 
 export interface GameObjectiveDetails {
   id: number;
-  settingsId: number;
   gameAddress: string;
   creatorAddress: string;
   name: string;
@@ -61,5 +60,4 @@ export interface ObjectivesParams {
   limit?: number;
   offset?: number;
   gameAddress?: string;
-  settingsId?: number;
 }

@@ -528,6 +528,7 @@ export async function rpcMintBatch(
     settings_id: number;
     objective_id: number;
     player_name: string;
+    skills_address: string;
     soulbound: boolean;
     to: string;
     salt: number;
@@ -547,6 +548,7 @@ export async function rpcMint(
     settings_id: number;
     objective_id: number;
     player_name: string;
+    skills_address: string;
     soulbound: boolean;
     to: string;
     salt: number;

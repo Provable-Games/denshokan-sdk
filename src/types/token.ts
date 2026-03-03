@@ -13,6 +13,9 @@ export interface Token {
   soulbound: boolean;
   isPlayable: boolean;
   gameAddress: string;
+  clientUrl?: string;
+  rendererAddress?: string;
+  skillsAddress?: string;
   startDelay: number;
   endDelay: number;
   hasContext: boolean;
