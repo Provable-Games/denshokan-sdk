@@ -44,6 +44,9 @@ export function mapToken(raw: Record<string, unknown>): Token {
     soulbound: Boolean(raw.soulbound ?? decoded?.soulbound),
     isPlayable: Boolean(raw.isPlayable ?? raw.is_playable),
     gameAddress: String(raw.gameAddress ?? raw.game_address ?? ""),
+    clientUrl: raw.clientUrl != null ? String(raw.clientUrl) : (raw.client_url != null ? String(raw.client_url) : undefined),
+    rendererAddress: raw.rendererAddress != null ? String(raw.rendererAddress) : (raw.renderer_address != null ? String(raw.renderer_address) : undefined),
+    skillsAddress: raw.skillsAddress != null ? String(raw.skillsAddress) : (raw.skills_address != null ? String(raw.skills_address) : undefined),
     // New fields from decoded token ID
     startDelay: Number(raw.startDelay ?? raw.start_delay ?? decoded?.startDelay ?? 0),
     endDelay: Number(raw.endDelay ?? raw.end_delay ?? decoded?.endDelay ?? 0),

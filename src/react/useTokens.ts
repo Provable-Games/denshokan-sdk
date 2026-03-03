@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { Token, PaginatedResult, TokensFilterParams, TokenScoreEntry } from "../types/token.js";
+import type {
+  Token,
+  PaginatedResult,
+  TokensFilterParams,
+  TokenScoreEntry,
+} from "../types/token.js";
 import { useDenshokanClient } from "./context.js";
 
 export interface UseTokensResult {
@@ -11,6 +16,7 @@ export interface UseTokensResult {
   refetch: () => void;
 }
 
+// TODO: store token uri into cache (e.g. React context or global variable) to avoid refetching on every mount of useTokens with includeUri
 export function useTokens(params?: TokensFilterParams): UseTokensResult {
   const client = useDenshokanClient();
   const [data, setData] = useState<PaginatedResult<Token> | null>(null);
@@ -69,7 +75,9 @@ export function useTokens(params?: TokensFilterParams): UseTokensResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, paramsKey, includeUri]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
 
   return { data, isLoading, isLoadingUri, error, refetch: fetch };
 }
@@ -98,7 +106,9 @@ export function useToken(tokenId: string | undefined): UseTokenResult {
       .finally(() => setIsLoading(false));
   }, [client, tokenId]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
 
   return { data, isLoading, error, refetch: fetch };
 }
@@ -130,7 +140,9 @@ export function useTokenScores(
       .finally(() => setIsLoading(false));
   }, [client, tokenId, limit]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
 
   return { data, isLoading, error, refetch: fetch };
 }
