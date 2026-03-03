@@ -347,7 +347,7 @@ export class DenshokanClient {
       clientUrl: meta.clientUrl || undefined,
       rendererAddress: meta.rendererAddress || undefined,
       royaltyFraction: meta.royaltyFraction.toString(),
-      agentSkills: meta.agentSkills || undefined,
+      skillsAddress: meta.skillsAddress || undefined,
       createdAt: meta.createdAt ? new Date(meta.createdAt * 1000).toISOString() : "",
     };
   }
@@ -442,7 +442,7 @@ export class DenshokanClient {
     const viewerContract = await this.getViewerContract();
     const offset = params?.offset ?? 0;
     const limit = params?.limit ?? 50;
-    return viewerAllObjectives(viewerContract, gameAddress, params?.settingsId ?? 0, offset, limit);
+    return viewerAllObjectives(viewerContract, gameAddress, offset, limit);
   }
 
   // =========================================================================

@@ -16,7 +16,7 @@ export interface GameMetadata {
   clientUrl: string;
   rendererAddress: string;
   royaltyFraction: bigint;
-  agentSkills: string;
+  skillsAddress: string;
   createdAt: number;
 }
 
@@ -25,6 +25,7 @@ export interface MintParams {
   settingsId: number;
   objectiveId: number;
   playerName: string;
+  skillsAddress?: string;
   soulbound: boolean;
   to: string;
   salt?: number;

@@ -68,7 +68,6 @@ export interface NewSettingEvent {
 export interface NewObjectiveEvent {
   gameAddress: string;
   objectiveId: number;
-  settingsId: number;
   creatorAddress: string;
   objectiveData: string | null;
 }

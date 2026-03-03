@@ -85,7 +85,7 @@
   },
   {
     "type": "struct",
-    "name": "denshokan_interfaces::filter::TokenFullState",
+    "name": "game_components_interfaces::structs::token::TokenFullState",
     "members": [
       {
         "name": "token_id",
@@ -1097,7 +1097,7 @@
         ],
         "outputs": [
           {
-            "type": "core::array::Array::<denshokan_interfaces::filter::TokenFullState>"
+            "type": "core::array::Array::<game_components_interfaces::structs::token::TokenFullState>"
           }
         ],
         "state_mutability": "view"
@@ -1131,11 +1131,11 @@
     "members": [
       {
         "name": "name",
-        "type": "core::byte_array::ByteArray"
+        "type": "core::felt252"
       },
       {
         "name": "value",
-        "type": "core::byte_array::ByteArray"
+        "type": "core::felt252"
       }
     ]
   },
@@ -1205,11 +1205,11 @@
     "members": [
       {
         "name": "name",
-        "type": "core::byte_array::ByteArray"
+        "type": "core::felt252"
       },
       {
         "name": "value",
-        "type": "core::byte_array::ByteArray"
+        "type": "core::felt252"
       }
     ]
   },
@@ -1251,10 +1251,6 @@
       },
       {
         "name": "objective_id",
-        "type": "core::integer::u32"
-      },
-      {
-        "name": "settings_id",
         "type": "core::integer::u32"
       },
       {
@@ -1312,10 +1308,6 @@
           {
             "name": "game_address",
             "type": "core::starknet::contract_address::ContractAddress"
-          },
-          {
-            "name": "settings_id",
-            "type": "core::integer::u32"
           },
           {
             "name": "offset",

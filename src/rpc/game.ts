@@ -240,7 +240,6 @@ function parseGameObjectiveDetails(raw: unknown, id: number): GameObjectiveDetai
   const obj = raw as Record<string, unknown>;
   return {
     id,
-    settingsId: Number(obj.settings_id ?? obj.settingsId ?? 0),
     gameAddress: "",
     creatorAddress: "",
     name: obj.name?.toString() ?? "",
