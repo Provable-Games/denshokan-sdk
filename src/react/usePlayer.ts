@@ -67,32 +67,40 @@ export function usePlayerTokens(
         setData(result);
         setIsLoading(false);
 
-        // Enrich with URIs in the background
+        // Enrich with URIs in the background — only for tokens missing a URI
         if (includeUri && result.data.length > 0) {
-          setIsLoadingUri(true);
-          const tokenIds = result.data.map((t) => t.tokenId);
-          client
-            .tokenUriBatch(tokenIds)
-            .then((uris) => {
-              if (id !== fetchIdRef.current) return;
-              setData((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      data: prev.data.map((token, i) => ({
-                        ...token,
-                        tokenUri: uris[i] || token.tokenUri,
-                      })),
-                    }
-                  : prev,
-              );
-            })
-            .catch(() => {
-              // URI fetch is best-effort
-            })
-            .finally(() => {
-              if (id === fetchIdRef.current) setIsLoadingUri(false);
-            });
+          const missingIndices = result.data
+            .map((t, i) => (!t.tokenUri ? i : -1))
+            .filter((i) => i >= 0);
+
+          if (missingIndices.length > 0) {
+            setIsLoadingUri(true);
+            const missingIds = missingIndices.map((i) => result.data[i].tokenId);
+            client
+              .tokenUriBatch(missingIds)
+              .then((uris) => {
+                if (id !== fetchIdRef.current) return;
+                setData((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        data: prev.data.map((token, i) => {
+                          const idx = missingIndices.indexOf(i);
+                          return idx >= 0 && uris[idx]
+                            ? { ...token, tokenUri: uris[idx] }
+                            : token;
+                        }),
+                      }
+                    : prev,
+                );
+              })
+              .catch(() => {
+                // URI fetch is best-effort
+              })
+              .finally(() => {
+                if (id === fetchIdRef.current) setIsLoadingUri(false);
+              });
+          }
         }
       })
       .catch((err) => {

@@ -811,17 +811,28 @@ export class DenshokanClient {
       });
     }
 
-    // Enrich with token URIs if requested and not already populated
-    if (params?.includeUri && result.data.length > 0 && result.data.some(t => !t.tokenUri)) {
-      const tokenIds = result.data.map((t) => t.tokenId);
-      try {
-        const uris = await this.tokenUriBatch(tokenIds);
-        result = {
-          ...result,
-          data: result.data.map((token, i) => ({ ...token, tokenUri: uris[i] })),
-        };
-      } catch {
-        // URI fetch is best-effort; don't fail the whole token load
+    // Enrich with token URIs if requested — only fetch for tokens missing a URI
+    if (params?.includeUri && result.data.length > 0) {
+      const missingIndices = result.data
+        .map((t, i) => (!t.tokenUri ? i : -1))
+        .filter((i) => i >= 0);
+
+      if (missingIndices.length > 0) {
+        const missingIds = missingIndices.map((i) => result.data[i].tokenId);
+        try {
+          const uris = await this.tokenUriBatch(missingIds);
+          result = {
+            ...result,
+            data: result.data.map((token, i) => {
+              const missingIdx = missingIndices.indexOf(i);
+              return missingIdx >= 0 && uris[missingIdx]
+                ? { ...token, tokenUri: uris[missingIdx] }
+                : token;
+            }),
+          };
+        } catch {
+          // URI fetch is best-effort; don't fail the whole token load
+        }
       }
     }
 
