@@ -914,16 +914,33 @@ export class DenshokanClient {
       const missingIds: string[] = [];
 
       try {
-        const results = await Promise.allSettled(
-          tokenIds.map((id) => apiGetToken(this.apiCtx, id)),
-        );
-        results.forEach((result, i) => {
-          if (result.status === "fulfilled" && result.value.tokenUri) {
-            uriMap.set(tokenIds[i], result.value.tokenUri);
-          } else {
-            missingIds.push(tokenIds[i]);
+        const concurrency = this.config.fetch.tokenUriConcurrency;
+        if (!concurrency || concurrency >= tokenIds.length) {
+          const results = await Promise.allSettled(
+            tokenIds.map((id) => apiGetToken(this.apiCtx, id)),
+          );
+          results.forEach((result, i) => {
+            if (result.status === "fulfilled" && result.value.tokenUri) {
+              uriMap.set(tokenIds[i], result.value.tokenUri);
+            } else {
+              missingIds.push(tokenIds[i]);
+            }
+          });
+        } else {
+          for (let i = 0; i < tokenIds.length; i += concurrency) {
+            const chunk = tokenIds.slice(i, i + concurrency);
+            const results = await Promise.allSettled(
+              chunk.map((id) => apiGetToken(this.apiCtx, id)),
+            );
+            results.forEach((result, j) => {
+              if (result.status === "fulfilled" && result.value.tokenUri) {
+                uriMap.set(tokenIds[i + j], result.value.tokenUri);
+              } else {
+                missingIds.push(tokenIds[i + j]);
+              }
+            });
           }
-        });
+        }
       } catch {
         missingIds.length = 0;
         missingIds.push(...tokenIds);
