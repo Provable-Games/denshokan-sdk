@@ -40,6 +40,7 @@ export function useTokens(params?: TokensFilterParams): UseTokensResult {
         setIsLoading(false);
 
         // Enrich with URIs in the background — only for tokens missing a URI
+        setIsLoadingUri(false);
         if (includeUri && result.data.length > 0) {
           const missingIndices = result.data
             .map((t, i) => (!t.tokenUri ? i : -1))

@@ -461,17 +461,28 @@ export class DenshokanClient {
       result = await this.buildTokensFromRpc(params);
     }
 
-    // Enrich with token URIs if requested and not already populated (RPC path populates inline)
-    if (params?.includeUri && result.data.length > 0 && result.data.some(t => !t.tokenUri)) {
-      const tokenIds = result.data.map((t) => t.tokenId);
-      try {
-        const uris = await this.tokenUriBatch(tokenIds);
-        result = {
-          ...result,
-          data: result.data.map((token, i) => ({ ...token, tokenUri: uris[i] })),
-        };
-      } catch {
-        // URI fetch is best-effort; return tokens without URIs
+    // Enrich with token URIs if requested — only fetch for tokens missing a URI
+    if (params?.includeUri && result.data.length > 0) {
+      const missingIndices = result.data
+        .map((t, i) => (!t.tokenUri ? i : -1))
+        .filter((i) => i >= 0);
+
+      if (missingIndices.length > 0) {
+        const missingIds = missingIndices.map((i) => result.data[i].tokenId);
+        try {
+          const uris = await this.tokenUriBatch(missingIds);
+          result = {
+            ...result,
+            data: result.data.map((token, i) => {
+              const missingIdx = missingIndices.indexOf(i);
+              return missingIdx >= 0 && uris[missingIdx]
+                ? { ...token, tokenUri: uris[missingIdx] }
+                : token;
+            }),
+          };
+        } catch {
+          // URI fetch is best-effort; don't fail the whole token load
+        }
       }
     }
 
@@ -882,19 +893,14 @@ export class DenshokanClient {
   }
 
   async tokenUri(tokenId: string): Promise<string> {
-    if (this.config.primarySource === "api") {
-      return withFallback(
-        async () => {
-          const token = await apiGetToken(this.apiCtx, tokenId);
-          if (!token.tokenUri) throw new Error("tokenUri not available from API");
-          return token.tokenUri;
-        },
-        async () => {
-          const contract = await this.getDenshokanContract();
-          return rpcTokenUri(contract, tokenId);
-        },
-        this.connectionStatus,
-      );
+    if (this.config.primarySource === "api" && this.connectionStatus.mode !== "rpc-fallback") {
+      try {
+        const token = await apiGetToken(this.apiCtx, tokenId);
+        if (token.tokenUri) return token.tokenUri;
+        // URI not indexed yet — fall through to RPC without marking API unhealthy
+      } catch {
+        // Actual API failure — fall through to RPC
+      }
     }
     const contract = await this.getDenshokanContract();
     return rpcTokenUri(contract, tokenId);
@@ -903,7 +909,7 @@ export class DenshokanClient {
   async tokenUriBatch(tokenIds: string[]): Promise<string[]> {
     if (tokenIds.length === 0) return [];
 
-    if (this.config.primarySource === "api") {
+    if (this.config.primarySource === "api" && this.connectionStatus.mode !== "rpc-fallback") {
       const uriMap = new Map<string, string>();
       const missingIds: string[] = [];
 
@@ -919,6 +925,7 @@ export class DenshokanClient {
           }
         });
       } catch {
+        missingIds.length = 0;
         missingIds.push(...tokenIds);
       }
 
