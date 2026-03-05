@@ -3,3 +3,18 @@ dist/
 *.tsbuildinfo
 .DS_Store
 bun.lock
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
