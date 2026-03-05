@@ -1,4 +1,4 @@
-import type { Contract } from "starknet";
+import { shortString, type Contract } from "starknet";
 import type { GameDetail, GameObjectiveDetails, GameSettingDetails } from "../types/game.js";
 import { RpcError } from "../errors/index.js";
 
@@ -220,8 +220,8 @@ export async function rpcSettingsDetail(
 function parseGameDetail(raw: unknown): GameDetail {
   const obj = raw as Record<string, unknown>;
   return {
-    key: obj.key?.toString() ?? "",
-    value: obj.value?.toString() ?? "",
+    key: shortString.decodeShortString(obj.name?.toString() ?? "0x0"),
+    value: shortString.decodeShortString(obj.value?.toString() ?? "0x0"),
   };
 }
 
@@ -229,8 +229,8 @@ function parseKeyValuePairs(raw: unknown[]): Record<string, string> {
   const result: Record<string, string> = {};
   for (const item of raw) {
     const obj = item as Record<string, unknown>;
-    const name = obj.name?.toString() ?? "";
-    const value = obj.value?.toString() ?? "";
+    const name = shortString.decodeShortString(obj.name?.toString() ?? "0x0");
+    const value = shortString.decodeShortString(obj.value?.toString() ?? "0x0");
     if (name) result[name] = value;
   }
   return result;
@@ -242,8 +242,8 @@ function parseGameObjectiveDetails(raw: unknown, id: number): GameObjectiveDetai
     id,
     gameAddress: "",
     creatorAddress: "",
-    name: obj.name?.toString() ?? "",
-    description: obj.description?.toString() ?? "",
+    name: shortString.decodeShortString(obj.name?.toString() ?? "0x0"),
+    description: shortString.decodeShortString(obj.description?.toString() ?? "0x0"),
     objectives: parseKeyValuePairs((obj.objectives as unknown[]) ?? []),
     blockNumber: "",
     createdAt: "",
@@ -256,8 +256,8 @@ function parseGameSettingDetails(raw: unknown, id: number): GameSettingDetails {
     id,
     gameAddress: "",
     creatorAddress: "",
-    name: obj.name?.toString() ?? "",
-    description: obj.description?.toString() ?? "",
+    name: shortString.decodeShortString(obj.name?.toString() ?? "0x0"),
+    description: shortString.decodeShortString(obj.description?.toString() ?? "0x0"),
     settings: parseKeyValuePairs((obj.settings as unknown[]) ?? []),
     blockNumber: "",
     createdAt: "",

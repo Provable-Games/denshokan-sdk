@@ -34,8 +34,8 @@
     "type": "struct",
     "name": "game_components_interfaces::structs::minigame::GameDetail",
     "members": [
-      { "name": "name", "type": "core::byte_array::ByteArray" },
-      { "name": "value", "type": "core::byte_array::ByteArray" }
+      { "name": "name", "type": "core::felt252" },
+      { "name": "value", "type": "core::felt252" }
     ]
   },
   {
@@ -49,8 +49,8 @@
     "type": "struct",
     "name": "game_components_interfaces::structs::minigame::GameObjective",
     "members": [
-      { "name": "name", "type": "core::byte_array::ByteArray" },
-      { "name": "value", "type": "core::byte_array::ByteArray" }
+      { "name": "name", "type": "core::felt252" },
+      { "name": "value", "type": "core::felt252" }
     ]
   },
   {
@@ -64,8 +64,8 @@
     "type": "struct",
     "name": "game_components_interfaces::structs::minigame::GameObjectiveDetails",
     "members": [
-      { "name": "name", "type": "core::byte_array::ByteArray" },
-      { "name": "description", "type": "core::byte_array::ByteArray" },
+      { "name": "name", "type": "core::felt252" },
+      { "name": "description", "type": "core::felt252" },
       { "name": "objectives", "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameObjective>" }
     ]
   },
@@ -73,8 +73,8 @@
     "type": "struct",
     "name": "game_components_interfaces::structs::minigame::GameSetting",
     "members": [
-      { "name": "name", "type": "core::byte_array::ByteArray" },
-      { "name": "value", "type": "core::byte_array::ByteArray" }
+      { "name": "name", "type": "core::felt252" },
+      { "name": "value", "type": "core::felt252" }
     ]
   },
   {
@@ -88,8 +88,8 @@
     "type": "struct",
     "name": "game_components_interfaces::structs::minigame::GameSettingDetails",
     "members": [
-      { "name": "name", "type": "core::byte_array::ByteArray" },
-      { "name": "description", "type": "core::byte_array::ByteArray" },
+      { "name": "name", "type": "core::felt252" },
+      { "name": "description", "type": "core::felt252" },
       { "name": "settings", "type": "core::array::Span::<game_components_interfaces::structs::minigame::GameSetting>" }
     ]
   },

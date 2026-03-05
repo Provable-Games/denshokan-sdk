@@ -145,7 +145,8 @@ Both `react` and `starknet` are external peer dependencies.
 | `getToken(id)` | Yes | Yes (metadata + owner) | Yes |
 | `getTokens(filter)` | Yes | — | API only |
 | `getPlayerTokens/Stats` | Yes | — | API only |
-| `balanceOf`, `ownerOf`, `tokenUri` | — | Yes | RPC only |
+| `balanceOf`, `ownerOf` | — | Yes | RPC only |
+| `tokenUri`, `tokenUriBatch` | Yes | Yes | Yes |
 | `tokenMetadataBatch` | — | Yes | RPC only |
 | `scoreBatch`, `gameOverBatch` | — | Yes | RPC only |
 

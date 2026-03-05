@@ -687,16 +687,6 @@ export async function viewerTokensFullStateBatch(
 // Batch token URI
 // =========================================================================
 
-export async function viewerTokenUriBatch(
-  contract: Contract,
-  tokenIds: string[],
-): Promise<string[]> {
-  return wrapRpcCall(async () => {
-    const result = await contract.call("token_uri_batch", [tokenIds]);
-    return (result as unknown[]).map((v) => String(v));
-  }, contract.address);
-}
-
 // =========================================================================
 // Settings & Objectives (via viewer contract)
 // =========================================================================

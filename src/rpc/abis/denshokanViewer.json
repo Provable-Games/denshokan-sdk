@@ -1101,22 +1101,6 @@
           }
         ],
         "state_mutability": "view"
-      },
-      {
-        "type": "function",
-        "name": "token_uri_batch",
-        "inputs": [
-          {
-            "name": "token_ids",
-            "type": "core::array::Array::<core::felt252>"
-          }
-        ],
-        "outputs": [
-          {
-            "type": "core::array::Array::<core::byte_array::ByteArray>"
-          }
-        ],
-        "state_mutability": "view"
       }
     ]
   },
