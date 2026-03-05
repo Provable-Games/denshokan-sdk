@@ -34,8 +34,8 @@
     "type": "struct",
     "name": "game_components_interfaces::structs::minigame::GameDetail",
     "members": [
-      { "name": "name", "type": "core::byte_array::ByteArray" },
-      { "name": "value", "type": "core::byte_array::ByteArray" }
+      { "name": "name", "type": "core::felt252" },
+      { "name": "value", "type": "core::felt252" }
     ]
   },
   {
