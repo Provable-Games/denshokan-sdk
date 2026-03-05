@@ -68,9 +68,6 @@ export { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
 export { normalizeAddress, toHexTokenId } from "./utils/address.js";
 export { MintSaltCounter, assignSalts, MAX_SALT } from "./utils/salt.js";
 
-// RPC: Viewer
-export { viewerTokenUriBatch } from "./rpc/viewer.js";
-
 // Datasource
 export { ConnectionStatus } from "./datasource/health.js";
 export type { ConnectionMode, ServiceStatus, ConnectionStatusState } from "./datasource/health.js";

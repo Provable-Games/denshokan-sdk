@@ -17,6 +17,7 @@ export interface GameMetadata {
   rendererAddress: string;
   royaltyFraction: bigint;
   skillsAddress: string;
+  version: number;
   createdAt: number;
 }
 

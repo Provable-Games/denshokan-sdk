@@ -12,6 +12,7 @@ export interface Game {
   rendererAddress?: string;
   royaltyFraction?: string;
   skillsAddress?: string;
+  version?: number;
   createdAt: string;
 }
 

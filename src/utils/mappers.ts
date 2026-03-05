@@ -95,6 +95,7 @@ export function mapGame(raw: Record<string, unknown>): Game {
     rendererAddress: raw.rendererAddress != null ? String(raw.rendererAddress) : (raw.renderer_address != null ? String(raw.renderer_address) : undefined),
     royaltyFraction: raw.royaltyFraction != null ? String(raw.royaltyFraction) : (raw.royalty_fraction != null ? String(raw.royalty_fraction) : undefined),
     skillsAddress: skillsAddress != null ? String(skillsAddress) : undefined,
+    version: raw.version != null ? Number(raw.version) : undefined,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
   };
 }
@@ -180,6 +181,7 @@ export function mapGameMetadata(raw: Record<string, unknown>): GameMetadata {
     rendererAddress: String(raw.renderer_address ?? ""),
     royaltyFraction: BigInt(String(raw.royalty_fraction ?? 0)),
     skillsAddress: String(raw.skills_address ?? ""),
+    version: Number(raw.version ?? 0),
     createdAt: Number(raw.created_at ?? 0),
   };
 }
