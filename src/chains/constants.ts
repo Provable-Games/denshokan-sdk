@@ -12,8 +12,8 @@ const CHAIN_CONFIGS: Record<string, ChainConfig> = {
   mainnet: {
     chainId: "SN_MAIN",
     rpcUrl: "https://api.cartridge.gg/x/starknet/mainnet",
-    apiUrl: "https://denshokan-api-production-a145.up.railway.app",
-    wsUrl: "wss://denshokan-api-production-a145.up.railway.app/ws",
+    apiUrl: "https://denshokan-api-production.up.railway.app",
+    wsUrl: "wss://denshokan-api-production.up.railway.app/ws",
     denshokanAddress:
       "0x0029ffae8b0c4626e06395a947800bc89e76422107f6adff8937a6e9a1e01f28",
     registryAddress:
@@ -24,8 +24,8 @@ const CHAIN_CONFIGS: Record<string, ChainConfig> = {
   sepolia: {
     chainId: "SN_SEPOLIA",
     rpcUrl: "https://api.cartridge.gg/x/starknet/sepolia",
-    apiUrl: "https://denshokan-api-production.up.railway.app",
-    wsUrl: "wss://denshokan-api-production.up.railway.app/ws",
+    apiUrl: "https://denshokan-api-sepolia.up.railway.app",
+    wsUrl: "wss://denshokan-api-sepolia.up.railway.app/ws",
     denshokanAddress:
       "0x0142712722e62a38f9c40fcc904610e1a14c70125876ecaaf25d803556734467",
     registryAddress:
