@@ -4,7 +4,7 @@
  */
 import { createDenshokanClient } from "../src/index.js";
 
-const API_URL = "https://denshokan-api-production.up.railway.app";
+const API_URL = "https://denshokan-api-sepolia.up.railway.app";
 const GAME_ADDRESS = "0x7bb56e8f0725cb2ad03037e4383f7d531c46e27e54be869589a8f0616fd9900";
 const TOKEN_ID = "295716915005308580247753821737990710711541918677276362081826313863169";
 const PLAYER_ADDRESS = "0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0";
