@@ -20,6 +20,14 @@ export interface Token {
   endDelay: number;
   hasContext: boolean;
   paymaster: boolean;
+  /** Context ID (e.g., tournament ID for tournament-minted tokens) */
+  contextId: number | null;
+  /** Structured context data from the minting contract */
+  contextData: {
+    name: string;
+    description: string;
+    context: Array<{ name: string; value: string }>;
+  } | null;
   /** Token URI (only populated when explicitly requested via includeUri option) */
   tokenUri?: string;
 }
@@ -113,6 +121,10 @@ export interface TokensFilterParams {
   playable?: boolean;
   /** Filter by game over status */
   gameOver?: boolean;
+  /** Filter by context ID (e.g., tournament ID for tournament-minted tokens) */
+  contextId?: number;
+  /** Filter by context name (e.g., "Budokan" for tournament tokens) */
+  contextName?: string;
   /** Filter by minted time range (unix timestamps) */
   mintedAfter?: number;
   mintedBefore?: number;

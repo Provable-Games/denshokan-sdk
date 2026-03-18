@@ -52,6 +52,12 @@ export function mapToken(raw: Record<string, unknown>): Token {
     endDelay: Number(raw.endDelay ?? raw.end_delay ?? decoded?.endDelay ?? 0),
     hasContext: Boolean(raw.hasContext ?? raw.has_context ?? decoded?.hasContext),
     paymaster: Boolean(raw.paymaster ?? decoded?.paymaster),
+    contextId: raw.contextId != null || raw.context_id != null
+      ? Number(raw.contextId ?? raw.context_id)
+      : null,
+    contextData: (raw.contextData ?? raw.context_data) != null
+      ? (raw.contextData ?? raw.context_data) as Token["contextData"]
+      : null,
     tokenUri: (raw.tokenUri ?? raw.token_uri) != null ? String(raw.tokenUri ?? raw.token_uri) : undefined,
   };
 }

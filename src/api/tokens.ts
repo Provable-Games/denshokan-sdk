@@ -17,6 +17,8 @@ export async function apiGetTokens(
     game_id: params?.gameId,
     owner: params?.owner,
     game_over: params?.gameOver,
+    context_id: params?.contextId,
+    context_name: params?.contextName,
     limit: params?.limit,
     offset: params?.offset,
   });
