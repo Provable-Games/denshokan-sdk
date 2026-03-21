@@ -46,6 +46,7 @@ export type {
   WSChannelPayloadMap,
   RoyaltyInfo,
   GameMetadata,
+  GameFeeInfo,
   MintParams,
   PlayerNameUpdate,
 } from "./types/index.js";

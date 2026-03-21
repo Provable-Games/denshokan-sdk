@@ -13,6 +13,8 @@ export interface Game {
   royaltyFraction?: string;
   skillsAddress?: string;
   version?: number;
+  license?: string;
+  gameFeeBps?: number;
   createdAt: string;
 }
 

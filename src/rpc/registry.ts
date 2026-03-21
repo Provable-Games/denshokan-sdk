@@ -1,5 +1,5 @@
 import type { Contract } from "starknet";
-import type { GameMetadata } from "../types/rpc.js";
+import type { GameMetadata, GameFeeInfo } from "../types/rpc.js";
 import { RpcError } from "../errors/index.js";
 import { toHexAddress } from "../utils/address.js";
 
@@ -46,5 +46,32 @@ export async function rpcGameAddress(
   return wrapRpcCall(async () => {
     const result = await contract.call("game_address_from_id", [gameId]);
     return toHexAddress(result);
+  }, contract.address);
+}
+
+export async function rpcGameFeeInfo(
+  contract: Contract,
+  gameId: number,
+): Promise<GameFeeInfo> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("game_fee_info", [gameId]);
+    const obj = result as Record<string, unknown>;
+    return {
+      license: obj.license?.toString() ?? "",
+      feeNumerator: Number(obj.fee_numerator ?? 0),
+    };
+  }, contract.address);
+}
+
+export async function rpcDefaultGameFeeInfo(
+  contract: Contract,
+): Promise<GameFeeInfo> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("default_game_fee_info", []);
+    const obj = result as Record<string, unknown>;
+    return {
+      license: obj.license?.toString() ?? "",
+      feeNumerator: Number(obj.fee_numerator ?? 0),
+    };
   }, contract.address);
 }

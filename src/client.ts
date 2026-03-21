@@ -25,6 +25,7 @@ import type {
   ActivityStats,
   RoyaltyInfo,
   GameMetadata,
+  GameFeeInfo,
   MintParams,
   PlayerNameUpdate,
   FilterResult,
@@ -96,7 +97,7 @@ import {
   rpcUpdatePlayerName,
   rpcUpdatePlayerNameBatch,
 } from "./rpc/denshokan.js";
-import { rpcGameMetadata, rpcGameAddress } from "./rpc/registry.js";
+import { rpcGameMetadata, rpcGameAddress, rpcGameFeeInfo, rpcDefaultGameFeeInfo } from "./rpc/registry.js";
 import {
   rpcScore,
   rpcScoreBatch,
@@ -1195,6 +1196,16 @@ export class DenshokanClient {
 
   async gameAddress(gameId: number): Promise<string> {
     return this.resolveGameAddress(gameId);
+  }
+
+  async gameFeeInfo(gameId: number): Promise<GameFeeInfo> {
+    const contract = await this.getRegistryContract();
+    return rpcGameFeeInfo(contract, gameId);
+  }
+
+  async defaultGameFeeInfo(): Promise<GameFeeInfo> {
+    const contract = await this.getRegistryContract();
+    return rpcDefaultGameFeeInfo(contract);
   }
 
   // =========================================================================

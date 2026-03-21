@@ -37,4 +37,4 @@ export type {
   NewObjectiveEvent,
   WSChannelPayloadMap,
 } from "./websocket.js";
-export type { RoyaltyInfo, GameMetadata, MintParams, PlayerNameUpdate, FilterResult, TokenFullState, Lifecycle } from "./rpc.js";
+export type { RoyaltyInfo, GameMetadata, GameFeeInfo, MintParams, PlayerNameUpdate, FilterResult, TokenFullState, Lifecycle } from "./rpc.js";
