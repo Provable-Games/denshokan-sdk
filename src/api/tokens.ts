@@ -1,5 +1,5 @@
 import type { FetchConfig } from "../types/config.js";
-import type { Token, TokenScoreEntry, PaginatedResult, TokensFilterParams } from "../types/token.js";
+import type { Token, TokenScoreEntry, PaginatedResult, TokensQueryParams } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
 import { mapPaginatedTokens, mapToken, mapTokenScoreEntries } from "../utils/mappers.js";
 
@@ -10,7 +10,7 @@ interface ApiContext {
 
 export async function apiGetTokens(
   ctx: ApiContext,
-  params?: TokensFilterParams,
+  params?: TokensQueryParams,
   signal?: AbortSignal,
 ): Promise<PaginatedResult<Token>> {
   const qs = buildQueryString({
@@ -19,6 +19,9 @@ export async function apiGetTokens(
     game_over: params?.gameOver,
     context_id: params?.contextId,
     context_name: params?.contextName,
+    minter_address: params?.minterAddress,
+    sort_by: params?.sort?.field,
+    sort_order: params?.sort?.direction,
     limit: params?.limit,
     offset: params?.offset,
   });

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type {
   Token,
   PaginatedResult,
-  TokensFilterParams,
+  TokensQueryParams,
   TokenScoreEntry,
 } from "../types/token.js";
 import { useDenshokanClient } from "./context.js";
@@ -17,7 +17,7 @@ export interface UseTokensResult {
 }
 
 // TODO: store token uri into cache (e.g. React context or global variable) to avoid refetching on every mount of useTokens with includeUri
-export function useTokens(params?: TokensFilterParams): UseTokensResult {
+export function useTokens(params?: TokensQueryParams): UseTokensResult {
   const client = useDenshokanClient();
   const [data, setData] = useState<PaginatedResult<Token> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,14 +26,18 @@ export function useTokens(params?: TokensFilterParams): UseTokensResult {
   const fetchIdRef = useRef(0);
 
   const { includeUri, ...filterParams } = params ?? {};
-  const paramsKey = JSON.stringify(filterParams);
+  const paramsKey = params ? JSON.stringify(filterParams) : null;
 
   const fetch = useCallback(() => {
+    if (paramsKey === null) {
+      setIsLoading(false);
+      return;
+    }
     const id = ++fetchIdRef.current;
     setIsLoading(true);
     setError(null);
     client
-      .getTokens(filterParams as TokensFilterParams)
+      .getTokens(filterParams as TokensQueryParams)
       .then((result) => {
         if (id !== fetchIdRef.current) return;
         setData(result);

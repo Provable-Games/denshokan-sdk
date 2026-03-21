@@ -14,7 +14,7 @@ import type {
   TokenMutableState,
   TokenScoreEntry,
   PaginatedResult,
-  TokensFilterParams,
+  TokensQueryParams,
   DecodedTokenId,
   CoreToken,
   PlayerStats,
@@ -449,7 +449,7 @@ export class DenshokanClient {
   // Tokens (API, with RPC fallback where noted)
   // =========================================================================
 
-  async getTokens(params?: TokensFilterParams): Promise<PaginatedResult<Token>> {
+  async getTokens(params?: TokensQueryParams): Promise<PaginatedResult<Token>> {
     let result: PaginatedResult<Token>;
     if (this.config.primarySource === "api") {
       result = await withFallback(
@@ -538,10 +538,13 @@ export class DenshokanClient {
       playerName,
       isPlayable,
       gameAddress,
+      contextId: null,
+      contextData: null,
+      minterAddress: null,
     };
   }
 
-  private async buildTokensFromRpc(params?: TokensFilterParams): Promise<PaginatedResult<Token>> {
+  private async buildTokensFromRpc(params?: TokensQueryParams): Promise<PaginatedResult<Token>> {
     const {
       gameId,
       gameAddress: providedGameAddress,
@@ -734,9 +737,20 @@ export class DenshokanClient {
     }
 
     // Build full Token objects for the results using batch method (1 RPC call for all tokens)
-    const tokens = tokenIds.length > 0
+    let tokens = tokenIds.length > 0
       ? await this.buildTokensFromFullStateBatch(viewerContract, tokenIds, includeUri)
       : [];
+
+    // Post-filter by contextId: in RPC mode contextId is not resolved, so
+    // at minimum filter out tokens without context (creator tokens).
+    // When the API is available it handles this server-side.
+    const { contextId } = params ?? {};
+    if (contextId !== undefined) {
+      tokens = tokens.filter((t) =>
+        t.contextId !== null ? t.contextId === contextId : t.hasContext,
+      );
+      total = tokens.length;
+    }
 
     return { data: tokens, total };
   }
@@ -788,6 +802,9 @@ export class DenshokanClient {
         playerName: state.playerName,
         isPlayable: state.isPlayable,
         gameAddress: state.gameAddress,
+        contextId: null,
+        contextData: null,
+        minterAddress: null,
         ...(uris ? { tokenUri: uris[i] } : {}),
       };
     });

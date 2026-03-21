@@ -38,6 +38,7 @@ export function mapToken(raw: Record<string, unknown>): Token {
     gameOver: Boolean(raw.gameOver ?? raw.game_over),
     playerName: String(raw.playerName ?? raw.player_name ?? ""),
     mintedBy: Number(raw.mintedBy ?? raw.minted_by ?? (decoded ? Number(decoded.mintedBy) : 0)),
+    minterAddress: (raw.minterAddress ?? raw.minter_address) != null ? String(raw.minterAddress ?? raw.minter_address) : null,
     mintedAt: String(raw.mintedAt ?? raw.minted_at ?? decoded?.mintedAt.toISOString() ?? ""),
     settingsId: Number(raw.settingsId ?? raw.settings_id ?? decoded?.settingsId ?? 0),
     objectiveId: Number(raw.objectiveId ?? raw.objective_id ?? decoded?.objectiveId ?? 0),

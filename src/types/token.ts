@@ -7,6 +7,8 @@ export interface Token {
   playerName: string;
   /** 40-bit truncated minter address from token ID (not full address) */
   mintedBy: number;
+  /** Full minter contract address (resolved from minters registry) */
+  minterAddress: string | null;
   mintedAt: string;
   settingsId: number;
   objectiveId: number;
@@ -128,9 +130,14 @@ export interface TokensFilterParams {
   /** Filter by minted time range (unix timestamps) */
   mintedAfter?: number;
   mintedBefore?: number;
+  /** Sort by field and direction */
+  sort?: { field: string; direction: "asc" | "desc" };
   /** Pagination */
   limit?: number;
   offset?: number;
+}
+
+export interface TokensQueryParams extends TokensFilterParams {
   /** When true, fetches token URIs via batch RPC and populates Token.tokenUri */
   includeUri?: boolean;
 }

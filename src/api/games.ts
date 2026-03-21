@@ -26,10 +26,10 @@ interface ApiContext {
 
 export async function apiGetGames(
   ctx: ApiContext,
-  params?: { limit?: number; offset?: number },
+  params?: { sort?: { field: string; direction: "asc" | "desc" }; limit?: number; offset?: number },
   signal?: AbortSignal,
 ): Promise<PaginatedResult<Game>> {
-  const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
+  const qs = buildQueryString({ sort_by: params?.sort?.field, sort_order: params?.sort?.direction, limit: params?.limit, offset: params?.offset });
   const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,
     path: `/games${qs}`,
@@ -79,7 +79,7 @@ export async function apiGetSettings(
 ): Promise<PaginatedResult<GameSettingDetails>> {
   if (params?.gameAddress) {
     // Per-game settings via /games/:address/settings
-    const qs = buildQueryString({ limit: params?.limit, offset: params?.offset });
+    const qs = buildQueryString({ sort_by: params?.sort?.field, sort_order: params?.sort?.direction, limit: params?.limit, offset: params?.offset });
     const result = await apiFetch<{ data: Record<string, unknown>[]; total?: number }>({
       baseUrl: ctx.baseUrl,
       path: `/games/${params.gameAddress}/settings${qs}`,
@@ -91,6 +91,8 @@ export async function apiGetSettings(
   }
   // Global settings via /settings
   const qs = buildQueryString({
+    sort_by: params?.sort?.field,
+    sort_order: params?.sort?.direction,
     limit: params?.limit,
     offset: params?.offset,
   });
@@ -131,6 +133,8 @@ export async function apiGetObjectives(
   if (params?.gameAddress) {
     // Per-game objectives via /games/:address/objectives
     const qs = buildQueryString({
+      sort_by: params?.sort?.field,
+      sort_order: params?.sort?.direction,
       limit: params?.limit,
       offset: params?.offset,
     });
@@ -145,6 +149,7 @@ export async function apiGetObjectives(
   }
   // Global objectives via /objectives
   const qs = buildQueryString({
+    sort: params?.sort,
     limit: params?.limit,
     offset: params?.offset,
   });

@@ -17,6 +17,8 @@ export async function apiGetPlayerTokens(
 ): Promise<PaginatedResult<Token>> {
   const qs = buildQueryString({
     game_id: params?.gameId,
+    sort_by: params?.sort?.field,
+    sort_order: params?.sort?.direction,
     limit: params?.limit,
     offset: params?.offset,
   });

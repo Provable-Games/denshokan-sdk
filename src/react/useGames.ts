@@ -4,6 +4,7 @@ import type { PaginatedResult } from "../types/token.js";
 import { useDenshokanClient } from "./context.js";
 
 export interface GamesParams {
+  sort?: { field: string; direction: "asc" | "desc" };
   limit?: number;
   offset?: number;
 }

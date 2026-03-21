@@ -17,6 +17,7 @@ export type {
   TokenScoreEntry,
   PaginatedResult,
   TokensFilterParams,
+  TokensQueryParams,
   Game,
   GameStats,
   GameDetail,

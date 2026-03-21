@@ -52,12 +52,14 @@ export interface GameSettingDetails {
 }
 
 export interface SettingsParams {
+  sort?: { field: string; direction: "asc" | "desc" };
   limit?: number;
   offset?: number;
   gameAddress?: string;
 }
 
 export interface ObjectivesParams {
+  sort?: { field: string; direction: "asc" | "desc" };
   limit?: number;
   offset?: number;
   gameAddress?: string;

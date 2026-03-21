@@ -8,6 +8,7 @@ export type {
   TokenScoreEntry,
   PaginatedResult,
   TokensFilterParams,
+  TokensQueryParams,
 } from "./token.js";
 export type {
   Game,
