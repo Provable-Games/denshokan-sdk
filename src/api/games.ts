@@ -149,7 +149,8 @@ export async function apiGetObjectives(
   }
   // Global objectives via /objectives
   const qs = buildQueryString({
-    sort: params?.sort,
+    sort_by: params?.sort?.field,
+    sort_order: params?.sort?.direction,
     limit: params?.limit,
     offset: params?.offset,
   });
