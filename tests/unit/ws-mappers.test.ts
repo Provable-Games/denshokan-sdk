@@ -26,6 +26,10 @@ describe("mapScoreEvent", () => {
       score: 500,
       ownerAddress: "0xabc",
       playerName: "Alice",
+      contextId: null,
+      mintedBy: null,
+      settingsId: null,
+      objectiveId: null,
     });
   });
 
@@ -37,7 +41,30 @@ describe("mapScoreEvent", () => {
       score: 0,
       ownerAddress: "",
       playerName: "",
+      contextId: null,
+      mintedBy: null,
+      settingsId: null,
+      objectiveId: null,
     });
+  });
+
+  it("should map filter fields when present", () => {
+    const raw = {
+      token_id: "0x123",
+      game_id: 1,
+      score: 500,
+      owner_address: "0xabc",
+      player_name: "Alice",
+      context_id: 42,
+      minted_by: 12345,
+      settings_id: 3,
+      objective_id: 7,
+    };
+    const result = mapScoreEvent(raw);
+    expect(result.contextId).toBe(42);
+    expect(result.mintedBy).toBe(12345);
+    expect(result.settingsId).toBe(3);
+    expect(result.objectiveId).toBe(7);
   });
 });
 
@@ -58,7 +85,31 @@ describe("mapGameOverEvent", () => {
       ownerAddress: "0xdef",
       playerName: "Bob",
       completedAllObjectives: true,
+      contextId: null,
+      mintedBy: null,
+      settingsId: null,
+      objectiveId: null,
     });
+  });
+
+  it("should map filter fields when present", () => {
+    const raw = {
+      token_id: "0x456",
+      game_id: 2,
+      score: 1000,
+      owner_address: "0xdef",
+      player_name: "Bob",
+      completed_all_objectives: true,
+      context_id: 10,
+      minted_by: 9999,
+      settings_id: 2,
+      objective_id: 5,
+    };
+    const result = mapGameOverEvent(raw);
+    expect(result.contextId).toBe(10);
+    expect(result.mintedBy).toBe(9999);
+    expect(result.settingsId).toBe(2);
+    expect(result.objectiveId).toBe(5);
   });
 
   it("should default completedAllObjectives to false", () => {
@@ -83,6 +134,8 @@ describe("mapMintEvent", () => {
       ownerAddress: "0xfed",
       mintedBy: "0xcba",
       settingsId: 5,
+      contextId: null,
+      objectiveId: null,
     });
   });
 
@@ -94,7 +147,24 @@ describe("mapMintEvent", () => {
       ownerAddress: "",
       mintedBy: "",
       settingsId: 0,
+      contextId: null,
+      objectiveId: null,
     });
+  });
+
+  it("should map filter fields when present", () => {
+    const raw = {
+      token_id: "0x789",
+      game_id: 3,
+      owner_address: "0xfed",
+      minted_by: "0xcba",
+      settings_id: 5,
+      context_id: 99,
+      objective_id: 11,
+    };
+    const result = mapMintEvent(raw);
+    expect(result.contextId).toBe(99);
+    expect(result.objectiveId).toBe(11);
   });
 });
 

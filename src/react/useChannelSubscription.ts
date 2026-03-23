@@ -5,6 +5,11 @@ import { useDenshokanClient } from "./context.js";
 
 export interface UseChannelOptions<C extends WSChannel> {
   gameIds?: number[];
+  contextIds?: number[];
+  minterAddresses?: string[];
+  owners?: string[];
+  settingsIds?: number[];
+  objectiveIds?: number[];
   bufferSize?: number;
   enabled?: boolean;
   onEvent?: (event: WSChannelPayloadMap[C]) => void;
@@ -21,7 +26,7 @@ function useChannelSubscription<C extends WSChannel>(
   channel: C,
   options: UseChannelOptions<C> = {},
 ): UseChannelResult<C> {
-  const { gameIds, bufferSize = 50, enabled = true, onEvent } = options;
+  const { gameIds, contextIds, minterAddresses, owners, settingsIds, objectiveIds, bufferSize = 50, enabled = true, onEvent } = options;
   const client = useDenshokanClient();
 
   const [lastEvent, setLastEvent] = useState<WSChannelPayloadMap[C] | null>(null);
@@ -54,7 +59,7 @@ function useChannelSubscription<C extends WSChannel>(
     client.connect();
 
     const unsubscribe = client.subscribe(
-      { channels: [channel], gameIds },
+      { channels: [channel], gameIds, contextIds, minterAddresses, owners, settingsIds, objectiveIds },
       (message) => {
         if (message.channel !== channel) return;
 
@@ -75,7 +80,7 @@ function useChannelSubscription<C extends WSChannel>(
 
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, channel, enabled, JSON.stringify(gameIds)]);
+  }, [client, channel, enabled, JSON.stringify(gameIds), JSON.stringify(contextIds), JSON.stringify(minterAddresses), JSON.stringify(owners), JSON.stringify(settingsIds), JSON.stringify(objectiveIds)]);
 
   return { lastEvent, events, isConnected, clear };
 }

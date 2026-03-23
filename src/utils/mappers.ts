@@ -302,6 +302,10 @@ export function mapScoreEvent(raw: Record<string, unknown>): ScoreEvent {
     score: Number(raw.score ?? 0),
     ownerAddress: String(raw.owner_address ?? ""),
     playerName: String(raw.player_name ?? ""),
+    contextId: raw.context_id != null ? Number(raw.context_id) : null,
+    mintedBy: raw.minted_by != null ? Number(raw.minted_by) : null,
+    settingsId: raw.settings_id != null ? Number(raw.settings_id) : null,
+    objectiveId: raw.objective_id != null ? Number(raw.objective_id) : null,
   };
 }
 
@@ -313,6 +317,10 @@ export function mapGameOverEvent(raw: Record<string, unknown>): GameOverEvent {
     ownerAddress: String(raw.owner_address ?? ""),
     playerName: String(raw.player_name ?? ""),
     completedAllObjectives: Boolean(raw.completed_all_objectives),
+    contextId: raw.context_id != null ? Number(raw.context_id) : null,
+    mintedBy: raw.minted_by != null ? Number(raw.minted_by) : null,
+    settingsId: raw.settings_id != null ? Number(raw.settings_id) : null,
+    objectiveId: raw.objective_id != null ? Number(raw.objective_id) : null,
   };
 }
 
@@ -323,6 +331,8 @@ export function mapMintEvent(raw: Record<string, unknown>): MintEvent {
     ownerAddress: String(raw.owner_address ?? ""),
     mintedBy: String(raw.minted_by ?? ""),
     settingsId: Number(raw.settings_id ?? 0),
+    contextId: raw.context_id != null ? Number(raw.context_id) : null,
+    objectiveId: raw.objective_id != null ? Number(raw.objective_id) : null,
   };
 }
 

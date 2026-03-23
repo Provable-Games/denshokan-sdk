@@ -129,6 +129,11 @@ export class WebSocketManager {
       type: "subscribe",
       channels: options.channels,
       gameIds: options.gameIds?.map(String),
+      contextIds: options.contextIds,
+      minterAddresses: options.minterAddresses,
+      owners: options.owners,
+      settingsIds: options.settingsIds,
+      objectiveIds: options.objectiveIds,
     }));
   }
 
