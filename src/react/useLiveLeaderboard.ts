@@ -195,7 +195,16 @@ export function useLiveLeaderboard(
     [scheduleFlush, scheduleRefetch, wouldEnterPage],
   );
 
-  useScoreUpdates({ enabled: enabled && liveScores, onEvent: onScoreEvent });
+  // Derive WS filters from TokensFilterParams for server-side event filtering
+  const wsGameIds = filterParams.gameId != null ? [filterParams.gameId] : undefined;
+  const wsContextIds = filterParams.contextId != null ? [filterParams.contextId] : undefined;
+  const wsMinterAddresses = filterParams.minterAddress != null ? [filterParams.minterAddress] : undefined;
+  const wsOwners = filterParams.owner != null ? [filterParams.owner] : undefined;
+  const wsSettingsIds = filterParams.settingsId != null ? [filterParams.settingsId] : undefined;
+  const wsObjectiveIds = filterParams.objectiveId != null ? [filterParams.objectiveId] : undefined;
+  const wsFilters = { gameIds: wsGameIds, contextIds: wsContextIds, minterAddresses: wsMinterAddresses, owners: wsOwners, settingsIds: wsSettingsIds, objectiveIds: wsObjectiveIds };
+
+  useScoreUpdates({ enabled: enabled && liveScores, onEvent: onScoreEvent, ...wsFilters });
 
   // Game over updates
   const onGameOverEvent = useCallback(
@@ -217,14 +226,14 @@ export function useLiveLeaderboard(
     [scheduleFlush, scheduleRefetch, wouldEnterPage],
   );
 
-  useGameOverEvents({ enabled: enabled && liveGameOver, onEvent: onGameOverEvent });
+  useGameOverEvents({ enabled: enabled && liveGameOver, onEvent: onGameOverEvent, ...wsFilters });
 
   // Mint events → debounced refetch (new token, total count changed)
   const onMintEvent = useCallback(() => {
     scheduleRefetch();
   }, [scheduleRefetch]);
 
-  useMintEvents({ enabled: enabled && liveMints, onEvent: onMintEvent });
+  useMintEvents({ enabled: enabled && liveMints, onEvent: onMintEvent, ...wsFilters });
 
   const total = httpResult?.total ?? 0;
 

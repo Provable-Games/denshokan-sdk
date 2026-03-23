@@ -9,6 +9,11 @@ export interface WSMessage {
 export interface WSSubscribeOptions {
   channels: WSChannel[];
   gameIds?: number[];
+  contextIds?: number[];
+  minterAddresses?: string[];
+  owners?: string[];
+  settingsIds?: number[];
+  objectiveIds?: number[];
 }
 
 export type WSEventHandler = (message: WSMessage) => void;
@@ -21,6 +26,10 @@ export interface ScoreEvent {
   score: number;
   ownerAddress: string;
   playerName: string;
+  contextId: number | null;
+  mintedBy: number | null;
+  settingsId: number | null;
+  objectiveId: number | null;
 }
 
 export interface GameOverEvent {
@@ -30,6 +39,10 @@ export interface GameOverEvent {
   ownerAddress: string;
   playerName: string;
   completedAllObjectives: boolean;
+  contextId: number | null;
+  mintedBy: number | null;
+  settingsId: number | null;
+  objectiveId: number | null;
 }
 
 export interface MintEvent {
@@ -38,6 +51,8 @@ export interface MintEvent {
   ownerAddress: string;
   mintedBy: string;
   settingsId: number;
+  contextId: number | null;
+  objectiveId: number | null;
 }
 
 export type TokenUpdateEvent =
