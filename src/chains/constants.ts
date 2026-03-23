@@ -15,11 +15,11 @@ const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     apiUrl: "https://denshokan-api-production.up.railway.app",
     wsUrl: "wss://denshokan-api-production.up.railway.app/ws",
     denshokanAddress:
-      "0x0029ffae8b0c4626e06395a947800bc89e76422107f6adff8937a6e9a1e01f28",
+      "0x04a8ca498b599a626756545c657f918905eb877f331801a02067d280d0312888",
     registryAddress:
-      "0x05b4a2ed39dfb28a33c2dd73cbedf02091a31dccb9ed4ed19201e3c255865851",
+      "0x03a7585714a5c2be8fd4333ff2ce7ef2a00d344fd319aa625693cf9af4449d9c",
     viewerAddress:
-      "0x01825fa210dc2abd02fa03d4eb37dabf1d6b69e9c4cd471ee402fa0fcc78611b",
+      "0x079d33700028250eb89ad937fc3b633818e22fac3b6f5f6388448ea256737ac7",
   },
   sepolia: {
     chainId: "SN_SEPOLIA",
