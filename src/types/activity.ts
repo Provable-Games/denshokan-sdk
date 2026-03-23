@@ -10,6 +10,7 @@ export interface ActivityEvent {
 
 export interface ActivityParams {
   type?: string;
+  sort?: { field: string; direction: "asc" | "desc" };
   limit?: number;
   offset?: number;
 }

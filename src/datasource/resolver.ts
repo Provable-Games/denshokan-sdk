@@ -1,5 +1,17 @@
 import type { ConnectionStatus } from "./health.js";
-import { DataSourceError } from "../errors/index.js";
+import { ApiError, DataSourceError } from "../errors/index.js";
+
+/**
+ * Check if an error is a client-side error (4xx) that should NOT trigger
+ * fallback or mark the API as unavailable. A 404 means the API is working
+ * fine — the specific resource just doesn't exist.
+ */
+function isClientError(error: unknown): boolean {
+  return error instanceof ApiError
+    && error.statusCode >= 400
+    && error.statusCode < 500
+    && error.statusCode !== 429;
+}
 
 export async function withFallback<T>(
   primary: () => Promise<T>,
@@ -28,7 +40,11 @@ export async function withFallback<T>(
     return await primary();
   } catch (error) {
     primaryError = error as Error;
-    // Report failure to health service
+    // Only mark API unavailable for server/network errors, not 4xx client errors.
+    // A 404 means the API is healthy — the resource just doesn't exist.
+    if (isClientError(error)) {
+      throw primaryError;
+    }
     if (health) {
       health.markApiUnavailable(primaryError.message);
     }

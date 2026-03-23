@@ -9,6 +9,7 @@ export interface PlayerStats {
 
 export interface PlayerTokensParams {
   gameId?: number;
+  sort?: { field: string; direction: "asc" | "desc" };
   limit?: number;
   offset?: number;
   /** When true, fetches token URIs via batch RPC and populates Token.tokenUri */

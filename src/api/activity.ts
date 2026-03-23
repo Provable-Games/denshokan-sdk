@@ -16,6 +16,8 @@ export async function apiGetActivity(
 ): Promise<PaginatedResult<ActivityEvent>> {
   const qs = buildQueryString({
     type: params?.type,
+    sort_by: params?.sort?.field,
+    sort_order: params?.sort?.direction,
     limit: params?.limit,
     offset: params?.offset,
   });

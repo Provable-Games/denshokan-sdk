@@ -17,6 +17,7 @@ export type {
   TokenScoreEntry,
   PaginatedResult,
   TokensFilterParams,
+  TokensQueryParams,
   Game,
   GameStats,
   GameDetail,
@@ -45,6 +46,7 @@ export type {
   WSChannelPayloadMap,
   RoyaltyInfo,
   GameMetadata,
+  GameFeeInfo,
   MintParams,
   PlayerNameUpdate,
 } from "./types/index.js";

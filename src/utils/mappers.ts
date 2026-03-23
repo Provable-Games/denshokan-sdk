@@ -10,7 +10,7 @@ import type {
 import type { PlayerStats } from "../types/player.js";
 import type { Minter } from "../types/minter.js";
 import type { ActivityEvent, ActivityStats } from "../types/activity.js";
-import type { GameMetadata, MintParams, PlayerNameUpdate } from "../types/rpc.js";
+import type { GameMetadata, GameFeeInfo, MintParams, PlayerNameUpdate } from "../types/rpc.js";
 import { DenshokanError } from "../errors/index.js";
 import { MAX_SALT } from "./salt.js";
 
@@ -38,6 +38,7 @@ export function mapToken(raw: Record<string, unknown>): Token {
     gameOver: Boolean(raw.gameOver ?? raw.game_over),
     playerName: String(raw.playerName ?? raw.player_name ?? ""),
     mintedBy: Number(raw.mintedBy ?? raw.minted_by ?? (decoded ? Number(decoded.mintedBy) : 0)),
+    minterAddress: (raw.minterAddress ?? raw.minter_address) != null ? String(raw.minterAddress ?? raw.minter_address) : null,
     mintedAt: String(raw.mintedAt ?? raw.minted_at ?? decoded?.mintedAt.toISOString() ?? ""),
     settingsId: Number(raw.settingsId ?? raw.settings_id ?? decoded?.settingsId ?? 0),
     objectiveId: Number(raw.objectiveId ?? raw.objective_id ?? decoded?.objectiveId ?? 0),
@@ -52,6 +53,12 @@ export function mapToken(raw: Record<string, unknown>): Token {
     endDelay: Number(raw.endDelay ?? raw.end_delay ?? decoded?.endDelay ?? 0),
     hasContext: Boolean(raw.hasContext ?? raw.has_context ?? decoded?.hasContext),
     paymaster: Boolean(raw.paymaster ?? decoded?.paymaster),
+    contextId: raw.contextId != null || raw.context_id != null
+      ? Number(raw.contextId ?? raw.context_id)
+      : null,
+    contextData: (raw.contextData ?? raw.context_data) != null
+      ? (raw.contextData ?? raw.context_data) as Token["contextData"]
+      : null,
     tokenUri: (raw.tokenUri ?? raw.token_uri) != null ? String(raw.tokenUri ?? raw.token_uri) : undefined,
   };
 }
@@ -96,6 +103,8 @@ export function mapGame(raw: Record<string, unknown>): Game {
     royaltyFraction: raw.royaltyFraction != null ? String(raw.royaltyFraction) : (raw.royalty_fraction != null ? String(raw.royalty_fraction) : undefined),
     skillsAddress: skillsAddress != null ? String(skillsAddress) : undefined,
     version: raw.version != null ? Number(raw.version) : undefined,
+    license: raw.license != null ? String(raw.license) : undefined,
+    gameFeeBps: raw.gameFeeBps != null ? Number(raw.gameFeeBps) : (raw.game_fee_bps != null ? Number(raw.game_fee_bps) : undefined),
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
   };
 }
@@ -183,6 +192,13 @@ export function mapGameMetadata(raw: Record<string, unknown>): GameMetadata {
     skillsAddress: String(raw.skills_address ?? ""),
     version: Number(raw.version ?? 0),
     createdAt: Number(raw.created_at ?? 0),
+  };
+}
+
+export function mapGameFeeInfo(raw: Record<string, unknown>): GameFeeInfo {
+  return {
+    license: String(raw.license ?? ""),
+    feeNumerator: Number(raw.fee_numerator ?? 0),
   };
 }
 

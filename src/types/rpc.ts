@@ -21,6 +21,11 @@ export interface GameMetadata {
   createdAt: number;
 }
 
+export interface GameFeeInfo {
+  license: string;
+  feeNumerator: number;
+}
+
 export interface MintParams {
   gameId: number;
   settingsId: number;

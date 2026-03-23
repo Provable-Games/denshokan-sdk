@@ -9,6 +9,8 @@ export { useDecodeToken } from "./useDecodeToken.js";
 export { usePlayerStats, usePlayerTokens } from "./usePlayer.js";
 export { useMinters } from "./useMinters.js";
 export { useActivity } from "./useActivity.js";
+export { useLiveLeaderboard } from "./useLiveLeaderboard.js";
+export type { UseLiveLeaderboardOptions, UseLiveLeaderboardResult, LeaderboardEntry } from "./useLiveLeaderboard.js";
 export { useSettings } from "./useSettings.js";
 export { useObjectives } from "./useObjectives.js";
 

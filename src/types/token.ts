@@ -7,6 +7,8 @@ export interface Token {
   playerName: string;
   /** 40-bit truncated minter address from token ID (not full address) */
   mintedBy: number;
+  /** Full minter contract address (resolved from minters registry) */
+  minterAddress: string | null;
   mintedAt: string;
   settingsId: number;
   objectiveId: number;
@@ -20,6 +22,14 @@ export interface Token {
   endDelay: number;
   hasContext: boolean;
   paymaster: boolean;
+  /** Context ID (e.g., tournament ID for tournament-minted tokens) */
+  contextId: number | null;
+  /** Structured context data from the minting contract */
+  contextData: {
+    name: string;
+    description: string;
+    context: Array<{ name: string; value: string }>;
+  } | null;
   /** Token URI (only populated when explicitly requested via includeUri option) */
   tokenUri?: string;
 }
@@ -113,12 +123,21 @@ export interface TokensFilterParams {
   playable?: boolean;
   /** Filter by game over status */
   gameOver?: boolean;
+  /** Filter by context ID (e.g., tournament ID for tournament-minted tokens) */
+  contextId?: number;
+  /** Filter by context name (e.g., "Budokan" for tournament tokens) */
+  contextName?: string;
   /** Filter by minted time range (unix timestamps) */
   mintedAfter?: number;
   mintedBefore?: number;
+  /** Sort by field and direction */
+  sort?: { field: string; direction: "asc" | "desc" };
   /** Pagination */
   limit?: number;
   offset?: number;
+}
+
+export interface TokensQueryParams extends TokensFilterParams {
   /** When true, fetches token URIs via batch RPC and populates Token.tokenUri */
   includeUri?: boolean;
 }
