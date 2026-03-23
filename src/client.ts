@@ -167,6 +167,9 @@ export class DenshokanClient {
   private readonly connectionStatus: ConnectionStatus;
   private readonly wsManager: WebSocketManager;
 
+  // In-flight request deduplication for getTokens
+  private _inflight = new Map<string, Promise<PaginatedResult<Token>>>();
+
   // Lazy-initialized RPC objects
   private _provider: RpcProvider | null = null;
   private _denshokanContract: Contract | null = null;
@@ -451,6 +454,23 @@ export class DenshokanClient {
   // =========================================================================
 
   async getTokens(params?: TokensQueryParams): Promise<PaginatedResult<Token>> {
+    // Deduplicate concurrent requests with identical params — when multiple
+    // useLiveLeaderboard hooks receive the same WS event, their scheduleRefetch
+    // calls fire near-simultaneously. Reusing the in-flight promise avoids
+    // redundant HTTP requests and rate-limit pressure.
+    const { includeUri, ...filterOnly } = params ?? {};
+    const cacheKey = JSON.stringify(filterOnly);
+    const existing = this._inflight.get(cacheKey);
+    if (existing) return existing;
+
+    const promise = this._getTokensImpl(params).finally(() => {
+      this._inflight.delete(cacheKey);
+    });
+    this._inflight.set(cacheKey, promise);
+    return promise;
+  }
+
+  private async _getTokensImpl(params?: TokensQueryParams): Promise<PaginatedResult<Token>> {
     let result: PaginatedResult<Token>;
     if (this.config.primarySource === "api") {
       result = await withFallback(

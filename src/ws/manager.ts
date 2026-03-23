@@ -93,11 +93,23 @@ export class WebSocketManager {
 
     return () => {
       this.subscriptions.delete(id);
+
+      // Only unsubscribe channels that no remaining subscription uses
       if (this.connected && this.ws) {
-        this.ws.send(JSON.stringify({
-          type: "unsubscribe",
-          channels: options.channels,
-        }));
+        const stillNeeded = new Set<string>();
+        for (const [, sub] of this.subscriptions) {
+          for (const ch of sub.options.channels) {
+            stillNeeded.add(ch);
+          }
+        }
+
+        const toRemove = options.channels.filter((ch) => !stillNeeded.has(ch));
+        if (toRemove.length > 0) {
+          this.ws.send(JSON.stringify({
+            type: "unsubscribe",
+            channels: toRemove,
+          }));
+        }
       }
     };
   }
