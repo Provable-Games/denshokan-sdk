@@ -87,9 +87,11 @@ export function useLiveLeaderboard(
         const aVal = (a as unknown as Record<string, unknown>)[sortField];
         const bVal = (b as unknown as Record<string, unknown>)[sortField];
         if (typeof aVal === "number" && typeof bVal === "number") {
-          return sortDir === "desc" ? bVal - aVal : aVal - bVal;
+          const cmp = sortDir === "desc" ? bVal - aVal : aVal - bVal;
+          if (cmp !== 0) return cmp;
         }
-        return 0;
+        // Secondary sort: tokenId ascending for stable ordering
+        return Number(a.tokenId) - Number(b.tokenId);
       });
       // Update the page minimum score for threshold checks
       if (sorted.length > 0 && pageLimit && sorted.length >= pageLimit) {
