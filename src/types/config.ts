@@ -21,6 +21,8 @@ export interface HealthConfig {
   checkInterval?: number;
   /** Timeout for each health check in ms (default: 5000) */
   checkTimeout?: number;
+  /** Max allowed block lag before triggering RPC failover (default: 50). Set to 0 to disable. */
+  maxBlockLag?: number;
 }
 
 export interface DenshokanClientConfig {

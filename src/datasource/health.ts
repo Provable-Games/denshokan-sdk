@@ -5,6 +5,7 @@ export interface ServiceStatus {
   lastChecked: number;
   latency: number | null;
   error: string | null;
+  blockNumber?: number | null;
 }
 
 export interface ConnectionStatusState {
@@ -12,6 +13,8 @@ export interface ConnectionStatusState {
   rpc: ServiceStatus;
   mode: ConnectionMode;
   initialCheckComplete: boolean;
+  /** Number of blocks the indexer is behind the chain head. null if unknown. */
+  blockLag: number | null;
 }
 
 type StatusListener = (status: ConnectionStatusState) => void;
@@ -20,6 +23,7 @@ export interface HealthTimingConfig {
   initialCheckDelay?: number;
   checkInterval?: number;
   checkTimeout?: number;
+  maxBlockLag?: number;
 }
 
 export class ConnectionStatus {
@@ -28,6 +32,7 @@ export class ConnectionStatus {
     rpc: { available: true, lastChecked: 0, latency: null, error: null },
     mode: "api",
     initialCheckComplete: false,
+    blockLag: null,
   };
 
   private listeners = new Set<StatusListener>();
@@ -38,6 +43,7 @@ export class ConnectionStatus {
   private readonly initialCheckDelay: number;
   private readonly checkIntervalMs: number;
   private readonly checkTimeoutMs: number;
+  private readonly maxBlockLag: number;
 
   constructor(apiUrl: string, rpcUrl: string, config?: HealthTimingConfig) {
     this.apiUrl = apiUrl;
@@ -45,6 +51,7 @@ export class ConnectionStatus {
     this.initialCheckDelay = Math.max(config?.initialCheckDelay ?? 1_000, 100);
     this.checkIntervalMs = Math.max(config?.checkInterval ?? 30_000, 1_000);
     this.checkTimeoutMs = Math.max(config?.checkTimeout ?? 5_000, 1_000);
+    this.maxBlockLag = config?.maxBlockLag ?? 50;
   }
 
   getStatus(): ConnectionStatusState {
@@ -106,7 +113,24 @@ export class ConnectionStatus {
       this.checkApi(),
       this.checkRpc(),
     ]);
-    this.updateStatus({ api: apiResult, rpc: rpcResult, initialCheckComplete: true });
+
+    let blockLag: number | null = null;
+
+    // Staleness check: compare indexer block vs chain head
+    if (
+      this.maxBlockLag > 0 &&
+      apiResult.blockNumber != null &&
+      rpcResult.blockNumber != null
+    ) {
+      blockLag = Math.max(0, rpcResult.blockNumber - apiResult.blockNumber);
+
+      if (blockLag > this.maxBlockLag) {
+        apiResult.available = false;
+        apiResult.error = `Indexer is ${blockLag} blocks behind (max: ${this.maxBlockLag})`;
+      }
+    }
+
+    this.updateStatus({ api: apiResult, rpc: rpcResult, blockLag, initialCheckComplete: true });
   }
 
   private async checkApi(): Promise<ServiceStatus> {
@@ -118,13 +142,19 @@ export class ConnectionStatus {
       clearTimeout(timeoutId);
       const latency = Date.now() - startTime;
       if (!response.ok) {
-        return { available: false, lastChecked: Date.now(), latency, error: `HTTP ${response.status}` };
+        return { available: false, lastChecked: Date.now(), latency, error: `HTTP ${response.status}`, blockNumber: null };
       }
-      const data = await response.json() as Record<string, unknown>;
+      const data = await response.json() as { status?: string; latestBlock?: number | null };
       const isAvailable = data.status === "healthy" || data.status === "degraded" || data.status === "ok";
-      return { available: isAvailable, lastChecked: Date.now(), latency, error: isAvailable ? null : `API status: ${data.status}` };
+      return {
+        available: isAvailable,
+        lastChecked: Date.now(),
+        latency,
+        error: isAvailable ? null : `API status: ${data.status}`,
+        blockNumber: data.latestBlock ?? null,
+      };
     } catch (error) {
-      return { available: false, lastChecked: Date.now(), latency: null, error: error instanceof Error ? error.message : "Network error" };
+      return { available: false, lastChecked: Date.now(), latency: null, error: error instanceof Error ? error.message : "Network error", blockNumber: null };
     }
   }
 
@@ -136,19 +166,25 @@ export class ConnectionStatus {
       const response = await fetch(this.rpcUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jsonrpc: "2.0", method: "starknet_chainId", params: [], id: 1 }),
+        body: JSON.stringify({ jsonrpc: "2.0", method: "starknet_blockNumber", params: [], id: 1 }),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
       const latency = Date.now() - startTime;
       if (!response.ok) {
-        return { available: false, lastChecked: Date.now(), latency, error: `HTTP ${response.status}` };
+        return { available: false, lastChecked: Date.now(), latency, error: `HTTP ${response.status}`, blockNumber: null };
       }
-      const data = await response.json() as Record<string, unknown>;
+      const data = await response.json() as { result?: number; error?: unknown };
       const isHealthy = data.result !== undefined && !data.error;
-      return { available: isHealthy, lastChecked: Date.now(), latency, error: isHealthy ? null : "RPC error" };
+      return {
+        available: isHealthy,
+        lastChecked: Date.now(),
+        latency,
+        error: isHealthy ? null : "RPC error",
+        blockNumber: isHealthy ? data.result ?? null : null,
+      };
     } catch (error) {
-      return { available: false, lastChecked: Date.now(), latency: null, error: error instanceof Error ? error.message : "Network error" };
+      return { available: false, lastChecked: Date.now(), latency: null, error: error instanceof Error ? error.message : "Network error", blockNumber: null };
     }
   }
 
@@ -167,7 +203,8 @@ export class ConnectionStatus {
       this.status.api.available !== newStatus.api.available ||
       this.status.rpc.available !== newStatus.rpc.available ||
       this.status.mode !== newStatus.mode ||
-      this.status.initialCheckComplete !== newStatus.initialCheckComplete;
+      this.status.initialCheckComplete !== newStatus.initialCheckComplete ||
+      this.status.blockLag !== newStatus.blockLag;
 
     this.status = newStatus;
 
