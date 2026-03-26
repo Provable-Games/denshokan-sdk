@@ -122,7 +122,7 @@ export class ConnectionStatus {
       apiResult.blockNumber != null &&
       rpcResult.blockNumber != null
     ) {
-      blockLag = rpcResult.blockNumber - apiResult.blockNumber;
+      blockLag = Math.max(0, rpcResult.blockNumber - apiResult.blockNumber);
 
       if (blockLag > this.maxBlockLag) {
         apiResult.available = false;
