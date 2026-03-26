@@ -211,7 +211,7 @@ export class DenshokanClient {
       primarySource: config.primarySource ?? "api",
       fetch: { ...DEFAULT_FETCH_CONFIG, ...config.fetch },
       ws: { ...DEFAULT_WS_CONFIG, ...config.ws },
-      health: { initialCheckDelay: 1000, checkInterval: 30000, checkTimeout: 5000, ...config.health },
+      health: { initialCheckDelay: 1000, checkInterval: 30000, checkTimeout: 5000, maxBlockLag: 50, ...config.health },
     };
   }
 
