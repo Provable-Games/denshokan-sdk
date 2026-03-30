@@ -798,11 +798,16 @@ export class DenshokanClient {
         chunks.map((chunk) => viewerDenshokanTokensBatch(viewerContract, chunk)),
       );
       usedEnriched = true;
-    } catch {
-      // Viewer may not support denshokan_tokens_batch yet — fall back
-      stateResults = await Promise.all(
-        chunks.map((chunk) => viewerTokensFullStateBatch(viewerContract, chunk)),
-      );
+    } catch (error: unknown) {
+      // Only fall back if the viewer doesn't support the method (old contract)
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg.includes("Entry point") || msg.includes("not found") || msg.includes("ENTRYPOINT_NOT_FOUND")) {
+        stateResults = await Promise.all(
+          chunks.map((chunk) => viewerTokensFullStateBatch(viewerContract, chunk)),
+        );
+      } else {
+        throw error;
+      }
     }
     const fullStates = stateResults.flat();
 
@@ -815,6 +820,10 @@ export class DenshokanClient {
         // URI fetch is best-effort; don't fail the whole token load
       }
     }
+
+    const ZERO_ADDR = "0x" + "0".repeat(64);
+    const nonZero = (addr: string | undefined): string | undefined =>
+      addr && addr !== ZERO_ADDR ? addr : undefined;
 
     return fullStates.map((state, i) => {
       const decoded = decodePackedTokenId(state.tokenId);
@@ -839,9 +848,9 @@ export class DenshokanClient {
         gameAddress: state.gameAddress,
         contextId: null,
         contextData: null,
-        minterAddress: enriched?.minterAddress ?? null,
-        rendererAddress: enriched?.rendererAddress,
-        skillsAddress: enriched?.skillsAddress,
+        minterAddress: nonZero(enriched?.minterAddress) ?? null,
+        rendererAddress: nonZero(enriched?.rendererAddress),
+        skillsAddress: nonZero(enriched?.skillsAddress),
         clientUrl: enriched?.clientUrl || undefined,
         ...(uris ? { tokenUri: uris[i] } : {}),
       };
