@@ -1101,6 +1101,48 @@
           }
         ],
         "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "denshokan_tokens_batch",
+        "inputs": [
+          {
+            "name": "token_ids",
+            "type": "core::array::Array::<core::felt252>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<denshokan_interfaces::filter::DenshokanTokenState>"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "denshokan_interfaces::filter::DenshokanTokenState",
+    "members": [
+      {
+        "name": "base",
+        "type": "game_components_interfaces::structs::token::TokenFullState"
+      },
+      {
+        "name": "minter_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "renderer_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "skills_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "client_url",
+        "type": "core::byte_array::ByteArray"
       }
     ]
   },

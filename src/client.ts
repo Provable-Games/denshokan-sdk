@@ -153,6 +153,7 @@ import {
   viewerTokensOfOwnerByPlayable,
   viewerTokensOfOwnerByGameOver,
   viewerTokensFullStateBatch,
+  viewerDenshokanTokensBatch,
   viewerAllSettings,
   viewerAllObjectives,
 } from "./rpc/viewer.js";
@@ -526,11 +527,14 @@ export class DenshokanClient {
   }
 
   private async buildTokenFromRpc(tokenId: string): Promise<Token> {
-    // Decode token ID first - many fields can be extracted without RPC
+    // Use the enriched batch method with a single token — one RPC call
+    const viewerContract = await this.getViewerContract();
+    const tokens = await this.buildTokensFromFullStateBatch(viewerContract, [tokenId]);
+    if (tokens.length > 0) return tokens[0];
+
+    // Fallback: individual RPC calls if viewer fails
     const decoded = decodePackedTokenId(tokenId);
     const contract = await this.getDenshokanContract();
-
-    // Fetch mutable state and other RPC-only fields in parallel
     const [mutableState, owner, playerName, isPlayable, gameAddress] = await Promise.all([
       rpcTokenMutableState(contract, tokenId),
       rpcOwnerOf(contract, tokenId),
@@ -541,7 +545,6 @@ export class DenshokanClient {
 
     return {
       tokenId: toHexTokenId(tokenId),
-      // FROM DECODED TOKEN ID (no RPC needed for these)
       gameId: decoded.gameId,
       settingsId: decoded.settingsId,
       objectiveId: decoded.objectiveId,
@@ -551,8 +554,7 @@ export class DenshokanClient {
       endDelay: decoded.endDelay,
       hasContext: decoded.hasContext,
       paymaster: decoded.paymaster,
-      mintedBy: Number(decoded.mintedBy), // 40-bit truncated address fits in JS number
-      // FROM RPC (can't derive from token ID)
+      mintedBy: Number(decoded.mintedBy),
       owner,
       score: 0,
       gameOver: mutableState.gameOver,
@@ -788,9 +790,25 @@ export class DenshokanClient {
     for (let i = 0; i < tokenIds.length; i += CHUNK_SIZE) {
       chunks.push(tokenIds.slice(i, i + CHUNK_SIZE));
     }
-    const stateResults = await Promise.all(
-      chunks.map((chunk) => viewerTokensFullStateBatch(viewerContract, chunk)),
-    );
+    // Try enriched denshokan_tokens_batch first, fall back to basic tokens_full_state_batch
+    let stateResults;
+    let usedEnriched = false;
+    try {
+      stateResults = await Promise.all(
+        chunks.map((chunk) => viewerDenshokanTokensBatch(viewerContract, chunk)),
+      );
+      usedEnriched = true;
+    } catch (error: unknown) {
+      // Only fall back if the viewer doesn't support the method (old contract)
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg.includes("Entry point") || msg.includes("not found") || msg.includes("ENTRYPOINT_NOT_FOUND")) {
+        stateResults = await Promise.all(
+          chunks.map((chunk) => viewerTokensFullStateBatch(viewerContract, chunk)),
+        );
+      } else {
+        throw error;
+      }
+    }
     const fullStates = stateResults.flat();
 
     // Optionally fetch URIs (chunked, non-fatal)
@@ -803,8 +821,13 @@ export class DenshokanClient {
       }
     }
 
+    const ZERO_ADDR = "0x" + "0".repeat(64);
+    const nonZero = (addr: string | undefined): string | undefined =>
+      addr && addr !== ZERO_ADDR ? addr : undefined;
+
     return fullStates.map((state, i) => {
       const decoded = decodePackedTokenId(state.tokenId);
+      const enriched = usedEnriched ? (state as import("./types/rpc.js").DenshokanTokenState) : null;
       return {
         tokenId: state.tokenId,
         gameId: decoded.gameId,
@@ -825,7 +848,10 @@ export class DenshokanClient {
         gameAddress: state.gameAddress,
         contextId: null,
         contextData: null,
-        minterAddress: null,
+        minterAddress: nonZero(enriched?.minterAddress) ?? null,
+        rendererAddress: nonZero(enriched?.rendererAddress),
+        skillsAddress: nonZero(enriched?.skillsAddress),
+        clientUrl: enriched?.clientUrl || undefined,
         ...(uris ? { tokenUri: uris[i] } : {}),
       };
     });

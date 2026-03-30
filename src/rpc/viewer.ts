@@ -1,5 +1,5 @@
 import type { Contract } from "starknet";
-import type { FilterResult, TokenFullState } from "../types/rpc.js";
+import type { FilterResult, TokenFullState, DenshokanTokenState } from "../types/rpc.js";
 import type { GameSettingDetails, GameObjectiveDetails } from "../types/game.js";
 import type { PaginatedResult } from "../types/token.js";
 import { RpcError } from "../errors/index.js";
@@ -680,6 +680,28 @@ export async function viewerTokensFullStateBatch(
   return wrapRpcCall(async () => {
     const result = await contract.call("tokens_full_state_batch", [tokenIds]);
     return (result as unknown[]).map(parseTokenFullState);
+  }, contract.address);
+}
+
+function parseDenshokanTokenState(raw: unknown): DenshokanTokenState {
+  const obj = raw as Record<string, unknown>;
+  const base = parseTokenFullState(obj.base);
+  return {
+    ...base,
+    minterAddress: num.toHex(obj.minter_address as bigint),
+    rendererAddress: num.toHex(obj.renderer_address as bigint),
+    skillsAddress: num.toHex(obj.skills_address as bigint),
+    clientUrl: obj.client_url?.toString() ?? "",
+  };
+}
+
+export async function viewerDenshokanTokensBatch(
+  contract: Contract,
+  tokenIds: string[],
+): Promise<DenshokanTokenState[]> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("denshokan_tokens_batch", [tokenIds]);
+    return (result as unknown[]).map(parseDenshokanTokenState);
   }, contract.address);
 }
 

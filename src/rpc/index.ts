@@ -47,4 +47,5 @@ export {
   viewerCountTokensOfOwnerByGameAndGameOver,
   viewerTokensByGameAndSoulbound,
   viewerCountTokensByGameAndSoulbound,
+  viewerDenshokanTokensBatch,
 } from "./viewer.js";

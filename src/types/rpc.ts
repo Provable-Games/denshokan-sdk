@@ -63,3 +63,10 @@ export interface TokenFullState {
   completedObjective: boolean;
   lifecycle: Lifecycle;
 }
+
+export interface DenshokanTokenState extends TokenFullState {
+  minterAddress: string;
+  rendererAddress: string;
+  skillsAddress: string;
+  clientUrl: string;
+}
