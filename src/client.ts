@@ -822,7 +822,7 @@ export class DenshokanClient {
     }
 
     const isZeroAddr = (addr: string | undefined): boolean =>
-      !addr || addr === "0x0" || addr === "0x" + "0".repeat(64) || /^0x0+$/.test(addr);
+      !addr || /^0x0+$/.test(addr);
 
     return fullStates.map((state, i) => {
       const decoded = decodePackedTokenId(state.tokenId);
@@ -847,9 +847,9 @@ export class DenshokanClient {
         gameAddress: state.gameAddress,
         contextId: null,
         contextData: null,
-        minterAddress: !isZeroAddr(enriched?.minterAddress) ? enriched!.minterAddress : null,
-        rendererAddress: !isZeroAddr(enriched?.rendererAddress) ? enriched!.rendererAddress : undefined,
-        skillsAddress: !isZeroAddr(enriched?.skillsAddress) ? enriched!.skillsAddress : undefined,
+        minterAddress: !isZeroAddr(enriched?.minterAddress) ? enriched?.minterAddress ?? null : null,
+        rendererAddress: !isZeroAddr(enriched?.rendererAddress) ? enriched?.rendererAddress : undefined,
+        skillsAddress: !isZeroAddr(enriched?.skillsAddress) ? enriched?.skillsAddress : undefined,
         clientUrl: enriched?.clientUrl || undefined,
         ...(uris ? { tokenUri: uris[i] } : {}),
       };
