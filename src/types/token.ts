@@ -4,7 +4,7 @@ export interface Token {
   owner: string;
   score: number;
   gameOver: boolean;
-  playerName: string;
+  playerName: string | null;
   /** 40-bit truncated minter address from token ID (not full address) */
   mintedBy: number;
   /** Full minter contract address (resolved from minters registry) */
@@ -18,8 +18,8 @@ export interface Token {
   clientUrl?: string;
   rendererAddress?: string;
   skillsAddress?: string;
-  startDelay: number;
-  endDelay: number;
+  startDelay?: number;
+  endDelay?: number;
   hasContext: boolean;
   paymaster: boolean;
   /** Context ID (e.g., tournament ID for tournament-minted tokens) */

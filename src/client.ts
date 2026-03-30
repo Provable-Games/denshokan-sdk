@@ -821,9 +821,8 @@ export class DenshokanClient {
       }
     }
 
-    const ZERO_ADDR = "0x" + "0".repeat(64);
-    const nonZero = (addr: string | undefined): string | undefined =>
-      addr && addr !== ZERO_ADDR ? addr : undefined;
+    const isZeroAddr = (addr: string | undefined): boolean =>
+      !addr || addr === "0x0" || addr === "0x" + "0".repeat(64) || /^0x0+$/.test(addr);
 
     return fullStates.map((state, i) => {
       const decoded = decodePackedTokenId(state.tokenId);
@@ -835,22 +834,22 @@ export class DenshokanClient {
         objectiveId: decoded.objectiveId,
         mintedAt: decoded.mintedAt.toISOString(),
         soulbound: decoded.soulbound,
-        startDelay: decoded.startDelay,
-        endDelay: decoded.endDelay,
+        startDelay: decoded.startDelay || undefined,
+        endDelay: decoded.endDelay || undefined,
         hasContext: decoded.hasContext,
         paymaster: decoded.paymaster,
         mintedBy: Number(decoded.mintedBy),
         owner: state.owner,
         score: 0,
         gameOver: state.gameOver,
-        playerName: state.playerName,
+        playerName: state.playerName || null,
         isPlayable: state.isPlayable,
         gameAddress: state.gameAddress,
         contextId: null,
         contextData: null,
-        minterAddress: nonZero(enriched?.minterAddress) ?? null,
-        rendererAddress: nonZero(enriched?.rendererAddress),
-        skillsAddress: nonZero(enriched?.skillsAddress),
+        minterAddress: !isZeroAddr(enriched?.minterAddress) ? enriched!.minterAddress : null,
+        rendererAddress: !isZeroAddr(enriched?.rendererAddress) ? enriched!.rendererAddress : undefined,
+        skillsAddress: !isZeroAddr(enriched?.skillsAddress) ? enriched!.skillsAddress : undefined,
         clientUrl: enriched?.clientUrl || undefined,
         ...(uris ? { tokenUri: uris[i] } : {}),
       };
