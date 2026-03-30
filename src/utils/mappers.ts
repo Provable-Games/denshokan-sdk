@@ -36,7 +36,7 @@ export function mapToken(raw: Record<string, unknown>): Token {
     owner: String(raw.ownerAddress ?? raw.owner_address ?? raw.owner ?? ""),
     score: Number(raw.currentScore ?? raw.current_score ?? raw.score ?? 0),
     gameOver: Boolean(raw.gameOver ?? raw.game_over),
-    playerName: String(raw.playerName ?? raw.player_name ?? ""),
+    playerName: String(raw.playerName ?? raw.player_name ?? "") || null,
     mintedBy: Number(raw.mintedBy ?? raw.minted_by ?? (decoded ? Number(decoded.mintedBy) : 0)),
     minterAddress: (raw.minterAddress ?? raw.minter_address) != null ? String(raw.minterAddress ?? raw.minter_address) : null,
     mintedAt: String(raw.mintedAt ?? raw.minted_at ?? decoded?.mintedAt.toISOString() ?? ""),
@@ -49,8 +49,8 @@ export function mapToken(raw: Record<string, unknown>): Token {
     rendererAddress: raw.rendererAddress != null ? String(raw.rendererAddress) : (raw.renderer_address != null ? String(raw.renderer_address) : undefined),
     skillsAddress: raw.skillsAddress != null ? String(raw.skillsAddress) : (raw.skills_address != null ? String(raw.skills_address) : undefined),
     // New fields from decoded token ID
-    startDelay: Number(raw.startDelay ?? raw.start_delay ?? decoded?.startDelay ?? 0),
-    endDelay: Number(raw.endDelay ?? raw.end_delay ?? decoded?.endDelay ?? 0),
+    startDelay: Number(raw.startDelay ?? raw.start_delay ?? decoded?.startDelay ?? 0) || undefined,
+    endDelay: Number(raw.endDelay ?? raw.end_delay ?? decoded?.endDelay ?? 0) || undefined,
     hasContext: Boolean(raw.hasContext ?? raw.has_context ?? decoded?.hasContext),
     paymaster: Boolean(raw.paymaster ?? decoded?.paymaster),
     contextId: raw.contextId != null || raw.context_id != null

@@ -21,7 +21,7 @@ export interface UseLiveLeaderboardOptions extends TokensFilterParams {
 export interface LeaderboardEntry {
   tokenId: string;
   score: number;
-  playerName: string;
+  playerName: string | null;
   owner: string;
   gameOver: boolean;
   rank: number;
