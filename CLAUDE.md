@@ -4,16 +4,20 @@
 
 `@provable-games/denshokan-sdk` is a TypeScript package that queries Denshokan game token data from both a REST API and direct Starknet RPC contract calls, with configurable priority and automatic fallback between sources. Batch RPC endpoints are used wherever possible for efficient multi-token queries.
 
+## Package Manager
+
+**CRITICAL: Always use `bun`, never `npm`, `yarn`, or `pnpm`.** This project uses `bun.lock` as the single lockfile. Do not run `npm install`, `npm ci`, or any npm commands that manage dependencies. Do not generate `package-lock.json`.
+
 ## Commands
 
 ```bash
-npm install          # Install dependencies
-npm run build        # Build ESM + CJS to dist/
-npm run typecheck    # TypeScript type checking (tsc --noEmit)
-npm test             # Run unit tests (vitest run)
-npm run test:watch   # Run tests in watch mode
-npm run dev          # Build in watch mode
-npm run clean        # Remove dist/
+bun install          # Install dependencies
+bun run build        # Build ESM + CJS to dist/
+bun run typecheck    # TypeScript type checking (tsc --noEmit)
+bun test             # Run unit tests (vitest run)
+bun run test:watch   # Run tests in watch mode
+bun run dev          # Build in watch mode
+bun run clean        # Remove dist/
 ```
 
 ## Architecture

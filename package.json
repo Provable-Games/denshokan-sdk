@@ -61,13 +61,13 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "react": "^19.0.0",
-    "starknet": "^9.2.1",
-    "tsup": "^8.4.0",
-    "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "@types/node": "22.0.0",
+    "@types/react": "19.0.0",
+    "react": "19.0.0",
+    "starknet": "9.2.1",
+    "tsup": "8.4.0",
+    "typescript": "5.7.3",
+    "vitest": "3.0.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
@@ -85,6 +85,6 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@rollup/rollup-linux-arm64-gnu": "^4.59.0"
+    "@rollup/rollup-linux-arm64-gnu": "4.59.0"
   }
 }
