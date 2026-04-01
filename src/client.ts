@@ -35,7 +35,7 @@ import type {
 import { getChainConfig } from "./chains/constants.js";
 import { DEFAULT_FETCH_CONFIG } from "./utils/retry.js";
 import { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
-import { toHexTokenId, normalizeAddress } from "./utils/address.js";
+import { toHexTokenId, normalizeAddress, isZeroAddress } from "./utils/address.js";
 import { mintParamsToSnake, playerNameUpdateToSnake } from "./utils/mappers.js";
 import { assignSalts } from "./utils/salt.js";
 import { InvalidChainError, GameNotFoundError } from "./errors/index.js";
@@ -156,6 +156,10 @@ import {
   viewerDenshokanTokensBatch,
   viewerAllSettings,
   viewerAllObjectives,
+  viewerAllGames,
+  viewerGamesByGenre,
+  viewerGamesByDeveloper,
+  viewerGamesByPublisher,
 } from "./rpc/viewer.js";
 
 const DEFAULT_WS_CONFIG = {
@@ -330,8 +334,44 @@ export class DenshokanClient {
   // Games (API, with RPC fallback where noted)
   // =========================================================================
 
-  async getGames(params?: { limit?: number; offset?: number }): Promise<PaginatedResult<Game>> {
-    return apiGetGames(this.apiCtx, params);
+  async getGames(params?: {
+    limit?: number;
+    offset?: number;
+    genre?: string;
+    developer?: string;
+    publisher?: string;
+  }): Promise<PaginatedResult<Game>> {
+    if (this.config.primarySource === "api") {
+      return withFallback(
+        () => apiGetGames(this.apiCtx, params),
+        () => this.getGamesViaRpc(params),
+        this.connectionStatus,
+      );
+    }
+    return this.getGamesViaRpc(params);
+  }
+
+  private async getGamesViaRpc(params?: {
+    limit?: number;
+    offset?: number;
+    genre?: string;
+    developer?: string;
+    publisher?: string;
+  }): Promise<PaginatedResult<Game>> {
+    const viewerContract = await this.getViewerContract();
+    const offset = params?.offset ?? 0;
+    const limit = params?.limit ?? 0;
+
+    if (params?.genre) {
+      return viewerGamesByGenre(viewerContract, params.genre, offset, limit);
+    }
+    if (params?.developer) {
+      return viewerGamesByDeveloper(viewerContract, params.developer, offset, limit);
+    }
+    if (params?.publisher) {
+      return viewerGamesByPublisher(viewerContract, params.publisher, offset, limit);
+    }
+    return viewerAllGames(viewerContract, offset, limit);
   }
 
   private async getGameViaRpc(gameAddress: string): Promise<Game> {
@@ -821,8 +861,7 @@ export class DenshokanClient {
       }
     }
 
-    const isZeroAddr = (addr: string | undefined): boolean =>
-      !addr || /^0x0+$/.test(addr);
+    const isZeroAddr = isZeroAddress;
 
     return fullStates.map((state, i) => {
       const decoded = decodePackedTokenId(state.tokenId);

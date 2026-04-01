@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { Minter } from "../types/minter.js";
 import type { PaginatedResult } from "../types/token.js";
 import { useDenshokanClient } from "./context.js";
+import { useResetOnClient } from "./useResetOnClient.js";
 
 export interface MintersParams {
   limit?: number;
@@ -20,6 +21,8 @@ export function useMinters(params?: MintersParams): UseMintersResult {
   const [data, setData] = useState<PaginatedResult<Minter> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  useResetOnClient(client, setData, setError);
 
   const paramsKey = JSON.stringify(params);
 

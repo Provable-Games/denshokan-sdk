@@ -1,10 +1,10 @@
 import type { Contract } from "starknet";
 import type { FilterResult, TokenFullState, DenshokanTokenState } from "../types/rpc.js";
-import type { GameSettingDetails, GameObjectiveDetails } from "../types/game.js";
+import type { Game, GameSettingDetails, GameObjectiveDetails } from "../types/game.js";
 import type { PaginatedResult } from "../types/token.js";
 import { RpcError } from "../errors/index.js";
 import { num } from "starknet";
-import { toHexTokenId } from "../utils/address.js";
+import { toHexTokenId, toHexAddress, isZeroAddress } from "../utils/address.js";
 
 function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise<T> {
   return fn().catch((error: unknown) => {
@@ -665,6 +665,111 @@ export async function viewerCountTokensOfOwnerByGameOver(
 ): Promise<number> {
   return wrapRpcCall(async () => {
     const result = await contract.call("count_tokens_of_owner_by_game_over", [owner]);
+    return Number(result);
+  }, contract.address);
+}
+
+// =========================================================================
+// Game listing (via viewer contract IDenshokanGames)
+// =========================================================================
+
+function parseGameEntry(raw: unknown): Game {
+  const entry = raw as Record<string, unknown>;
+  const metadata = entry.metadata as Record<string, unknown>;
+  const feeInfo = entry.fee_info as Record<string, unknown>;
+  return {
+    gameId: Number(entry.game_id ?? 0),
+    contractAddress: toHexAddress(metadata.contract_address ?? 0),
+    name: metadata.name?.toString() ?? "",
+    description: metadata.description?.toString() ?? "",
+    developer: metadata.developer?.toString() || undefined,
+    publisher: metadata.publisher?.toString() || undefined,
+    genre: metadata.genre?.toString() || undefined,
+    imageUrl: metadata.image?.toString() || undefined,
+    color: metadata.color?.toString() || undefined,
+    clientUrl: metadata.client_url?.toString() || undefined,
+    rendererAddress: isZeroAddress(toHexAddress(metadata.renderer_address ?? 0)) ? undefined : toHexAddress(metadata.renderer_address ?? 0),
+    royaltyFraction: metadata.royalty_fraction?.toString(),
+    skillsAddress: isZeroAddress(toHexAddress(metadata.skills_address ?? 0)) ? undefined : toHexAddress(metadata.skills_address ?? 0),
+    version: metadata.version != null ? Number(metadata.version) : undefined,
+    license: feeInfo.license?.toString() || undefined,
+    gameFeeBps: feeInfo.fee_numerator != null ? Number(feeInfo.fee_numerator) : undefined,
+    createdAt: metadata.created_at
+      ? new Date(Number(metadata.created_at) * 1000).toISOString()
+      : "",
+  };
+}
+
+export async function viewerAllGames(
+  contract: Contract,
+  offset: number,
+  limit: number,
+): Promise<PaginatedResult<Game>> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("all_games", [offset, limit]) as Record<string, unknown>;
+    const entries = (result.entries as unknown[]) ?? [];
+    const total = Number(result.total ?? 0);
+    return {
+      data: entries.map(parseGameEntry),
+      total,
+    };
+  }, contract.address);
+}
+
+export async function viewerGamesByGenre(
+  contract: Contract,
+  genre: string,
+  offset: number,
+  limit: number,
+): Promise<PaginatedResult<Game>> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("games_by_genre", [genre, offset, limit]) as Record<string, unknown>;
+    const entries = (result.entries as unknown[]) ?? [];
+    const total = Number(result.total ?? 0);
+    return {
+      data: entries.map(parseGameEntry),
+      total,
+    };
+  }, contract.address);
+}
+
+export async function viewerGamesByDeveloper(
+  contract: Contract,
+  developer: string,
+  offset: number,
+  limit: number,
+): Promise<PaginatedResult<Game>> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("games_by_developer", [developer, offset, limit]) as Record<string, unknown>;
+    const entries = (result.entries as unknown[]) ?? [];
+    const total = Number(result.total ?? 0);
+    return {
+      data: entries.map(parseGameEntry),
+      total,
+    };
+  }, contract.address);
+}
+
+export async function viewerGamesByPublisher(
+  contract: Contract,
+  publisher: string,
+  offset: number,
+  limit: number,
+): Promise<PaginatedResult<Game>> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("games_by_publisher", [publisher, offset, limit]) as Record<string, unknown>;
+    const entries = (result.entries as unknown[]) ?? [];
+    const total = Number(result.total ?? 0);
+    return {
+      data: entries.map(parseGameEntry),
+      total,
+    };
+  }, contract.address);
+}
+
+export async function viewerGameCount(contract: Contract): Promise<number> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("game_count", []);
     return Number(result);
   }, contract.address);
 }

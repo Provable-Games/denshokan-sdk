@@ -3,6 +3,8 @@ import type { Token, TokensFilterParams } from "../types/token.js";
 import type { ScoreEvent, GameOverEvent } from "../types/websocket.js";
 import { useTokens } from "./useTokens.js";
 import { useScoreUpdates, useGameOverEvents, useMintEvents } from "./useChannelSubscription.js";
+import { useDenshokanClient } from "./context.js";
+import { useResetOnClient } from "./useResetOnClient.js";
 
 export interface UseLiveLeaderboardOptions extends TokensFilterParams {
   /** Subscribe to score updates (default: true when enabled) */
@@ -78,7 +80,11 @@ export function useLiveLeaderboard(
   // Track the lowest score on the current page for threshold checks
   const pageMinScoreRef = useRef<number>(-Infinity);
 
+  const client = useDenshokanClient();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+
+  const resetEntries = useCallback(() => setEntries([]), []);
+  useResetOnClient(client, resetEntries);
 
   // Re-sort within the current page and assign ranks accounting for offset
   const sortAndRank = useCallback(

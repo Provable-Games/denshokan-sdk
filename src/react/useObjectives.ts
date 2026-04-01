@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { GameObjectiveDetails, ObjectivesParams } from "../types/game.js";
 import type { PaginatedResult } from "../types/token.js";
 import { useDenshokanClient } from "./context.js";
+import { useResetOnClient } from "./useResetOnClient.js";
 
 export interface UseObjectivesResult {
   data: PaginatedResult<GameObjectiveDetails> | null;
@@ -15,6 +16,8 @@ export function useObjectives(params?: ObjectivesParams): UseObjectivesResult {
   const [data, setData] = useState<PaginatedResult<GameObjectiveDetails> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  useResetOnClient(client, setData, setError);
 
   const paramsKey = JSON.stringify(params);
 

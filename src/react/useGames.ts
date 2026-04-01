@@ -2,11 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import type { Game, GameStats } from "../types/game.js";
 import type { PaginatedResult } from "../types/token.js";
 import { useDenshokanClient } from "./context.js";
+import { useResetOnClient } from "./useResetOnClient.js";
 
 export interface GamesParams {
   sort?: { field: string; direction: "asc" | "desc" };
   limit?: number;
   offset?: number;
+  genre?: string;
+  developer?: string;
+  publisher?: string;
 }
 
 export interface UseGamesResult {
@@ -21,6 +25,8 @@ export function useGames(params?: GamesParams): UseGamesResult {
   const [data, setData] = useState<PaginatedResult<Game> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  useResetOnClient(client, setData, setError);
 
   const paramsKey = JSON.stringify(params);
 
@@ -53,6 +59,8 @@ export function useGame(gameAddress: string | undefined): UseGameResult {
   const [isLoading, setIsLoading] = useState(!!gameAddress);
   const [error, setError] = useState<Error | null>(null);
 
+  useResetOnClient(client, setData, setError);
+
   const fetch = useCallback(() => {
     if (gameAddress === undefined) return;
     setIsLoading(true);
@@ -81,6 +89,8 @@ export function useGameStats(gameAddress: string | undefined): UseGameStatsResul
   const [data, setData] = useState<GameStats | null>(null);
   const [isLoading, setIsLoading] = useState(!!gameAddress);
   const [error, setError] = useState<Error | null>(null);
+
+  useResetOnClient(client, setData, setError);
 
   const fetch = useCallback(() => {
     if (gameAddress === undefined) return;
