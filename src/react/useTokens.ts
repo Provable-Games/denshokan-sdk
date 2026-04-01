@@ -6,6 +6,7 @@ import type {
   TokenScoreEntry,
 } from "../types/token.js";
 import { useDenshokanClient } from "./context.js";
+import { useResetOnClient } from "./useResetOnClient.js";
 
 export interface UseTokensResult {
   data: PaginatedResult<Token> | null;
@@ -24,6 +25,8 @@ export function useTokens(params?: TokensQueryParams): UseTokensResult {
   const [isLoadingUri, setIsLoadingUri] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const fetchIdRef = useRef(0);
+
+  useResetOnClient(client, setData, setError);
 
   const { includeUri, ...filterParams } = params ?? {};
   const paramsKey = params ? JSON.stringify(filterParams) : null;
@@ -108,6 +111,8 @@ export function useToken(tokenId: string | undefined): UseTokenResult {
   const [isLoading, setIsLoading] = useState(!!tokenId);
   const [error, setError] = useState<Error | null>(null);
 
+  useResetOnClient(client, setData, setError);
+
   const fetch = useCallback(() => {
     if (!tokenId) return;
     setIsLoading(true);
@@ -141,6 +146,8 @@ export function useTokenScores(
   const [data, setData] = useState<TokenScoreEntry[] | null>(null);
   const [isLoading, setIsLoading] = useState(!!tokenId);
   const [error, setError] = useState<Error | null>(null);
+
+  useResetOnClient(client, setData, setError);
 
   const fetch = useCallback(() => {
     if (!tokenId) return;

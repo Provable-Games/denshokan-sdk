@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { PlayerStats, PlayerTokensParams } from "../types/player.js";
 import type { Token, PaginatedResult } from "../types/token.js";
 import { useDenshokanClient } from "./context.js";
+import { useResetOnClient } from "./useResetOnClient.js";
 
 export interface UsePlayerStatsResult {
   data: PlayerStats | null;
@@ -15,6 +16,8 @@ export function usePlayerStats(address: string | undefined): UsePlayerStatsResul
   const [data, setData] = useState<PlayerStats | null>(null);
   const [isLoading, setIsLoading] = useState(!!address);
   const [error, setError] = useState<Error | null>(null);
+
+  useResetOnClient(client, setData, setError);
 
   const fetch = useCallback(() => {
     if (!address) return;
@@ -51,6 +54,8 @@ export function usePlayerTokens(
   const [isLoadingUri, setIsLoadingUri] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const fetchIdRef = useRef(0);
+
+  useResetOnClient(client, setData, setError);
 
   const { includeUri, ...tokenParams } = params ?? {};
   const paramsKey = JSON.stringify(tokenParams);

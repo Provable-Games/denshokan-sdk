@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import type { TokenMetadata } from "../types/token.js";
+import type { DenshokanClient } from "../client.js";
 import { useDenshokanClient } from "./context.js";
+import { useResetOnClient } from "./useResetOnClient.js";
 
 interface UseAsyncResult<T> {
   data: T | null;
@@ -10,6 +12,7 @@ interface UseAsyncResult<T> {
 }
 
 function useAsync<T>(
+  client: DenshokanClient,
   fetcher: () => Promise<T>,
   deps: unknown[],
   enabled = true,
@@ -17,6 +20,8 @@ function useAsync<T>(
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<Error | null>(null);
+
+  useResetOnClient(client, setData, setError);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetch = useCallback(fetcher, deps);
@@ -39,6 +44,7 @@ function useAsync<T>(
 export function useBalanceOf(account: string | undefined): UseAsyncResult<bigint> {
   const client = useDenshokanClient();
   return useAsync(
+    client,
     () => client.balanceOf(account!),
     [client, account],
     !!account,
@@ -48,6 +54,7 @@ export function useBalanceOf(account: string | undefined): UseAsyncResult<bigint
 export function useOwnerOf(tokenId: string | undefined): UseAsyncResult<string> {
   const client = useDenshokanClient();
   return useAsync(
+    client,
     () => client.ownerOf(tokenId!),
     [client, tokenId],
     !!tokenId,
@@ -57,6 +64,7 @@ export function useOwnerOf(tokenId: string | undefined): UseAsyncResult<string> 
 export function useTokenUri(tokenId: string | undefined): UseAsyncResult<string> {
   const client = useDenshokanClient();
   return useAsync(
+    client,
     () => client.tokenUri(tokenId!),
     [client, tokenId],
     !!tokenId,
@@ -69,6 +77,7 @@ export function useTokenUriBatch(
   const client = useDenshokanClient();
   const key = JSON.stringify(tokenIds);
   return useAsync(
+    client,
     () => client.tokenUriBatch(tokenIds!),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client, key],
@@ -82,6 +91,7 @@ export function useTokenMetadataBatch(
   const client = useDenshokanClient();
   const key = JSON.stringify(tokenIds);
   return useAsync(
+    client,
     () => client.tokenMetadataBatch(tokenIds!),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client, key],
@@ -96,6 +106,7 @@ export function useScoreBatch(
   const client = useDenshokanClient();
   const key = JSON.stringify(tokenIds);
   return useAsync(
+    client,
     () => client.scoreBatch(tokenIds!, gameAddress!),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client, key, gameAddress],
@@ -110,6 +121,7 @@ export function useGameOverBatch(
   const client = useDenshokanClient();
   const key = JSON.stringify(tokenIds);
   return useAsync(
+    client,
     () => client.gameOverBatch(tokenIds!, gameAddress!),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client, key, gameAddress],
@@ -124,6 +136,7 @@ export function useObjectivesCount(
 ): UseAsyncResult<number> {
   const client = useDenshokanClient();
   return useAsync(
+    client,
     () => client.objectivesCount(gameAddress!),
     [client, gameAddress],
     !!gameAddress,
@@ -137,6 +150,7 @@ export function useSettingsCount(
 ): UseAsyncResult<number> {
   const client = useDenshokanClient();
   return useAsync(
+    client,
     () => client.settingsCount(gameAddress!),
     [client, gameAddress],
     !!gameAddress,
