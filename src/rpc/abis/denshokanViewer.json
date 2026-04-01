@@ -140,6 +140,32 @@
     ]
   },
   {
+    "type": "struct",
+    "name": "denshokan_interfaces::filter::DenshokanTokenState",
+    "members": [
+      {
+        "name": "base",
+        "type": "game_components_interfaces::structs::token::TokenFullState"
+      },
+      {
+        "name": "minter_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "renderer_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "skills_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "client_url",
+        "type": "core::byte_array::ByteArray"
+      }
+    ]
+  },
+  {
     "type": "interface",
     "name": "denshokan_interfaces::filter::IDenshokanFilter",
     "items": [
@@ -1121,32 +1147,6 @@
     ]
   },
   {
-    "type": "struct",
-    "name": "denshokan_interfaces::filter::DenshokanTokenState",
-    "members": [
-      {
-        "name": "base",
-        "type": "game_components_interfaces::structs::token::TokenFullState"
-      },
-      {
-        "name": "minter_address",
-        "type": "core::starknet::contract_address::ContractAddress"
-      },
-      {
-        "name": "renderer_address",
-        "type": "core::starknet::contract_address::ContractAddress"
-      },
-      {
-        "name": "skills_address",
-        "type": "core::starknet::contract_address::ContractAddress"
-      },
-      {
-        "name": "client_url",
-        "type": "core::byte_array::ByteArray"
-      }
-    ]
-  },
-  {
     "type": "impl",
     "name": "DenshokanSettingsObjectivesImpl",
     "interface_name": "denshokan_interfaces::filter::IDenshokanSettingsObjectives"
@@ -1379,6 +1379,228 @@
         "outputs": [
           {
             "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "DenshokanGamesImpl",
+    "interface_name": "denshokan_interfaces::filter::IDenshokanGames"
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::registry::GameMetadata",
+    "members": [
+      {
+        "name": "contract_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "name",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "description",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "developer",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "publisher",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "genre",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "image",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "color",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "client_url",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "renderer_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "royalty_fraction",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "skills_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "created_at",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "version",
+        "type": "core::integer::u64"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "game_components_interfaces::structs::registry::GameFeeInfo",
+    "members": [
+      {
+        "name": "license",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "fee_numerator",
+        "type": "core::integer::u16"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "denshokan_interfaces::filter::GameEntry",
+    "members": [
+      {
+        "name": "game_id",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "metadata",
+        "type": "game_components_interfaces::structs::registry::GameMetadata"
+      },
+      {
+        "name": "fee_info",
+        "type": "game_components_interfaces::structs::registry::GameFeeInfo"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "denshokan_interfaces::filter::GamesResult",
+    "members": [
+      {
+        "name": "entries",
+        "type": "core::array::Array::<denshokan_interfaces::filter::GameEntry>"
+      },
+      {
+        "name": "total",
+        "type": "core::integer::u64"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "denshokan_interfaces::filter::IDenshokanGames",
+    "items": [
+      {
+        "type": "function",
+        "name": "all_games",
+        "inputs": [
+          {
+            "name": "offset",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "limit",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "denshokan_interfaces::filter::GamesResult"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "games_by_genre",
+        "inputs": [
+          {
+            "name": "genre",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "offset",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "limit",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "denshokan_interfaces::filter::GamesResult"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "games_by_developer",
+        "inputs": [
+          {
+            "name": "developer",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "offset",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "limit",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "denshokan_interfaces::filter::GamesResult"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "games_by_publisher",
+        "inputs": [
+          {
+            "name": "publisher",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "offset",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "limit",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "denshokan_interfaces::filter::GamesResult"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "game_count",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u64"
           }
         ],
         "state_mutability": "view"

@@ -7,6 +7,9 @@ export interface GamesParams {
   sort?: { field: string; direction: "asc" | "desc" };
   limit?: number;
   offset?: number;
+  genre?: string;
+  developer?: string;
+  publisher?: string;
 }
 
 export interface UseGamesResult {
