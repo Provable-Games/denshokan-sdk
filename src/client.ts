@@ -35,7 +35,7 @@ import type {
 import { getChainConfig } from "./chains/constants.js";
 import { DEFAULT_FETCH_CONFIG } from "./utils/retry.js";
 import { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
-import { toHexTokenId, normalizeAddress } from "./utils/address.js";
+import { toHexTokenId, normalizeAddress, isZeroAddress } from "./utils/address.js";
 import { mintParamsToSnake, playerNameUpdateToSnake } from "./utils/mappers.js";
 import { assignSalts } from "./utils/salt.js";
 import { InvalidChainError, GameNotFoundError } from "./errors/index.js";
@@ -861,8 +861,7 @@ export class DenshokanClient {
       }
     }
 
-    const isZeroAddr = (addr: string | undefined): boolean =>
-      !addr || /^0x0+$/.test(addr);
+    const isZeroAddr = isZeroAddress;
 
     return fullStates.map((state, i) => {
       const decoded = decodePackedTokenId(state.tokenId);

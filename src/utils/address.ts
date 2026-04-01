@@ -26,6 +26,10 @@ export function toHexAddress(value: unknown): string {
   }
 }
 
+export function isZeroAddress(addr: string | undefined): boolean {
+  return !addr || /^0x0+$/.test(addr);
+}
+
 /**
  * Convert a BigInt or hex/decimal string to a 0x-prefixed hex token ID.
  * Unlike addresses, token IDs don't need to be padded to 64 characters.

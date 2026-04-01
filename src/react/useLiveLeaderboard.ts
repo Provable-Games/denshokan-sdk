@@ -84,7 +84,7 @@ export function useLiveLeaderboard(
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
   const resetEntries = useCallback(() => setEntries([]), []);
-  useResetOnClient(client, resetEntries as unknown as (value: null) => void);
+  useResetOnClient(client, resetEntries);
 
   // Re-sort within the current page and assign ranks accounting for offset
   const sortAndRank = useCallback(

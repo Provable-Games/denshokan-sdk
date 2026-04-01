@@ -4,7 +4,7 @@ import type { Game, GameSettingDetails, GameObjectiveDetails } from "../types/ga
 import type { PaginatedResult } from "../types/token.js";
 import { RpcError } from "../errors/index.js";
 import { num } from "starknet";
-import { toHexTokenId, toHexAddress } from "../utils/address.js";
+import { toHexTokenId, toHexAddress, isZeroAddress } from "../utils/address.js";
 
 function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise<T> {
   return fn().catch((error: unknown) => {
@@ -688,12 +688,12 @@ function parseGameEntry(raw: unknown): Game {
     imageUrl: metadata.image?.toString() || undefined,
     color: metadata.color?.toString() || undefined,
     clientUrl: metadata.client_url?.toString() || undefined,
-    rendererAddress: toHexAddress(metadata.renderer_address ?? 0) || undefined,
+    rendererAddress: isZeroAddress(toHexAddress(metadata.renderer_address ?? 0)) ? undefined : toHexAddress(metadata.renderer_address ?? 0),
     royaltyFraction: metadata.royalty_fraction?.toString(),
-    skillsAddress: toHexAddress(metadata.skills_address ?? 0) || undefined,
-    version: Number(metadata.version ?? 0) || undefined,
+    skillsAddress: isZeroAddress(toHexAddress(metadata.skills_address ?? 0)) ? undefined : toHexAddress(metadata.skills_address ?? 0),
+    version: metadata.version != null ? Number(metadata.version) : undefined,
     license: feeInfo.license?.toString() || undefined,
-    gameFeeBps: Number(feeInfo.fee_numerator ?? 0) || undefined,
+    gameFeeBps: feeInfo.fee_numerator != null ? Number(feeInfo.fee_numerator) : undefined,
     createdAt: metadata.created_at
       ? new Date(Number(metadata.created_at) * 1000).toISOString()
       : "",

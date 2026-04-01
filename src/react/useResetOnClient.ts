@@ -7,7 +7,7 @@ import type { DenshokanClient } from "../client.js";
  */
 export function useResetOnClient(
   client: DenshokanClient,
-  ...resetters: Array<(value: null) => void>
+  ...resetters: Array<((value: null) => void) | (() => void)>
 ): void {
   useEffect(() => {
     for (const reset of resetters) {
