@@ -6,7 +6,7 @@ export type { DenshokanProviderProps } from "./context.js";
 export { useGames, useGame, useGameStats } from "./useGames.js";
 export { useTokens, useToken, useTokenScores } from "./useTokens.js";
 export { useDecodeToken } from "./useDecodeToken.js";
-export { usePlayerStats, usePlayerTokens } from "./usePlayer.js";
+export { usePlayerStats } from "./usePlayer.js";
 export { useMinters } from "./useMinters.js";
 export { useActivity } from "./useActivity.js";
 export { useLiveLeaderboard } from "./useLiveLeaderboard.js";

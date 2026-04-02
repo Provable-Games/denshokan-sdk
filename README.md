@@ -238,7 +238,7 @@ The SDK monitors API and RPC health in the background (30s interval). When the A
 
 All data hooks return `{ data, isLoading, error, refetch }`.
 
-**Data** — `useGames()`, `useTokens(params?)`, `useToken(tokenId)`, `useLeaderboard(gameId, opts?)`, `usePlayerStats(address)`, `usePlayerTokens(address, params?)`, `useMinters()`, `useActivity(params?)`
+**Data** — `useGames()`, `useTokens(params?)`, `useToken(tokenId)`, `useLeaderboard(gameId, opts?)`, `usePlayerStats(address)`, `useMinters()`, `useActivity(params?)`
 
 **RPC** — `useBalanceOf(account)`, `useOwnerOf(tokenId)`, `useTokenUri(tokenId)`, `useTokenMetadataBatch(tokenIds)`, `useScoreBatch(tokenIds, gameAddress)`, `useGameOverBatch(tokenIds, gameAddress)`
 
