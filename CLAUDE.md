@@ -71,7 +71,7 @@ src/
     ├── useGames.ts           # useGames hook
     ├── useTokens.ts          # useTokens, useToken hooks
     ├── useLeaderboard.ts     # useLeaderboard hook
-    ├── usePlayer.ts          # usePlayerStats, usePlayerTokens hooks
+    ├── usePlayer.ts          # usePlayerStats hook
     ├── useMinters.ts         # useMinters hook
     ├── useActivity.ts        # useActivity hook
     ├── useSubscription.ts    # WebSocket subscription hook
