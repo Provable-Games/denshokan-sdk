@@ -30,6 +30,8 @@ export interface DenshokanClientConfig {
   apiUrl?: string;
   wsUrl?: string;
   rpcUrl?: string;
+  /** Custom headers to send with every RPC request (e.g. Authorization). */
+  rpcHeaders?: Record<string, string>;
   provider?: unknown;
   /** Denshokan ERC721 contract address. Defaults to chain-specific address if not provided. */
   denshokanAddress?: string;
@@ -48,6 +50,7 @@ export interface ResolvedConfig {
   apiUrl: string;
   wsUrl: string;
   rpcUrl: string;
+  rpcHeaders: Record<string, string> | undefined;
   provider: unknown | null;
   denshokanAddress: string;
   registryAddress: string;

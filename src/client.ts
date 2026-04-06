@@ -209,6 +209,7 @@ export class DenshokanClient {
       apiUrl,
       wsUrl,
       rpcUrl: config.rpcUrl ?? chainConfig.rpcUrl,
+      rpcHeaders: config.rpcHeaders,
       provider: config.provider ?? null,
       denshokanAddress: config.denshokanAddress ?? chainConfig.denshokanAddress,
       registryAddress: config.registryAddress ?? chainConfig.registryAddress,
@@ -228,7 +229,7 @@ export class DenshokanClient {
     if (!this._provider) {
       this._provider = this.config.provider
         ? (this.config.provider as RpcProvider)
-        : await createProvider(this.config.rpcUrl);
+        : await createProvider(this.config.rpcUrl, this.config.rpcHeaders);
     }
     return this._provider;
   }
