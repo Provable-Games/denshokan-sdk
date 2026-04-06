@@ -624,7 +624,6 @@ export class DenshokanClient {
       includeUri,
     } = params ?? {};
 
-    const denshokanContract = await this.getDenshokanContract();
     const viewerContract = await this.getViewerContract();
 
     // Resolve gameAddress from gameId if needed
