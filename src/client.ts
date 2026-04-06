@@ -67,8 +67,6 @@ import {
   rpcName,
   rpcSymbol,
   rpcRoyaltyInfo,
-  rpcTotalSupply,
-  rpcTokenByIndex,
   rpcTokenOfOwnerByIndex,
   rpcTokenMetadata,
   rpcTokenMetadataBatch,
@@ -787,17 +785,9 @@ export class DenshokanClient {
       tokenIds = filterResult.tokenIds;
       total = filterResult.total;
     } else {
-      // No filter - enumerate all tokens via ERC721Enumerable
-      const totalSupply = await rpcTotalSupply(denshokanContract);
-      total = Number(totalSupply);
-      const allTokenIds: string[] = [];
-      const start = BigInt(offset);
-      const end = start + BigInt(limit) > totalSupply ? totalSupply : start + BigInt(limit);
-      for (let i = start; i < end; i++) {
-        const tokenId = await rpcTokenByIndex(denshokanContract, i);
-        allTokenIds.push(tokenId);
-      }
-      tokenIds = allTokenIds;
+      // Global token enumeration removed — use API datasource for unfiltered queries
+      tokenIds = [];
+      total = 0;
     }
 
     // Build full Token objects for the results using batch method (1 RPC call for all tokens)
@@ -1103,43 +1093,12 @@ export class DenshokanClient {
   }
 
   // =========================================================================
-  // RPC: Denshokan Contract (ERC721Enumerable)
+  // RPC: Denshokan Contract (Owner Enumeration)
   // =========================================================================
-
-  async totalSupply(): Promise<bigint> {
-    const contract = await this.getDenshokanContract();
-    return rpcTotalSupply(contract);
-  }
-
-  async tokenByIndex(index: bigint): Promise<string> {
-    const contract = await this.getDenshokanContract();
-    return rpcTokenByIndex(contract, index);
-  }
 
   async tokenOfOwnerByIndex(owner: string, index: bigint): Promise<string> {
     const contract = await this.getDenshokanContract();
     return rpcTokenOfOwnerByIndex(contract, owner, index);
-  }
-
-  /**
-   * Enumerate all token IDs in the contract.
-   * Uses ERC721Enumerable to iterate through all tokens.
-   * @param options.limit - Maximum number of tokens to return (default: all)
-   * @param options.offset - Starting index (default: 0)
-   */
-  async enumerateTokenIds(options?: { limit?: number; offset?: number }): Promise<string[]> {
-    const contract = await this.getDenshokanContract();
-    const total = await rpcTotalSupply(contract);
-    const offset = BigInt(options?.offset ?? 0);
-    const limit = options?.limit ? BigInt(options.limit) : total - offset;
-    const end = offset + limit > total ? total : offset + limit;
-
-    const tokenIds: string[] = [];
-    for (let i = offset; i < end; i++) {
-      const tokenId = await rpcTokenByIndex(contract, i);
-      tokenIds.push(tokenId);
-    }
-    return tokenIds;
   }
 
   /**

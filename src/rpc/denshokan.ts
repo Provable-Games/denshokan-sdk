@@ -123,21 +123,7 @@ export async function rpcRoyaltyInfo(
   }, contract.address);
 }
 
-// === ERC721Enumerable calls ===
-
-export async function rpcTotalSupply(contract: Contract): Promise<bigint> {
-  return wrapRpcCall(async () => {
-    const result = await contract.call("total_supply");
-    return BigInt(result.toString());
-  }, contract.address);
-}
-
-export async function rpcTokenByIndex(contract: Contract, index: bigint): Promise<string> {
-  return wrapRpcCall(async () => {
-    const result = await contract.call("token_by_index", [index]);
-    return toHexTokenId(result);
-  }, contract.address);
-}
+// === ERC721Enumerable (owner-based) ===
 
 export async function rpcTokenOfOwnerByIndex(
   contract: Contract,
