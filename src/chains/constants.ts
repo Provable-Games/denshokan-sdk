@@ -15,11 +15,11 @@ const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     apiUrl: "https://denshokan-api-production.up.railway.app",
     wsUrl: "wss://denshokan-api-production.up.railway.app/ws",
     denshokanAddress:
-      "0x03b54a422e241957e105f41e992bdd5af349d68a87358e5f470a5c2880bc6253",
+      "0x00263cc540dac11334470a64759e03952ee2f84a290e99ba8cbc391245cd0bf9",
     registryAddress:
-      "0x01b529f24758f5862d4c614440aa0188a9e86d5adcfc55b39d28cd42e31daae1",
+      "0x02cbaec07913d3580822e5811e575ab657ee0362c022b8df56214cb6ca95fe06",
     viewerAddress:
-      "0x011e6c8ae5550ea53fa49c6badaf17cc3732795ecb0389275183362e1078392d",
+      "0x04b71fe06bc359e5b105857f8d7781b5390066f459c733604abeaa3c6e884875",
   },
   sepolia: {
     chainId: "SN_SEPOLIA",
@@ -27,11 +27,11 @@ const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     apiUrl: "https://denshokan-api-sepolia.up.railway.app",
     wsUrl: "wss://denshokan-api-sepolia.up.railway.app/ws",
     denshokanAddress:
-      "0x017eae504f5716423d423c3fe5640b4dcf830a9634c243d86f6fe0cc01b688c3",
+      "0x0004e6e5bbf18424dfb825f1dbb65e10473b4603a1ec7b9ab02c143d877114f9",
     registryAddress:
-      "0x04e2b728f2b0209ede6f3fd01ec190c33d1d73aa628ad5e9f80549ba62d0e331",
+      "0x06794040fa260cbc80630b90c5e63f9bc6b1b572d9289175b409e70ae2c234b6",
     viewerAddress:
-      "0x036d3cab94a44a63ecd063d1c26e1f37915c75a2e0ae419e2f8f56421c2278b6",
+      "0x010527799357ce3c8e71700b9a13485afcd25304cfebb393919b369845c68f6f",
   },
 };
 
