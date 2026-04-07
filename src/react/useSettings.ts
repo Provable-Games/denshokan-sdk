@@ -8,7 +8,7 @@ export interface UseSettingsResult {
   data: PaginatedResult<GameSettingDetails> | null;
   isLoading: boolean;
   error: Error | null;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 export function useSettings(params?: SettingsParams): UseSettingsResult {
@@ -21,14 +21,17 @@ export function useSettings(params?: SettingsParams): UseSettingsResult {
 
   const paramsKey = JSON.stringify(params);
 
-  const fetch = useCallback(() => {
+  const fetch = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    client
-      .getSettings(params)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setIsLoading(false));
+    try {
+      const result = await client.getSettings(params);
+      setData(result);
+    } catch (e) {
+      setError(e as Error);
+    } finally {
+      setIsLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, paramsKey]);
 

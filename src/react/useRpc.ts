@@ -8,7 +8,7 @@ interface UseAsyncResult<T> {
   data: T | null;
   isLoading: boolean;
   error: Error | null;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 function useAsync<T>(
@@ -26,14 +26,18 @@ function useAsync<T>(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetch = useCallback(fetcher, deps);
 
-  const refetch = useCallback(() => {
+  const refetch = useCallback(async () => {
     if (!enabled) return;
     setIsLoading(true);
     setError(null);
-    fetch()
-      .then(setData)
-      .catch(setError)
-      .finally(() => setIsLoading(false));
+    try {
+      const result = await fetch();
+      setData(result);
+    } catch (e) {
+      setError(e as Error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [fetch, enabled]);
 
   useEffect(() => { refetch(); }, [refetch]);

@@ -17,7 +17,7 @@ export interface UseGamesResult {
   data: PaginatedResult<Game> | null;
   isLoading: boolean;
   error: Error | null;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 export function useGames(params?: GamesParams): UseGamesResult {
@@ -30,14 +30,17 @@ export function useGames(params?: GamesParams): UseGamesResult {
 
   const paramsKey = JSON.stringify(params);
 
-  const fetch = useCallback(() => {
+  const fetch = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    client
-      .getGames(params)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setIsLoading(false));
+    try {
+      const result = await client.getGames(params);
+      setData(result);
+    } catch (e) {
+      setError(e as Error);
+    } finally {
+      setIsLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, paramsKey]);
 
@@ -50,7 +53,7 @@ export interface UseGameResult {
   data: Game | null;
   isLoading: boolean;
   error: Error | null;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 export function useGame(gameAddress: string | undefined): UseGameResult {
@@ -61,15 +64,18 @@ export function useGame(gameAddress: string | undefined): UseGameResult {
 
   useResetOnClient(client, setData, setError);
 
-  const fetch = useCallback(() => {
+  const fetch = useCallback(async () => {
     if (gameAddress === undefined) return;
     setIsLoading(true);
     setError(null);
-    client
-      .getGame(gameAddress)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setIsLoading(false));
+    try {
+      const result = await client.getGame(gameAddress);
+      setData(result);
+    } catch (e) {
+      setError(e as Error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [client, gameAddress]);
 
   useEffect(() => { fetch(); }, [fetch]);
@@ -81,7 +87,7 @@ export interface UseGameStatsResult {
   data: GameStats | null;
   isLoading: boolean;
   error: Error | null;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 export function useGameStats(gameAddress: string | undefined): UseGameStatsResult {
@@ -92,15 +98,18 @@ export function useGameStats(gameAddress: string | undefined): UseGameStatsResul
 
   useResetOnClient(client, setData, setError);
 
-  const fetch = useCallback(() => {
+  const fetch = useCallback(async () => {
     if (gameAddress === undefined) return;
     setIsLoading(true);
     setError(null);
-    client
-      .getGameStats(gameAddress)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setIsLoading(false));
+    try {
+      const result = await client.getGameStats(gameAddress);
+      setData(result);
+    } catch (e) {
+      setError(e as Error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [client, gameAddress]);
 
   useEffect(() => { fetch(); }, [fetch]);

@@ -8,7 +8,7 @@ export interface UseActivityResult {
   data: PaginatedResult<ActivityEvent> | null;
   isLoading: boolean;
   error: Error | null;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 export function useActivity(params?: ActivityParams): UseActivityResult {
@@ -21,14 +21,17 @@ export function useActivity(params?: ActivityParams): UseActivityResult {
 
   const paramsKey = JSON.stringify(params);
 
-  const fetch = useCallback(() => {
+  const fetch = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    client
-      .getActivity(params)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setIsLoading(false));
+    try {
+      const result = await client.getActivity(params);
+      setData(result);
+    } catch (e) {
+      setError(e as Error);
+    } finally {
+      setIsLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, paramsKey]);
 

@@ -8,7 +8,7 @@ export interface UseObjectivesResult {
   data: PaginatedResult<GameObjectiveDetails> | null;
   isLoading: boolean;
   error: Error | null;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 export function useObjectives(params?: ObjectivesParams): UseObjectivesResult {
@@ -21,14 +21,17 @@ export function useObjectives(params?: ObjectivesParams): UseObjectivesResult {
 
   const paramsKey = JSON.stringify(params);
 
-  const fetch = useCallback(() => {
+  const fetch = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    client
-      .getObjectives(params)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setIsLoading(false));
+    try {
+      const result = await client.getObjectives(params);
+      setData(result);
+    } catch (e) {
+      setError(e as Error);
+    } finally {
+      setIsLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, paramsKey]);
 

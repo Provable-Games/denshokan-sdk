@@ -123,6 +123,8 @@ export interface TokensFilterParams {
   playable?: boolean;
   /** Filter by game over status */
   gameOver?: boolean;
+  /** Filter to tokens that have a context (contextId != 0) or don't */
+  hasContext?: boolean;
   /** Filter by context ID (e.g., tournament ID for tournament-minted tokens) */
   contextId?: number;
   /** Filter by context name (e.g., "Budokan" for tournament tokens) */

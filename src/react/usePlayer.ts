@@ -7,7 +7,7 @@ export interface UsePlayerStatsResult {
   data: PlayerStats | null;
   isLoading: boolean;
   error: Error | null;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 export function usePlayerStats(address: string | undefined): UsePlayerStatsResult {
@@ -18,15 +18,18 @@ export function usePlayerStats(address: string | undefined): UsePlayerStatsResul
 
   useResetOnClient(client, setData, setError);
 
-  const fetch = useCallback(() => {
+  const fetch = useCallback(async () => {
     if (!address) return;
     setIsLoading(true);
     setError(null);
-    client
-      .getPlayerStats(address)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setIsLoading(false));
+    try {
+      const result = await client.getPlayerStats(address);
+      setData(result);
+    } catch (e) {
+      setError(e as Error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [client, address]);
 
   useEffect(() => { fetch(); }, [fetch]);

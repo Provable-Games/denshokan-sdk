@@ -35,7 +35,7 @@ export interface UseLiveLeaderboardResult {
   /** Total matching tokens across all pages (for pagination controls) */
   total: number;
   isLoading: boolean;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 function toEntry(token: Token, rank: number): LeaderboardEntry {
