@@ -133,30 +133,3 @@ export function useGameOverBatch(
   );
 }
 
-// === Objectives (RPC count) ===
-
-export function useObjectivesCount(
-  gameAddress: string | undefined,
-): UseAsyncResult<number> {
-  const client = useDenshokanClient();
-  return useAsync(
-    client,
-    () => client.objectivesCount(gameAddress!),
-    [client, gameAddress],
-    !!gameAddress,
-  );
-}
-
-// === Settings (RPC count) ===
-
-export function useSettingsCount(
-  gameAddress: string | undefined,
-): UseAsyncResult<number> {
-  const client = useDenshokanClient();
-  return useAsync(
-    client,
-    () => client.settingsCount(gameAddress!),
-    [client, gameAddress],
-    !!gameAddress,
-  );
-}
