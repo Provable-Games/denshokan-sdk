@@ -38,6 +38,4 @@ export {
   useTokenMetadataBatch,
   useScoreBatch,
   useGameOverBatch,
-  useObjectivesCount,
-  useSettingsCount,
 } from "./useRpc.js";
