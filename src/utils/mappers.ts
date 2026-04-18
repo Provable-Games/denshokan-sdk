@@ -3,13 +3,11 @@ import { decodePackedTokenId } from "./token-id.js";
 import { toHexTokenId } from "./address.js";
 import type {
   Game,
-  GameStats,
   GameObjectiveDetails,
   GameSettingDetails,
 } from "../types/game.js";
 import type { PlayerStats } from "../types/player.js";
 import type { Minter } from "../types/minter.js";
-import type { ActivityEvent, ActivityStats } from "../types/activity.js";
 import type { GameMetadata, GameFeeInfo, MintParams, PlayerNameUpdate } from "../types/rpc.js";
 import { DenshokanError } from "../errors/index.js";
 import { MAX_SALT } from "./salt.js";
@@ -113,16 +111,6 @@ export function mapGames(raw: Record<string, unknown>[]): Game[] {
   return raw.map(mapGame);
 }
 
-export function mapGameStats(raw: Record<string, unknown>): GameStats {
-  return {
-    gameId: Number(raw.gameId ?? raw.game_id ?? 0),
-    totalTokens: Number(raw.totalTokens ?? raw.total_tokens ?? 0),
-    completedGames: Number(raw.completedGames ?? raw.completed_games ?? 0),
-    activeGames: Number(raw.activeGames ?? raw.active_games ?? 0),
-    uniquePlayers: Number(raw.uniquePlayers ?? raw.unique_players ?? 0),
-  };
-}
-
 export function mapPlayerStats(raw: Record<string, unknown>): PlayerStats {
   return {
     address: String(raw.address ?? ""),
@@ -147,32 +135,6 @@ export function mapMinter(raw: Record<string, unknown>): Minter {
 
 export function mapMinters(raw: Record<string, unknown>[]): Minter[] {
   return raw.map(mapMinter);
-}
-
-export function mapActivityEvent(raw: Record<string, unknown>): ActivityEvent {
-  return {
-    id: String(raw.id ?? ""),
-    type: String(raw.eventType ?? raw.event_type ?? raw.type ?? ""),
-    tokenId: toHexTokenId(raw.tokenId ?? raw.token_id ?? "0"),
-    gameId: Number(raw.gameId ?? raw.game_id ?? 0),
-    player: String(raw.player ?? raw.ownerAddress ?? raw.owner_address ?? ""),
-    data: (raw.eventData ?? raw.event_data ?? raw.data) as Record<string, unknown> ?? {},
-    timestamp: String(raw.blockTimestamp ?? raw.block_timestamp ?? raw.timestamp ?? ""),
-  };
-}
-
-export function mapActivityEvents(raw: Record<string, unknown>[]): ActivityEvent[] {
-  return raw.map(mapActivityEvent);
-}
-
-export function mapActivityStats(raw: Record<string, unknown>): ActivityStats {
-  return {
-    gameId: Number(raw.gameId ?? raw.game_id ?? 0),
-    totalTokens: Number(raw.totalTokens ?? raw.total_tokens ?? 0),
-    completedGames: Number(raw.completedGames ?? raw.completed_games ?? 0),
-    activeGames: Number(raw.activeGames ?? raw.active_games ?? 0),
-    uniquePlayers: Number(raw.uniquePlayers ?? raw.unique_players ?? 0),
-  };
 }
 
 export function mapGameMetadata(raw: Record<string, unknown>): GameMetadata {

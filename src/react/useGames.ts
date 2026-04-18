@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { Game, GameStats } from "../types/game.js";
+import type { Game } from "../types/game.js";
 import type { PaginatedResult } from "../types/token.js";
 import { useDenshokanClient } from "./context.js";
 import { useResetOnClient } from "./useResetOnClient.js";
@@ -70,40 +70,6 @@ export function useGame(gameAddress: string | undefined): UseGameResult {
     setError(null);
     try {
       const result = await client.getGame(gameAddress);
-      setData(result);
-    } catch (e) {
-      setError(e as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [client, gameAddress]);
-
-  useEffect(() => { fetch(); }, [fetch]);
-
-  return { data, isLoading, error, refetch: fetch };
-}
-
-export interface UseGameStatsResult {
-  data: GameStats | null;
-  isLoading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-}
-
-export function useGameStats(gameAddress: string | undefined): UseGameStatsResult {
-  const client = useDenshokanClient();
-  const [data, setData] = useState<GameStats | null>(null);
-  const [isLoading, setIsLoading] = useState(!!gameAddress);
-  const [error, setError] = useState<Error | null>(null);
-
-  useResetOnClient(client, setData, setError);
-
-  const fetch = useCallback(async () => {
-    if (gameAddress === undefined) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await client.getGameStats(gameAddress);
       setData(result);
     } catch (e) {
       setError(e as Error);

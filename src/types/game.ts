@@ -18,14 +18,6 @@ export interface Game {
   createdAt: string;
 }
 
-export interface GameStats {
-  gameId: number;
-  totalTokens: number;
-  completedGames: number;
-  activeGames: number;
-  uniquePlayers: number;
-}
-
 export interface GameDetail {
   key: string;
   value: string;
