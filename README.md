@@ -210,15 +210,13 @@ The SDK monitors API and RPC health in the background (30s interval). When the A
 
 ### Client Methods
 
-**Games** — `getGames()`, `getGame(id)`, `getGameStats(id)`, `getGameLeaderboard(id, opts?)`, `getLeaderboardPosition(gameId, tokenId, context?)`, `getGameObjectives(id)`, `getGameSettings(id)`
+**Games** — `getGames()`, `getGame(id)`, `getGameLeaderboard(id, opts?)`, `getLeaderboardPosition(gameId, tokenId, context?)`, `getGameObjectives(id)`, `getGameSettings(id)`
 
 **Tokens** — `getTokens(params?)`, `getToken(id)`, `getTokenScores(id, limit?)`
 
 **Players** — `getPlayerTokens(address, params?)`, `getPlayerStats(address)`
 
 **Minters** — `getMinters()`, `getMinter(id)`
-
-**Activity** — `getActivity(params?)`, `getActivityStats(gameId?)`
 
 **RPC: ERC721** — `balanceOf(account)`, `ownerOf(tokenId)`, `tokenUri(tokenId)`, `name()`, `symbol()`, `royaltyInfo(tokenId, salePrice)`
 
@@ -238,7 +236,7 @@ The SDK monitors API and RPC health in the background (30s interval). When the A
 
 All data hooks return `{ data, isLoading, error, refetch }`.
 
-**Data** — `useGames()`, `useTokens(params?)`, `useToken(tokenId)`, `useLeaderboard(gameId, opts?)`, `usePlayerStats(address)`, `useMinters()`, `useActivity(params?)`
+**Data** — `useGames()`, `useTokens(params?)`, `useToken(tokenId)`, `useLeaderboard(gameId, opts?)`, `usePlayerStats(address)`, `useMinters()`
 
 **RPC** — `useBalanceOf(account)`, `useOwnerOf(tokenId)`, `useTokenUri(tokenId)`, `useTokenMetadataBatch(tokenIds)`, `useScoreBatch(tokenIds, gameAddress)`, `useGameOverBatch(tokenIds, gameAddress)`
 

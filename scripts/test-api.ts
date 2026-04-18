@@ -60,19 +60,6 @@ async function run() {
     assert(typeof game.contractAddress === "string", "contractAddress should be string");
   });
 
-  await test("getGameStats(gameAddress) returns stats", async () => {
-    const stats = await client.getGameStats(GAME_ADDRESS);
-    assert(typeof stats.gameId === "number", "gameId should be number");
-    assert(typeof stats.totalTokens === "number", "totalTokens should be number");
-    assert(typeof stats.activeGames === "number", "activeGames should be number");
-    assert(typeof stats.completedGames === "number", "completedGames should be number");
-    assert(typeof stats.uniquePlayers === "number", "uniquePlayers should be number");
-    // Verify old fields are gone
-    assert(!("activeTokens" in stats), "should NOT have activeTokens");
-    assert(!("highestScore" in stats), "should NOT have highestScore");
-    assert(!("totalPlayers" in stats), "should NOT have totalPlayers");
-  });
-
   await test("getGameObjectives(gameAddress) returns array", async () => {
     const objectives = await client.getGameObjectives(GAME_ADDRESS);
     assert(Array.isArray(objectives), "should be an array");
@@ -166,40 +153,6 @@ async function run() {
     const minter = await client.getMinter(MINTER_ID);
     assert(minter.minterId === "1", `minterId should be '1', got '${minter.minterId}'`);
     assert(typeof minter.contractAddress === "string", "contractAddress should be string");
-  });
-
-  // ── Activity ───────────────────────────────────────────
-
-  console.log("\nActivity:");
-
-  await test("getActivity() returns paginated events", async () => {
-    const result = await client.getActivity({ limit: 5 });
-    assert(Array.isArray(result.data), "data should be an array");
-    assert(typeof result.total === "number", "total should be a number");
-    if (result.data.length > 0) {
-      const event = result.data[0];
-      assert(typeof event.id === "string", "id should be string");
-      assert(typeof event.type === "string", "type should be string");
-      assert(typeof event.tokenId === "string", "tokenId should be string");
-      assert(typeof event.timestamp === "string", "timestamp should be string");
-    }
-  });
-
-  await test("getActivity({ type }) filters by event type", async () => {
-    const result = await client.getActivity({ type: "mint", limit: 5 });
-    assert(Array.isArray(result.data), "data should be an array");
-    for (const event of result.data) {
-      assert(event.type === "mint", `all events should be type 'mint', got '${event.type}'`);
-    }
-  });
-
-  await test("getActivityStats() returns stats", async () => {
-    const stats = await client.getActivityStats(1);
-    assert(typeof stats.gameId === "number", "gameId should be number");
-    assert(typeof stats.totalTokens === "number", "totalTokens should be number");
-    assert(typeof stats.activeGames === "number", "activeGames should be number");
-    assert(typeof stats.completedGames === "number", "completedGames should be number");
-    assert(typeof stats.uniquePlayers === "number", "uniquePlayers should be number");
   });
 
   // ── Summary ────────────────────────────────────────────

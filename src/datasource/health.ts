@@ -116,18 +116,16 @@ export class ConnectionStatus {
 
     let blockLag: number | null = null;
 
-    // Staleness check: compare indexer block vs chain head
+    // Staleness check: compare indexer block vs chain head (informational only).
+    // Block lag no longer triggers rpc-fallback mode because the API returns
+    // correctly filtered data even when slightly behind, whereas the RPC
+    // fallback cannot replicate server-side filtering (context, game_over, etc.)
+    // and returns unfiltered results that are worse than stale data.
     if (
-      this.maxBlockLag > 0 &&
       apiResult.blockNumber != null &&
       rpcResult.blockNumber != null
     ) {
       blockLag = Math.max(0, rpcResult.blockNumber - apiResult.blockNumber);
-
-      if (blockLag > this.maxBlockLag) {
-        apiResult.available = false;
-        apiResult.error = `Indexer is ${blockLag} blocks behind (max: ${this.maxBlockLag})`;
-      }
     }
 
     this.updateStatus({ api: apiResult, rpc: rpcResult, blockLag, initialCheckComplete: true });
