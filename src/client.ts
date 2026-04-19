@@ -3,7 +3,6 @@ import type {
   DenshokanClientConfig,
   ResolvedConfig,
   Game,
-  GameStats,
   GameObjectiveDetails,
   GameSettingDetails,
   GameDetail,
@@ -20,9 +19,6 @@ import type {
   PlayerStats,
   PlayerTokensParams,
   Minter,
-  ActivityEvent,
-  ActivityParams,
-  ActivityStats,
   RoyaltyInfo,
   GameMetadata,
   GameFeeInfo,
@@ -47,7 +43,6 @@ import { WebSocketManager } from "./ws/manager.js";
 import {
   apiGetGames,
   apiGetGame,
-  apiGetGameStats,
   apiGetSettings,
   apiGetSetting,
   apiGetObjectives,
@@ -56,7 +51,6 @@ import {
 import { apiGetTokens, apiGetToken, apiGetTokenScores } from "./api/tokens.js";
 import { apiGetPlayerTokens, apiGetPlayerStats } from "./api/players.js";
 import { apiGetMinters, apiGetMinter } from "./api/minters.js";
-import { apiGetActivity, apiGetActivityStats } from "./api/activity.js";
 
 // RPC imports
 import { createProvider, createContract } from "./rpc/provider.js";
@@ -405,10 +399,6 @@ export class DenshokanClient {
       );
     }
     return this.getGameViaRpc(gameAddress);
-  }
-
-  async getGameStats(gameAddress: string): Promise<GameStats> {
-    return apiGetGameStats(this.apiCtx, gameAddress);
   }
 
   // =========================================================================
@@ -956,18 +946,6 @@ export class DenshokanClient {
 
   async getMinter(minterId: string): Promise<Minter> {
     return apiGetMinter(this.apiCtx, minterId);
-  }
-
-  // =========================================================================
-  // Activity (API only)
-  // =========================================================================
-
-  async getActivity(params?: ActivityParams): Promise<PaginatedResult<ActivityEvent>> {
-    return apiGetActivity(this.apiCtx, params);
-  }
-
-  async getActivityStats(gameId?: number): Promise<ActivityStats> {
-    return apiGetActivityStats(this.apiCtx, gameId);
   }
 
   // =========================================================================

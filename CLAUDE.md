@@ -31,10 +31,9 @@ src/
 ├── types/                    # All TypeScript interfaces (camelCase fields)
 │   ├── config.ts             # DenshokanClientConfig, DataSource
 │   ├── token.ts              # Token, DecodedTokenId, TokenMetadata
-│   ├── game.ts               # Game, GameStats, LeaderboardEntry, GameDetail
+│   ├── game.ts               # Game, LeaderboardEntry, GameDetail
 │   ├── player.ts             # PlayerStats
 │   ├── minter.ts             # Minter
-│   ├── activity.ts           # ActivityEvent
 │   ├── websocket.ts          # WSChannel, WSMessage
 │   └── rpc.ts                # RoyaltyInfo, GameMetadata, MintParams
 ├── api/                      # REST API layer
@@ -43,7 +42,6 @@ src/
 │   ├── tokens.ts             # Token endpoints
 │   ├── players.ts            # Player endpoints
 │   ├── minters.ts            # Minter endpoints
-│   └── activity.ts           # Activity endpoints
 ├── rpc/                      # Starknet RPC layer
 │   ├── provider.ts           # createProvider, createContract helpers
 │   ├── denshokan.ts          # Denshokan contract (ERC721 + batch metadata)
@@ -73,7 +71,6 @@ src/
     ├── useLeaderboard.ts     # useLeaderboard hook
     ├── usePlayer.ts          # usePlayerStats hook
     ├── useMinters.ts         # useMinters hook
-    ├── useActivity.ts        # useActivity hook
     ├── useSubscription.ts    # WebSocket subscription hook
     └── useRpc.ts             # useBalanceOf, useOwnerOf, useTokenUri, batch hooks
 ```

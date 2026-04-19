@@ -1,7 +1,6 @@
 import type { FetchConfig } from "../types/config.js";
 import type {
   Game,
-  GameStats,
   GameObjectiveDetails,
   GameSettingDetails,
   SettingsParams,
@@ -12,7 +11,6 @@ import { apiFetch, buildQueryString } from "./base.js";
 import {
   mapGame,
   mapGames,
-  mapGameStats,
   mapObjectiveDetails,
   mapObjectivesDetails,
   mapSettingDetails,
@@ -54,20 +52,6 @@ export async function apiGetGame(
     fetchConfig: ctx.fetchConfig,
   });
   return mapGame(result.data);
-}
-
-export async function apiGetGameStats(
-  ctx: ApiContext,
-  gameAddress: string,
-  signal?: AbortSignal,
-): Promise<GameStats> {
-  const result = await apiFetch<{ data: Record<string, unknown> }>({
-    baseUrl: ctx.baseUrl,
-    path: `/games/${gameAddress}/stats`,
-    signal,
-    fetchConfig: ctx.fetchConfig,
-  });
-  return mapGameStats(result.data);
 }
 
 // === Settings (unified - supports both global and per-game) ===

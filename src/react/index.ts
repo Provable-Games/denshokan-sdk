@@ -3,12 +3,11 @@ export { DenshokanProvider, useDenshokanClient } from "./context.js";
 export type { DenshokanProviderProps } from "./context.js";
 
 // Data hooks
-export { useGames, useGame, useGameStats } from "./useGames.js";
+export { useGames, useGame } from "./useGames.js";
 export { useTokens, useToken, useTokenScores } from "./useTokens.js";
 export { useDecodeToken } from "./useDecodeToken.js";
 export { usePlayerStats } from "./usePlayer.js";
 export { useMinters } from "./useMinters.js";
-export { useActivity } from "./useActivity.js";
 export { useLiveLeaderboard } from "./useLiveLeaderboard.js";
 export type { UseLiveLeaderboardOptions, UseLiveLeaderboardResult, LeaderboardEntry } from "./useLiveLeaderboard.js";
 export { useSettings } from "./useSettings.js";
