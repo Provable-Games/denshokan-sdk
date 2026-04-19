@@ -43,7 +43,6 @@ export class ConnectionStatus {
   private readonly initialCheckDelay: number;
   private readonly checkIntervalMs: number;
   private readonly checkTimeoutMs: number;
-  private readonly maxBlockLag: number;
 
   constructor(apiUrl: string, rpcUrl: string, config?: HealthTimingConfig) {
     this.apiUrl = apiUrl;
@@ -51,7 +50,6 @@ export class ConnectionStatus {
     this.initialCheckDelay = Math.max(config?.initialCheckDelay ?? 1_000, 100);
     this.checkIntervalMs = Math.max(config?.checkInterval ?? 30_000, 1_000);
     this.checkTimeoutMs = Math.max(config?.checkTimeout ?? 5_000, 1_000);
-    this.maxBlockLag = config?.maxBlockLag ?? 50;
   }
 
   getStatus(): ConnectionStatusState {
