@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { Token, TokenSortField, TokensFilterParams } from "../types/token.js";
 import type { ScoreEvent, GameOverEvent } from "../types/websocket.js";
+import { useTokens } from "./useTokens.js";
+import { useScoreUpdates, useGameOverEvents, useMintEvents } from "./useChannelSubscription.js";
+import { useDenshokanClient } from "./context.js";
+import { useResetOnClient } from "./useResetOnClient.js";
 
 /** Map API sort field names to Token object property names for client-side re-sorting */
 const SORT_FIELD_TO_PROP: Record<TokenSortField, keyof Token> = {
   currentScore: "score",
   mintedAt: "mintedAt",
-  lastUpdatedAt: "mintedAt", // fallback — lastUpdatedAt not on Token, use mintedAt
+  lastUpdatedAt: "lastUpdatedAt",
 };
-import { useTokens } from "./useTokens.js";
-import { useScoreUpdates, useGameOverEvents, useMintEvents } from "./useChannelSubscription.js";
-import { useDenshokanClient } from "./context.js";
-import { useResetOnClient } from "./useResetOnClient.js";
 
 export interface UseLiveLeaderboardOptions extends TokensFilterParams {
   /** Subscribe to score updates (default: true when enabled) */
@@ -69,7 +69,7 @@ export function useLiveLeaderboard(
   } = options;
 
   const apiSortField = filterParams.sort?.field ?? "currentScore";
-  const sortField = SORT_FIELD_TO_PROP[apiSortField] ?? "score";
+  const sortField = SORT_FIELD_TO_PROP[apiSortField];
   const sortDir = filterParams.sort?.direction ?? "desc";
   const pageOffset = filterParams.offset ?? 0;
   const pageLimit = filterParams.limit;

@@ -30,6 +30,8 @@ export interface Token {
     description: string;
     context: Array<{ name: string; value: string }>;
   } | null;
+  /** Last time this token's mutable state was updated (ISO 8601) */
+  lastUpdatedAt: string;
   /** Token URI (only populated when explicitly requested via includeUri option) */
   tokenUri?: string;
 }
