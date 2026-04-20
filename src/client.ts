@@ -592,7 +592,8 @@ export class DenshokanClient {
       gameAddress,
       lastUpdatedAt: decoded.mintedAt.toISOString(),
       contextId: null,
-      contextData: null,
+      contextName: null,
+      completedAt: null,
       minterAddress: null,
     };
   }
@@ -867,7 +868,8 @@ export class DenshokanClient {
         gameAddress: state.gameAddress,
         lastUpdatedAt: decoded.mintedAt.toISOString(),
         contextId: null,
-        contextData: null,
+        contextName: null,
+        completedAt: null,
         minterAddress: !isZeroAddr(enriched?.minterAddress) ? enriched?.minterAddress ?? null : null,
         rendererAddress: !isZeroAddr(enriched?.rendererAddress) ? enriched?.rendererAddress : undefined,
         skillsAddress: !isZeroAddr(enriched?.skillsAddress) ? enriched?.skillsAddress : undefined,

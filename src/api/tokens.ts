@@ -8,6 +8,7 @@ const SORT_FIELD_TO_API: Record<TokenSortField, string> = {
   score: "currentScore",
   mintedAt: "mintedAt",
   lastUpdatedAt: "lastUpdatedAt",
+  completedAt: "completedAt",
 };
 
 interface ApiContext {

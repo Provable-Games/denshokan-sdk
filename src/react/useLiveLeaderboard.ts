@@ -11,6 +11,7 @@ const SORT_FIELD_TO_PROP: Record<TokenSortField, keyof Token> = {
   score: "score",
   mintedAt: "mintedAt",
   lastUpdatedAt: "lastUpdatedAt",
+  completedAt: "completedAt",
 };
 
 export interface UseLiveLeaderboardOptions extends TokensFilterParams {
