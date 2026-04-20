@@ -105,8 +105,8 @@ export function useLiveLeaderboard(
           const cmp = sortDir === "desc" ? bVal - aVal : aVal - bVal;
           if (cmp !== 0) return cmp;
         }
-        // Secondary sort: tokenId ascending for stable ordering
-        return Number(a.tokenId) - Number(b.tokenId);
+        // Secondary sort: mintedAt ascending for stable ordering (earlier mint wins ties)
+        return new Date(a.mintedAt).getTime() - new Date(b.mintedAt).getTime();
       });
       // Update the page minimum score for threshold checks
       if (sorted.length > 0 && pageLimit && sorted.length >= pageLimit) {
