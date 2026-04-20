@@ -6,9 +6,9 @@ import { useScoreUpdates, useGameOverEvents, useMintEvents } from "./useChannelS
 import { useDenshokanClient } from "./context.js";
 import { useResetOnClient } from "./useResetOnClient.js";
 
-/** Map API sort field names to Token object property names for client-side re-sorting */
+/** Map sort field names to Token object property names for client-side re-sorting */
 const SORT_FIELD_TO_PROP: Record<TokenSortField, keyof Token> = {
-  currentScore: "score",
+  score: "score",
   mintedAt: "mintedAt",
   lastUpdatedAt: "lastUpdatedAt",
 };
@@ -68,7 +68,7 @@ export function useLiveLeaderboard(
     ...filterParams
   } = options;
 
-  const apiSortField = filterParams.sort?.field ?? "currentScore";
+  const apiSortField = filterParams.sort?.field ?? "score";
   const sortField = SORT_FIELD_TO_PROP[apiSortField];
   const sortDir = filterParams.sort?.direction ?? "desc";
   const pageOffset = filterParams.offset ?? 0;

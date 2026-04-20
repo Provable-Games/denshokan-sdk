@@ -108,9 +108,8 @@ export interface PaginatedResult<T> {
 
 /**
  * Available sort fields for token queries.
- * These map directly to the API's `sort_by` parameter.
  */
-export type TokenSortField = "mintedAt" | "currentScore" | "lastUpdatedAt";
+export type TokenSortField = "score" | "mintedAt" | "lastUpdatedAt";
 
 export interface TokensFilterParams {
   /** Filter by game ID (resolved to game address via registry) */
