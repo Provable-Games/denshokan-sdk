@@ -104,6 +104,12 @@ export interface PaginatedResult<T> {
   total: number;
 }
 
+/**
+ * Available sort fields for token queries.
+ * These map directly to the API's `sort_by` parameter.
+ */
+export type TokenSortField = "mintedAt" | "currentScore" | "lastUpdatedAt";
+
 export interface TokensFilterParams {
   /** Filter by game ID (resolved to game address via registry) */
   gameId?: number;
@@ -133,7 +139,7 @@ export interface TokensFilterParams {
   mintedAfter?: number;
   mintedBefore?: number;
   /** Sort by field and direction */
-  sort?: { field: string; direction: "asc" | "desc" };
+  sort?: { field: TokenSortField; direction: "asc" | "desc" };
   /** Pagination */
   limit?: number;
   offset?: number;

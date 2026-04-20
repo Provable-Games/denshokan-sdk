@@ -7,6 +7,7 @@ export type {
   TokenMetadata,
   TokenScoreEntry,
   PaginatedResult,
+  TokenSortField,
   TokensFilterParams,
   TokensQueryParams,
 } from "./token.js";
