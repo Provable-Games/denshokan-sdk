@@ -10,6 +10,7 @@ export type {
   TokenRankParams,
   PlayerRankParams,
   PaginatedResult,
+  TokenSortField,
   TokensFilterParams,
   TokensQueryParams,
 } from "./token.js";

@@ -1,7 +1,15 @@
 import type { FetchConfig } from "../types/config.js";
-import type { Token, TokenScoreEntry, TokenRank, TokenRankParams, PaginatedResult, TokensQueryParams } from "../types/token.js";
+import type { Token, TokenScoreEntry, TokenRank, TokenRankParams, TokenSortField, PaginatedResult, TokensQueryParams } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
 import { mapPaginatedTokens, mapToken, mapTokenScoreEntries, mapTokenRank } from "../utils/mappers.js";
+
+/** Map consumer-facing sort field names to API query parameter values */
+const SORT_FIELD_TO_API: Record<TokenSortField, string> = {
+  score: "currentScore",
+  mintedAt: "mintedAt",
+  lastUpdatedAt: "lastUpdatedAt",
+  completedAt: "completedAt",
+};
 
 interface ApiContext {
   baseUrl: string;
@@ -21,7 +29,7 @@ export async function apiGetTokens(
     context_id: params?.contextId,
     context_name: params?.contextName,
     minter_address: params?.minterAddress,
-    sort_by: params?.sort?.field,
+    sort_by: params?.sort?.field ? SORT_FIELD_TO_API[params.sort.field] : undefined,
     sort_order: params?.sort?.direction,
     limit: params?.limit,
     offset: params?.offset,

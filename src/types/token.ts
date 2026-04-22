@@ -24,12 +24,12 @@ export interface Token {
   paymaster: boolean;
   /** Context ID (e.g., tournament ID for tournament-minted tokens) */
   contextId: number | null;
-  /** Structured context data from the minting contract */
-  contextData: {
-    name: string;
-    description: string;
-    context: Array<{ name: string; value: string }>;
-  } | null;
+  /** Context name (e.g., tournament name) */
+  contextName: string | null;
+  /** Last time this token's mutable state was updated (ISO 8601) */
+  lastUpdatedAt: string;
+  /** Unix timestamp when the game was completed (null if still active) */
+  completedAt: number | null;
   /** Token URI (only populated when explicitly requested via includeUri option) */
   tokenUri?: string;
 }
@@ -138,6 +138,11 @@ export interface PaginatedResult<T> {
   total: number;
 }
 
+/**
+ * Available sort fields for token queries.
+ */
+export type TokenSortField = "score" | "mintedAt" | "lastUpdatedAt" | "completedAt";
+
 export interface TokensFilterParams {
   /** Filter by game ID (resolved to game address via registry) */
   gameId?: number;
@@ -167,7 +172,7 @@ export interface TokensFilterParams {
   mintedAfter?: number;
   mintedBefore?: number;
   /** Sort by field and direction */
-  sort?: { field: string; direction: "asc" | "desc" };
+  sort?: { field: TokenSortField; direction: "asc" | "desc" };
   /** Pagination */
   limit?: number;
   offset?: number;
