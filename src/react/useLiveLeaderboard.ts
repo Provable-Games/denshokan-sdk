@@ -1,10 +1,18 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import type { Token, TokensFilterParams } from "../types/token.js";
+import type { Token, TokenSortField, TokensFilterParams } from "../types/token.js";
 import type { ScoreEvent, GameOverEvent } from "../types/websocket.js";
 import { useTokens } from "./useTokens.js";
 import { useScoreUpdates, useGameOverEvents, useMintEvents } from "./useChannelSubscription.js";
 import { useDenshokanClient } from "./context.js";
 import { useResetOnClient } from "./useResetOnClient.js";
+
+/** Map sort field names to Token object property names for client-side re-sorting */
+const SORT_FIELD_TO_PROP: Record<TokenSortField, keyof Token> = {
+  score: "score",
+  mintedAt: "mintedAt",
+  lastUpdatedAt: "lastUpdatedAt",
+  completedAt: "completedAt",
+};
 
 export interface UseLiveLeaderboardOptions extends TokensFilterParams {
   /** Subscribe to score updates (default: true when enabled) */
@@ -61,7 +69,8 @@ export function useLiveLeaderboard(
     ...filterParams
   } = options;
 
-  const sortField = filterParams.sort?.field ?? "score";
+  const apiSortField = filterParams.sort?.field ?? "score";
+  const sortField = SORT_FIELD_TO_PROP[apiSortField];
   const sortDir = filterParams.sort?.direction ?? "desc";
   const pageOffset = filterParams.offset ?? 0;
   const pageLimit = filterParams.limit;
@@ -96,8 +105,8 @@ export function useLiveLeaderboard(
           const cmp = sortDir === "desc" ? bVal - aVal : aVal - bVal;
           if (cmp !== 0) return cmp;
         }
-        // Secondary sort: tokenId ascending for stable ordering
-        return Number(a.tokenId) - Number(b.tokenId);
+        // Secondary sort: mintedAt ascending for stable ordering (earlier mint wins ties)
+        return new Date(a.mintedAt).getTime() - new Date(b.mintedAt).getTime();
       });
       // Update the page minimum score for threshold checks
       if (sorted.length > 0 && pageLimit && sorted.length >= pageLimit) {
