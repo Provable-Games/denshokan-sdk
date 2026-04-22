@@ -8,6 +8,7 @@ export type {
   TokenScoreEntry,
   TokenRank,
   TokenRankParams,
+  PlayerRankParams,
   PaginatedResult,
   TokensFilterParams,
   TokensQueryParams,

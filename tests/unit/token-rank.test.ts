@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mapTokenRank } from "../../src/utils/mappers.js";
 import { apiGetTokenRank } from "../../src/api/tokens.js";
+import { apiGetPlayerBestRank } from "../../src/api/players.js";
 
 describe("mapTokenRank", () => {
   it("maps snake_case and camelCase fields", () => {
@@ -97,5 +98,45 @@ describe("apiGetTokenRank", () => {
     );
 
     expect(captured[0]).toBe("http://localhost:3001/tokens/0x1/rank");
+  });
+});
+
+describe("apiGetPlayerBestRank", () => {
+  const originalFetch = globalThis.fetch;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.useRealTimers();
+  });
+
+  it("calls /players/:address/rank with scope params (no owner)", async () => {
+    const captured: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+      captured.push(url);
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          data: { token_id: "0xa", rank: 4, total: 50, score: "900" },
+        }),
+      });
+    }) as unknown as typeof fetch;
+
+    const result = await apiGetPlayerBestRank(
+      { baseUrl: "http://localhost:3001", fetchConfig: { maxRetries: 1, timeout: 5000, baseBackoff: 100, maxBackoff: 500 } },
+      "0xabc",
+      { gameId: 3, contextId: 9, gameOver: false },
+    );
+
+    expect(result).toEqual({ tokenId: "0xa", rank: 4, total: 50, score: 900 });
+    const url = new URL(captured[0]);
+    expect(url.pathname).toBe("/players/0xabc/rank");
+    expect(url.searchParams.get("game_id")).toBe("3");
+    expect(url.searchParams.get("context_id")).toBe("9");
+    expect(url.searchParams.get("game_over")).toBe("false");
+    expect(url.searchParams.get("owner")).toBeNull();
   });
 });

@@ -127,6 +127,12 @@ export interface TokenRankParams {
   maxScore?: number | bigint;
 }
 
+/**
+ * Scope filters for a player's best-rank query. Same shape as TokenRankParams
+ * minus `owner` — the player address is passed separately.
+ */
+export type PlayerRankParams = Omit<TokenRankParams, "owner">;
+
 export interface PaginatedResult<T> {
   data: T[];
   total: number;
