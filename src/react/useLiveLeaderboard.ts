@@ -35,6 +35,8 @@ export interface LeaderboardEntry {
   owner: string;
   gameOver: boolean;
   rank: number;
+  /** ISO timestamp of when the token was minted (useful as a tie-breaker) */
+  mintedAt: string;
 }
 
 export interface UseLiveLeaderboardResult {
@@ -54,6 +56,7 @@ function toEntry(token: Token, rank: number): LeaderboardEntry {
     owner: token.owner,
     gameOver: token.gameOver,
     rank,
+    mintedAt: token.mintedAt,
   };
 }
 
