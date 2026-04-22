@@ -12,6 +12,9 @@ import type {
   TokenMetadata,
   TokenMutableState,
   TokenScoreEntry,
+  TokenRank,
+  TokenRankParams,
+  PlayerRankParams,
   PaginatedResult,
   TokensQueryParams,
   DecodedTokenId,
@@ -48,8 +51,8 @@ import {
   apiGetObjectives,
   apiGetObjective,
 } from "./api/games.js";
-import { apiGetTokens, apiGetToken, apiGetTokenScores } from "./api/tokens.js";
-import { apiGetPlayerTokens, apiGetPlayerStats } from "./api/players.js";
+import { apiGetTokens, apiGetToken, apiGetTokenScores, apiGetTokenRank } from "./api/tokens.js";
+import { apiGetPlayerTokens, apiGetPlayerStats, apiGetPlayerBestRank } from "./api/players.js";
 import { apiGetMinters, apiGetMinter } from "./api/minters.js";
 
 // RPC imports
@@ -555,6 +558,18 @@ export class DenshokanClient {
     return apiGetTokenScores(this.apiCtx, tokenId, limit);
   }
 
+  /**
+   * Get the rank of a token within a scoped leaderboard.
+   *
+   * Returns `{ rank, total, score }` where rank is 1-indexed. Higher score
+   * ranks better; ties are broken by earlier `mintedAt`. The target token
+   * must itself match the scope — otherwise the API responds 404 and this
+   * throws `ApiError`. API-only (no RPC equivalent).
+   */
+  async getTokenRank(tokenId: string, params?: TokenRankParams): Promise<TokenRank> {
+    return apiGetTokenRank(this.apiCtx, tokenId, params);
+  }
+
   private async buildTokenFromRpc(tokenId: string): Promise<Token> {
     // Use the enriched batch method with a single token — one RPC call
     const viewerContract = await this.getViewerContract();
@@ -938,6 +953,16 @@ export class DenshokanClient {
 
   async getPlayerStats(address: string): Promise<PlayerStats> {
     return apiGetPlayerStats(this.apiCtx, address);
+  }
+
+  /**
+   * Get the best rank achieved by any token owned by `address` within the
+   * scope. Returns the token's rank, the total leaderboard size, the token's
+   * current score, and the `tokenId` that achieved this rank. Throws
+   * `ApiError` (404) if the address owns no tokens in scope.
+   */
+  async getPlayerBestRank(address: string, params?: PlayerRankParams): Promise<TokenRank> {
+    return apiGetPlayerBestRank(this.apiCtx, address, params);
   }
 
   // =========================================================================

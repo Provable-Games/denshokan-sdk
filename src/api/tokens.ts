@@ -1,7 +1,7 @@
 import type { FetchConfig } from "../types/config.js";
-import type { Token, TokenScoreEntry, TokenSortField, PaginatedResult, TokensQueryParams } from "../types/token.js";
+import type { Token, TokenScoreEntry, TokenRank, TokenRankParams, TokenSortField, PaginatedResult, TokensQueryParams } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
-import { mapPaginatedTokens, mapToken, mapTokenScoreEntries } from "../utils/mappers.js";
+import { mapPaginatedTokens, mapToken, mapTokenScoreEntries, mapTokenRank } from "../utils/mappers.js";
 
 /** Map consumer-facing sort field names to API query parameter values */
 const SORT_FIELD_TO_API: Record<TokenSortField, string> = {
@@ -55,6 +55,33 @@ export async function apiGetToken(
     fetchConfig: ctx.fetchConfig,
   });
   return mapToken(result.data);
+}
+
+export async function apiGetTokenRank(
+  ctx: ApiContext,
+  tokenId: string,
+  params?: TokenRankParams,
+  signal?: AbortSignal,
+): Promise<TokenRank> {
+  const qs = buildQueryString({
+    game_id: params?.gameId,
+    settings_id: params?.settingsId,
+    objective_id: params?.objectiveId,
+    context_id: params?.contextId,
+    context_name: params?.contextName,
+    owner: params?.owner,
+    minter_address: params?.minterAddress,
+    game_over: params?.gameOver,
+    min_score: params?.minScore !== undefined ? params.minScore.toString() : undefined,
+    max_score: params?.maxScore !== undefined ? params.maxScore.toString() : undefined,
+  });
+  const result = await apiFetch<{ data: Record<string, unknown> }>({
+    baseUrl: ctx.baseUrl,
+    path: `/tokens/${tokenId}/rank${qs}`,
+    signal,
+    fetchConfig: ctx.fetchConfig,
+  });
+  return mapTokenRank(result.data);
 }
 
 export async function apiGetTokenScores(

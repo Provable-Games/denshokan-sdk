@@ -1,8 +1,8 @@
 import type { FetchConfig } from "../types/config.js";
 import type { PlayerStats, PlayerTokensParams } from "../types/player.js";
-import type { Token, PaginatedResult } from "../types/token.js";
+import type { Token, TokenRank, PlayerRankParams, PaginatedResult } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
-import { mapPaginatedTokens, mapPlayerStats } from "../utils/mappers.js";
+import { mapPaginatedTokens, mapPlayerStats, mapTokenRank } from "../utils/mappers.js";
 
 interface ApiContext {
   baseUrl: string;
@@ -29,6 +29,32 @@ export async function apiGetPlayerTokens(
     fetchConfig: ctx.fetchConfig,
   });
   return mapPaginatedTokens(raw);
+}
+
+export async function apiGetPlayerBestRank(
+  ctx: ApiContext,
+  address: string,
+  params?: PlayerRankParams,
+  signal?: AbortSignal,
+): Promise<TokenRank> {
+  const qs = buildQueryString({
+    game_id: params?.gameId,
+    settings_id: params?.settingsId,
+    objective_id: params?.objectiveId,
+    context_id: params?.contextId,
+    context_name: params?.contextName,
+    minter_address: params?.minterAddress,
+    game_over: params?.gameOver,
+    min_score: params?.minScore !== undefined ? params.minScore.toString() : undefined,
+    max_score: params?.maxScore !== undefined ? params.maxScore.toString() : undefined,
+  });
+  const result = await apiFetch<{ data: Record<string, unknown> }>({
+    baseUrl: ctx.baseUrl,
+    path: `/players/${address}/rank${qs}`,
+    signal,
+    fetchConfig: ctx.fetchConfig,
+  });
+  return mapTokenRank(result.data);
 }
 
 export async function apiGetPlayerStats(
