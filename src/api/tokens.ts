@@ -3,11 +3,11 @@ import type { Token, TokenScoreEntry, TokenRank, TokenRankParams, TokenSortField
 import { apiFetch, buildQueryString } from "./base.js";
 import { mapPaginatedTokens, mapToken, mapTokenScoreEntries, mapTokenRank } from "../utils/mappers.js";
 
-/** Map consumer-facing sort field names to API query parameter values */
-const SORT_FIELD_TO_API: Record<TokenSortField, string> = {
-  score: "currentScore",
-  mintedAt: "mintedAt",
-  lastUpdatedAt: "lastUpdatedAt",
+/** Map consumer-facing sort field names to the short names the API expects */
+export const SORT_FIELD_TO_API: Record<TokenSortField, string> = {
+  score: "score",
+  mintedAt: "minted",
+  lastUpdatedAt: "updated",
   completedAt: "completedAt",
 };
 

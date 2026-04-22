@@ -2,6 +2,7 @@ import type { FetchConfig } from "../types/config.js";
 import type { PlayerStats, PlayerTokensParams } from "../types/player.js";
 import type { Token, TokenRank, PlayerRankParams, PaginatedResult } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
+import { SORT_FIELD_TO_API } from "./tokens.js";
 import { mapPaginatedTokens, mapPlayerStats, mapTokenRank } from "../utils/mappers.js";
 
 interface ApiContext {
@@ -17,7 +18,7 @@ export async function apiGetPlayerTokens(
 ): Promise<PaginatedResult<Token>> {
   const qs = buildQueryString({
     game_id: params?.gameId,
-    sort_by: params?.sort?.field,
+    sort_by: params?.sort?.field ? SORT_FIELD_TO_API[params.sort.field] : undefined,
     sort_order: params?.sort?.direction,
     limit: params?.limit,
     offset: params?.offset,
