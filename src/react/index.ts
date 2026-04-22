@@ -5,6 +5,8 @@ export type { DenshokanProviderProps } from "./context.js";
 // Data hooks
 export { useGames, useGame } from "./useGames.js";
 export { useTokens, useToken, useTokenScores } from "./useTokens.js";
+export { useTokenRank } from "./useTokenRank.js";
+export type { UseTokenRankOptions, UseTokenRankResult } from "./useTokenRank.js";
 export { useDecodeToken } from "./useDecodeToken.js";
 export { usePlayerStats } from "./usePlayer.js";
 export { useMinters } from "./useMinters.js";

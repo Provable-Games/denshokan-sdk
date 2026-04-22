@@ -6,6 +6,8 @@ export type {
   TokenMutableState,
   TokenMetadata,
   TokenScoreEntry,
+  TokenRank,
+  TokenRankParams,
   PaginatedResult,
   TokensFilterParams,
   TokensQueryParams,

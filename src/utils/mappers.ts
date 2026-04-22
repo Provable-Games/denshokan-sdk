@@ -1,4 +1,4 @@
-import type { Token, TokenScoreEntry, PaginatedResult, DecodedTokenId } from "../types/token.js";
+import type { Token, TokenScoreEntry, TokenRank, PaginatedResult, DecodedTokenId } from "../types/token.js";
 import { decodePackedTokenId } from "./token-id.js";
 import { toHexTokenId } from "./address.js";
 import type {
@@ -82,6 +82,15 @@ export function mapTokenScoreEntry(raw: Record<string, unknown>): TokenScoreEntr
 
 export function mapTokenScoreEntries(raw: Record<string, unknown>[]): TokenScoreEntry[] {
   return raw.map(mapTokenScoreEntry);
+}
+
+export function mapTokenRank(raw: Record<string, unknown>): TokenRank {
+  return {
+    tokenId: toHexTokenId(raw.tokenId ?? raw.token_id ?? "0"),
+    rank: Number(raw.rank ?? 0),
+    total: Number(raw.total ?? 0),
+    score: Number(raw.score ?? 0),
+  };
 }
 
 export function mapGame(raw: Record<string, unknown>): Game {

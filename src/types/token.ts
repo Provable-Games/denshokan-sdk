@@ -99,6 +99,34 @@ export interface TokenScoreEntry {
   timestamp: string;
 }
 
+/** Rank of a token within a scoped leaderboard */
+export interface TokenRank {
+  tokenId: string;
+  /** 1-indexed position (1 = top). Ties broken by earlier mintedAt. */
+  rank: number;
+  /** Total tokens matching the scope */
+  total: number;
+  /** The token's current score at the time of the query */
+  score: number;
+}
+
+/**
+ * Scope filters for ranking. The target token itself must match the scope —
+ * if it doesn't, the SDK call rejects with TokenNotFoundError.
+ */
+export interface TokenRankParams {
+  gameId?: number;
+  settingsId?: number;
+  objectiveId?: number;
+  contextId?: number;
+  contextName?: string;
+  owner?: string;
+  minterAddress?: string;
+  gameOver?: boolean;
+  minScore?: number | bigint;
+  maxScore?: number | bigint;
+}
+
 export interface PaginatedResult<T> {
   data: T[];
   total: number;

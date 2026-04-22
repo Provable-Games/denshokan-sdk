@@ -12,6 +12,8 @@ import type {
   TokenMetadata,
   TokenMutableState,
   TokenScoreEntry,
+  TokenRank,
+  TokenRankParams,
   PaginatedResult,
   TokensQueryParams,
   DecodedTokenId,
@@ -48,7 +50,7 @@ import {
   apiGetObjectives,
   apiGetObjective,
 } from "./api/games.js";
-import { apiGetTokens, apiGetToken, apiGetTokenScores } from "./api/tokens.js";
+import { apiGetTokens, apiGetToken, apiGetTokenScores, apiGetTokenRank } from "./api/tokens.js";
 import { apiGetPlayerTokens, apiGetPlayerStats } from "./api/players.js";
 import { apiGetMinters, apiGetMinter } from "./api/minters.js";
 
@@ -553,6 +555,18 @@ export class DenshokanClient {
 
   async getTokenScores(tokenId: string, limit?: number): Promise<TokenScoreEntry[]> {
     return apiGetTokenScores(this.apiCtx, tokenId, limit);
+  }
+
+  /**
+   * Get the rank of a token within a scoped leaderboard.
+   *
+   * Returns `{ rank, total, score }` where rank is 1-indexed. Higher score
+   * ranks better; ties are broken by earlier `mintedAt`. The target token
+   * must itself match the scope — otherwise the API responds 404 and this
+   * throws `ApiError`. API-only (no RPC equivalent).
+   */
+  async getTokenRank(tokenId: string, params?: TokenRankParams): Promise<TokenRank> {
+    return apiGetTokenRank(this.apiCtx, tokenId, params);
   }
 
   private async buildTokenFromRpc(tokenId: string): Promise<Token> {
