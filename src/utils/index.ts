@@ -2,6 +2,7 @@ export { withRetry, calculateBackoff, sleep, DEFAULT_FETCH_CONFIG } from "./retr
 export type { RetryOptions } from "./retry.js";
 export { decodePackedTokenId, decodeCoreToken } from "./token-id.js";
 export { normalizeAddress } from "./address.js";
+export { sortTokensWithTiebreak } from "./sort.js";
 export { MintSaltCounter, assignSalts, MAX_SALT } from "./salt.js";
 export {
   mapToken,

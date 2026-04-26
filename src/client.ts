@@ -37,6 +37,7 @@ import { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
 import { toHexTokenId, normalizeAddress, isZeroAddress } from "./utils/address.js";
 import { mintParamsToSnake, playerNameUpdateToSnake } from "./utils/mappers.js";
 import { assignSalts } from "./utils/salt.js";
+import { sortTokensWithTiebreak } from "./utils/sort.js";
 import { InvalidChainError, GameNotFoundError } from "./errors/index.js";
 import { ConnectionStatus } from "./datasource/health.js";
 import { withFallback } from "./datasource/resolver.js";
@@ -515,6 +516,13 @@ export class DenshokanClient {
       result = await this.buildTokensFromRpc(params);
     }
 
+    // Apply the on-chain leaderboard tiebreak (mintedAt asc, tokenId asc) on
+    // top of whatever the data source returned, so equal-key entries land in
+    // the same order the leaderboard contract enforces at submit_score time.
+    if (result.data.length > 1) {
+      result = { ...result, data: sortTokensWithTiebreak(result.data, params?.sort) };
+    }
+
     // Enrich with token URIs if requested — only fetch for tokens missing a URI
     if (params?.includeUri && result.data.length > 0) {
       const missingIndices = result.data
@@ -921,6 +929,12 @@ export class DenshokanClient {
         offset: params?.offset,
         includeUri: params?.includeUri,
       });
+    }
+
+    // Apply the on-chain leaderboard tiebreak so equal-key entries land in
+    // the same order submit_score will accept. See _getTokensImpl for context.
+    if (result.data.length > 1) {
+      result = { ...result, data: sortTokensWithTiebreak(result.data, params?.sort) };
     }
 
     // Enrich with token URIs if requested — only fetch for tokens missing a URI

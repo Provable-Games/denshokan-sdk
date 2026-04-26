@@ -69,6 +69,7 @@ export {
 export { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
 export { normalizeAddress, toHexTokenId } from "./utils/address.js";
 export { MintSaltCounter, assignSalts, MAX_SALT } from "./utils/salt.js";
+export { sortTokensWithTiebreak } from "./utils/sort.js";
 
 // Datasource
 export { ConnectionStatus } from "./datasource/health.js";

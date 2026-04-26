@@ -5,8 +5,9 @@ import { useTokens } from "./useTokens.js";
 import { useScoreUpdates, useGameOverEvents, useMintEvents } from "./useChannelSubscription.js";
 import { useDenshokanClient } from "./context.js";
 import { useResetOnClient } from "./useResetOnClient.js";
+import { sortTokensWithTiebreak } from "../utils/sort.js";
 
-/** Map sort field names to Token object property names for client-side re-sorting */
+/** Map sort field names to Token object property names — used for page threshold checks */
 const SORT_FIELD_TO_PROP: Record<TokenSortField, keyof Token> = {
   score: "score",
   mintedAt: "mintedAt",
@@ -75,6 +76,10 @@ export function useLiveLeaderboard(
   const apiSortField = filterParams.sort?.field ?? "score";
   const sortField = SORT_FIELD_TO_PROP[apiSortField];
   const sortDir = filterParams.sort?.direction ?? "desc";
+  const sortSpec = useMemo(
+    () => ({ field: apiSortField, direction: sortDir }),
+    [apiSortField, sortDir],
+  );
   const pageOffset = filterParams.offset ?? 0;
   const pageLimit = filterParams.limit;
 
@@ -98,19 +103,12 @@ export function useLiveLeaderboard(
   const resetEntries = useCallback(() => setEntries([]), []);
   useResetOnClient(client, resetEntries);
 
-  // Re-sort within the current page and assign ranks accounting for offset
+  // Re-sort within the current page and assign ranks accounting for offset.
+  // Uses the shared on-chain tiebreak (mintedAt asc, then tokenId asc) so the
+  // displayed order matches submit_score acceptance.
   const sortAndRank = useCallback(
     (list: Token[]): LeaderboardEntry[] => {
-      const sorted = [...list].sort((a, b) => {
-        const aVal = (a as unknown as Record<string, unknown>)[sortField];
-        const bVal = (b as unknown as Record<string, unknown>)[sortField];
-        if (typeof aVal === "number" && typeof bVal === "number") {
-          const cmp = sortDir === "desc" ? bVal - aVal : aVal - bVal;
-          if (cmp !== 0) return cmp;
-        }
-        // Secondary sort: mintedAt ascending for stable ordering (earlier mint wins ties)
-        return new Date(a.mintedAt).getTime() - new Date(b.mintedAt).getTime();
-      });
+      const sorted = sortTokensWithTiebreak(list, sortSpec);
       // Update the page minimum score for threshold checks
       if (sorted.length > 0 && pageLimit && sorted.length >= pageLimit) {
         const edge = sorted[sorted.length - 1];
@@ -122,7 +120,7 @@ export function useLiveLeaderboard(
       }
       return sorted.map((token, i) => toEntry(token, pageOffset + i + 1));
     },
-    [sortField, sortDir, pageOffset, pageLimit],
+    [sortSpec, sortField, pageOffset, pageLimit],
   );
 
   // Sync HTTP data into tokenMapRef + update output
