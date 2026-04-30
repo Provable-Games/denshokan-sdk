@@ -133,6 +133,16 @@ export interface TokenRankParams {
  */
 export type PlayerRankParams = Omit<TokenRankParams, "owner">;
 
+/**
+ * Result shape for bulk rank lookups. `data` contains an entry per
+ * requested tokenId that exists in scope; ids that don't match the scope
+ * (or don't exist) are listed in `notFound`.
+ */
+export interface TokenRanksResult {
+  data: TokenRank[];
+  notFound: string[];
+}
+
 export interface PaginatedResult<T> {
   data: T[];
   total: number;

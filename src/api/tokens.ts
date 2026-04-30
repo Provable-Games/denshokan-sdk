@@ -1,5 +1,5 @@
 import type { FetchConfig } from "../types/config.js";
-import type { Token, TokenScoreEntry, TokenRank, TokenRankParams, TokenSortField, PaginatedResult, TokensQueryParams } from "../types/token.js";
+import type { Token, TokenScoreEntry, TokenRank, TokenRankParams, TokenRanksResult, TokenSortField, PaginatedResult, TokensQueryParams } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
 import { mapPaginatedTokens, mapToken, mapTokenScoreEntries, mapTokenRank } from "../utils/mappers.js";
 
@@ -82,6 +82,50 @@ export async function apiGetTokenRank(
     fetchConfig: ctx.fetchConfig,
   });
   return mapTokenRank(result.data);
+}
+
+/**
+ * Bulk-rank lookup. POST because the tokenIds list can be hundreds of
+ * felt252 values — URL-length limits in proxies/CDNs would bite for
+ * typical Budokan-scale player profiles.
+ *
+ * Server caps the list at 500 entries; callers should chunk if exceeding.
+ */
+export async function apiGetTokenRanks(
+  ctx: ApiContext,
+  tokenIds: string[],
+  params?: TokenRankParams,
+  signal?: AbortSignal,
+): Promise<TokenRanksResult> {
+  const result = await apiFetch<{
+    data: Record<string, unknown>[];
+    notFound: string[];
+  }>({
+    baseUrl: ctx.baseUrl,
+    path: `/tokens/rank`,
+    method: "POST",
+    body: {
+      tokenIds,
+      gameId: params?.gameId,
+      settingsId: params?.settingsId,
+      objectiveId: params?.objectiveId,
+      contextId: params?.contextId,
+      contextName: params?.contextName,
+      owner: params?.owner,
+      minterAddress: params?.minterAddress,
+      gameOver: params?.gameOver,
+      minScore:
+        params?.minScore !== undefined ? params.minScore.toString() : undefined,
+      maxScore:
+        params?.maxScore !== undefined ? params.maxScore.toString() : undefined,
+    },
+    signal,
+    fetchConfig: ctx.fetchConfig,
+  });
+  return {
+    data: result.data.map(mapTokenRank),
+    notFound: result.notFound ?? [],
+  };
 }
 
 export async function apiGetTokenScores(
