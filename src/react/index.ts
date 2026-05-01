@@ -7,6 +7,8 @@ export { useGames, useGame } from "./useGames.js";
 export { useTokens, useToken, useTokenScores } from "./useTokens.js";
 export { useTokenRank } from "./useTokenRank.js";
 export type { UseTokenRankOptions, UseTokenRankResult } from "./useTokenRank.js";
+export { useTokenRanks } from "./useTokenRanks.js";
+export type { UseTokenRanksOptions, UseTokenRanksResult } from "./useTokenRanks.js";
 export { usePlayerBestRank } from "./usePlayerBestRank.js";
 export type { UsePlayerBestRankOptions, UsePlayerBestRankResult } from "./usePlayerBestRank.js";
 export { useDecodeToken } from "./useDecodeToken.js";

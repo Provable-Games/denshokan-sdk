@@ -7,10 +7,14 @@ export interface ApiFetchOptions {
   path: string;
   signal?: AbortSignal;
   fetchConfig?: Partial<FetchConfig>;
+  /** HTTP method — defaults to GET. */
+  method?: "GET" | "POST";
+  /** Request body for non-GET requests; serialized as JSON. */
+  body?: unknown;
 }
 
 export async function apiFetch<T>(options: ApiFetchOptions): Promise<T> {
-  const { baseUrl, path, signal } = options;
+  const { baseUrl, path, signal, method = "GET", body } = options;
   const config = { ...DEFAULT_FETCH_CONFIG, ...options.fetchConfig };
 
   return withRetry(
@@ -29,7 +33,9 @@ export async function apiFetch<T>(options: ApiFetchOptions): Promise<T> {
 
       try {
         const response = await fetch(`${baseUrl}${path}`, {
+          method,
           headers: { "Content-Type": "application/json" },
+          body: body !== undefined ? JSON.stringify(body) : undefined,
           signal: controller.signal,
         });
 

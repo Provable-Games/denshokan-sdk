@@ -14,6 +14,7 @@ import type {
   TokenScoreEntry,
   TokenRank,
   TokenRankParams,
+  TokenRanksResult,
   PlayerRankParams,
   PaginatedResult,
   TokensQueryParams,
@@ -52,7 +53,7 @@ import {
   apiGetObjectives,
   apiGetObjective,
 } from "./api/games.js";
-import { apiGetTokens, apiGetToken, apiGetTokenScores, apiGetTokenRank } from "./api/tokens.js";
+import { apiGetTokens, apiGetToken, apiGetTokenScores, apiGetTokenRank, apiGetTokenRanks } from "./api/tokens.js";
 import { apiGetPlayerTokens, apiGetPlayerStats, apiGetPlayerBestRank } from "./api/players.js";
 import { apiGetMinters, apiGetMinter } from "./api/minters.js";
 
@@ -576,6 +577,24 @@ export class DenshokanClient {
    */
   async getTokenRank(tokenId: string, params?: TokenRankParams): Promise<TokenRank> {
     return apiGetTokenRank(this.apiCtx, tokenId, params);
+  }
+
+  /**
+   * Bulk-rank lookup for many tokens within the same scope. Single round-trip;
+   * server caps at 500 ids per call. Tokens missing from scope are returned in
+   * `notFound` rather than throwing — the call resolves regardless of whether
+   * any ids match.
+   *
+   * Tie-break matches `getTokenRank` exactly (score desc, mintedAt asc), so a
+   * single bulk call returns the same number that N parallel single-rank calls
+   * would. API-only — RPC fallback would defeat the round-trip savings, so
+   * consumers needing RPC mode should call `getTokenRank` per id.
+   */
+  async getTokenRanks(
+    tokenIds: string[],
+    params?: TokenRankParams,
+  ): Promise<TokenRanksResult> {
+    return apiGetTokenRanks(this.apiCtx, tokenIds, params);
   }
 
   private async buildTokenFromRpc(tokenId: string): Promise<Token> {
