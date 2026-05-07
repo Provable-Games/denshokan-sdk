@@ -16,7 +16,10 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname } from "node:path";
-import { createDenshokanClient } from "@provable-games/denshokan-sdk";
+import {
+  createDenshokanClient,
+  normalizeAddress as normalizeSdkAddress,
+} from "@provable-games/denshokan-sdk";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${requiredEnv("TELEGRAM_BOT_TOKEN")}`;
 const REGISTRATIONS_FILE = process.env.REGISTRATIONS_FILE ?? ".telegram-score-bot-registrations.json";
@@ -395,7 +398,7 @@ function normalizeAddress(value) {
   if (typeof value !== "string" || !/^0[xX][0-9a-fA-F]+$/.test(value)) {
     throw new Error("Invalid address");
   }
-  return `0x${BigInt(value).toString(16)}`;
+  return normalizeSdkAddress(value.toLowerCase());
 }
 
 function shortHex(value) {
