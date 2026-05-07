@@ -21,17 +21,49 @@ import {
   normalizeAddress as normalizeSdkAddress,
 } from "@provable-games/denshokan-sdk";
 
-const TELEGRAM_API = `https://api.telegram.org/bot${requiredEnv("TELEGRAM_BOT_TOKEN")}`;
-const REGISTRATIONS_FILE = process.env.REGISTRATIONS_FILE ?? ".telegram-score-bot-registrations.json";
+function loadConfig() {
+  const telegramBotToken = env("TELEGRAM_BOT_TOKEN");
+  if (!telegramBotToken) {
+    console.error("TELEGRAM_BOT_TOKEN is required.");
+    process.exit(1);
+  }
+
+  const chain = env("DENSHOKAN_CHAIN") ?? "mainnet";
+  if (chain !== "mainnet" && chain !== "sepolia") {
+    console.error("DENSHOKAN_CHAIN must be either 'mainnet' or 'sepolia'.");
+    process.exit(1);
+  }
+
+  return {
+    telegramBotToken,
+    registrationsFile: env("REGISTRATIONS_FILE") ?? ".telegram-score-bot-registrations.json",
+    chain,
+    apiUrl: env("DENSHOKAN_API_URL"),
+    wsUrl: env("DENSHOKAN_WS_URL"),
+    rpcUrl: env("DENSHOKAN_RPC_URL"),
+    denshokanAddress: env("DENSHOKAN_ADDRESS"),
+    registryAddress: env("DENSHOKAN_REGISTRY_ADDRESS"),
+    viewerAddress: env("DENSHOKAN_VIEWER_ADDRESS"),
+  };
+}
+
+function env(name) {
+  return process.env[name]?.trim() || undefined;
+}
+
+const config = loadConfig();
+const TELEGRAM_API = `https://api.telegram.org/bot${config.telegramBotToken}`;
+const REGISTRATIONS_FILE = config.registrationsFile;
+const telegramPollingAbortController = new AbortController();
 
 const client = createDenshokanClient({
-  chain: process.env.DENSHOKAN_CHAIN ?? "mainnet",
-  apiUrl: process.env.DENSHOKAN_API_URL,
-  wsUrl: process.env.DENSHOKAN_WS_URL,
-  rpcUrl: process.env.DENSHOKAN_RPC_URL,
-  denshokanAddress: process.env.DENSHOKAN_ADDRESS,
-  registryAddress: process.env.DENSHOKAN_REGISTRY_ADDRESS,
-  viewerAddress: process.env.DENSHOKAN_VIEWER_ADDRESS,
+  chain: config.chain,
+  apiUrl: config.apiUrl,
+  wsUrl: config.wsUrl,
+  rpcUrl: config.rpcUrl,
+  denshokanAddress: config.denshokanAddress,
+  registryAddress: config.registryAddress,
+  viewerAddress: config.viewerAddress,
 });
 
 let registrations = await loadRegistrations();
@@ -49,15 +81,6 @@ await telegram("deleteWebhook", { drop_pending_updates: false });
 refreshDenshokanSubscription();
 console.log("Telegram score bot is running.");
 await pollTelegram();
-
-function requiredEnv(name) {
-  const value = process.env[name];
-  if (!value) {
-    console.error(`${name} is required.`);
-    process.exit(1);
-  }
-  return value;
-}
 
 async function loadRegistrations() {
   if (!existsSync(REGISTRATIONS_FILE)) return { accounts: {} };
@@ -144,7 +167,9 @@ function refreshDenshokanSubscription() {
   unsubscribeDenshokan = client.subscribe(
     { channels: ["scores", "game_over"], owners },
     (message) => {
-      void handleDenshokanMessage(message);
+      handleDenshokanMessage(message).catch((error) => {
+        console.error(`WS handler failed: ${formatError(error)}`);
+      });
     },
   );
   console.log(`Subscribed to score updates for ${entries.length} account(s).`);
@@ -178,6 +203,8 @@ async function handleDenshokanMessage(message) {
       console.error(`Telegram send failed: ${formatError(result.reason)}`);
     }
   }
+  // Production note: if Telegram returns 400/403 for a chat that blocked or
+  // removed the bot, remove that chat from registrations to stop retrying.
 }
 
 // WebSocket payloads currently arrive as snake_case from the API, but this
@@ -191,12 +218,12 @@ function mapScoreLikeEvent(data) {
     score: Number(raw.score ?? 0),
     ownerAddress: String(raw.owner_address ?? raw.ownerAddress ?? ""),
     playerName: String(raw.player_name ?? raw.playerName ?? ""),
-    completedAllObjectives: Boolean(raw.completed_all_objectives ?? raw.completedAllObjectives),
+    completedAllObjectives: Boolean(raw.completed_all_objectives) || Boolean(raw.completedAllObjectives),
   };
 }
 
-// Telegram long polling. `deleteWebhook` is called at startup because Telegram
-// allows either webhooks or polling for a bot, not both.
+// Telegram long polling. `deleteWebhook` is called at startup because
+// `getUpdates` can return a conflict when a webhook is configured.
 async function pollTelegram() {
   let offset;
 
@@ -206,6 +233,8 @@ async function pollTelegram() {
         timeout: 50,
         offset,
         allowed_updates: ["message"],
+      }, {
+        signal: telegramPollingAbortController.signal,
       });
 
       for (const update of result) {
@@ -215,8 +244,9 @@ async function pollTelegram() {
         }
       }
     } catch (error) {
+      if (stopping || isAbortError(error)) break;
       console.error(`Telegram polling failed: ${formatError(error)}`);
-      await sleep(2000);
+      await sleep(2000, telegramPollingAbortController.signal);
     }
   }
 }
@@ -410,11 +440,12 @@ function formatError(error) {
   return error instanceof Error ? error.message : String(error);
 }
 
-async function telegram(method, body) {
+async function telegram(method, body, options = {}) {
   const response = await fetch(`${TELEGRAM_API}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal: options.signal,
   });
 
   const payload = await response.json();
@@ -432,14 +463,34 @@ async function sendMessage(chatId, text) {
   });
 }
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function sleep(ms, signal) {
+  if (signal?.aborted) return Promise.resolve();
+  return new Promise((resolve) => {
+    let settled = false;
+    let timeout;
+    const cleanup = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", cleanup);
+      resolve();
+    };
+    timeout = setTimeout(cleanup, ms);
+    signal?.addEventListener("abort", cleanup, { once: true });
+  });
+}
+
+function isAbortError(error) {
+  return error instanceof Error && error.name === "AbortError";
 }
 
 async function shutdown() {
   if (stopping) return;
   stopping = true;
   console.log("Shutting down...");
+  telegramPollingAbortController.abort();
   if (unsubscribeDenshokan) unsubscribeDenshokan();
+  // `disconnect()` also destroys SDK health monitoring. Use it only for final
+  // process shutdown, not as a temporary pause/resume mechanism.
   client.disconnect();
 }

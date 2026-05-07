@@ -2,7 +2,7 @@
 
 This example runs a dependency-free Telegram bot that lets a chat register one or more Starknet account addresses and receive live Denshokan score updates.
 
-It uses Telegram long polling (`getUpdates`), so it does not need a public HTTPS webhook. On startup it calls `deleteWebhook` before polling because Telegram webhooks and long polling are mutually exclusive.
+It uses Telegram long polling (`getUpdates`), so it does not need a public HTTPS webhook. On startup it calls `deleteWebhook` because `getUpdates` can return a conflict when a webhook is configured.
 
 ## Create a Telegram bot
 
@@ -26,7 +26,7 @@ node examples/telegram-score-bot.mjs
 
 The script starts the bot and stores registrations in `.telegram-score-bot-registrations.json` by default.
 
-Optional environment variables are listed in `telegram-score-bot.env.example`.
+Optional environment variables are listed in `telegram-score-bot.env.example`. Empty optional environment variables are ignored, so unset and empty values both use the SDK defaults.
 
 ## Test in Telegram
 
@@ -51,7 +51,7 @@ To stop updates:
 /unregister
 ```
 
-You can also add the bot to a group and run `/register 0xACCOUNT_ADDRESS` in that group. The bot posts matching updates to the group.
+You can also add the bot to a group and run `/register 0xACCOUNT_ADDRESS` in that group. If BotFather privacy mode is enabled, use `/register@your_bot_username 0xACCOUNT_ADDRESS` or disable privacy mode with `/setprivacy` in BotFather.
 
 ## Optional command menu
 
@@ -63,6 +63,7 @@ curl -s "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setMyCommands" \
   -d '{
     "commands": [
       {"command":"start","description":"Show help"},
+      {"command":"help","description":"Show help"},
       {"command":"register","description":"Register an account"},
       {"command":"unregister","description":"Unregister accounts"},
       {"command":"accounts","description":"List registered accounts"},
@@ -91,6 +92,8 @@ TELEGRAM_BOT_TOKEN=123456789:replace-with-your-token
 DENSHOKAN_CHAIN=mainnet
 REGISTRATIONS_FILE=/opt/denshokan-sdk/.telegram-score-bot-registrations.json
 EOF
+sudo chown root:root /etc/denshokan-telegram-bot.env
+sudo chmod 600 /etc/denshokan-telegram-bot.env
 ```
 
 Create the service:
