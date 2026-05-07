@@ -112,6 +112,25 @@ function ScoreFeed({ gameId }: { gameId: number }) {
 }
 ```
 
+### Telegram Score Bot Example
+
+This repo includes a dependency-free Telegram bot example that lets a chat register a Starknet account and receive live Denshokan score updates.
+
+```bash
+bun run build
+TELEGRAM_BOT_TOKEN=123456789:your-token node examples/telegram-score-bot.mjs
+```
+
+In Telegram:
+
+```text
+/register 0xACCOUNT_ADDRESS
+/status
+/unregister
+```
+
+Full setup, testing, and deployment instructions are in `examples/telegram-score-bot.md`. Optional environment variables are listed in `examples/telegram-score-bot.env.example`. The bot persists chat registrations in `.telegram-score-bot-registrations.json` by default.
+
 ### RPC Hooks
 
 ```tsx
@@ -266,11 +285,11 @@ Error classes: `DenshokanError`, `ApiError`, `RpcError`, `RateLimitError`, `Time
 ## Development
 
 ```bash
-npm install
-npm run build        # ESM + CJS to dist/
-npm run typecheck    # TypeScript validation
-npm test             # Unit tests
-npm run dev          # Watch mode
+bun install
+bun run build        # ESM + CJS to dist/
+bun run typecheck    # TypeScript validation
+bun test             # Unit tests
+bun run dev          # Watch mode
 ```
 
 ## Publishing

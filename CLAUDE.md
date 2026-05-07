@@ -75,6 +75,17 @@ src/
     └── useRpc.ts             # useBalanceOf, useOwnerOf, useTokenUri, batch hooks
 ```
 
+### Reference Examples
+
+```
+examples/
+├── telegram-score-bot.mjs          # Dependency-free Telegram live score bot reference
+├── telegram-score-bot.md           # End-to-end setup, testing, and deployment guide
+└── telegram-score-bot.env.example  # Optional environment variables
+```
+
+The Telegram bot is a reference implementation for downstream developers and AI agents. Keep it self-contained, readable, and documented. It should demonstrate SDK usage through public APIs and WebSocket subscriptions without changing SDK internals under `src/`.
+
 ### Key Design Patterns
 
 **camelCase public types, snake_case wire protocol:** All SDK consumer-facing types use camelCase (`tokenId`, `gameId`, `playerName`). Transformation happens at the API/RPC boundary via `src/utils/mappers.ts`. Contract call strings (`"balance_of"`) and API query params (`game_id=`) remain snake_case since they're external protocol identifiers.
@@ -175,7 +186,7 @@ Non-retryable errors (4xx except 429, AbortError, not-found errors) are never re
 
 ### Testing
 
-Tests live in `tests/unit/`. Run with `npm test`. Current test coverage:
+Tests live in `tests/unit/`. Run with `bun test`. Current test coverage:
 - `token-id.test.ts` — Packed token ID decoder (bit field extraction)
 - `resolver.test.ts` — `withFallback` data source switching logic
 - `api.test.ts` — `apiFetch` and `buildQueryString` utilities
