@@ -24,10 +24,29 @@ interface ApiContext {
 
 export async function apiGetGames(
   ctx: ApiContext,
-  params?: { sort?: { field: string; direction: "asc" | "desc" }; limit?: number; offset?: number; genre?: string; developer?: string; publisher?: string },
+  params?: {
+    sort?: { field: string; direction: "asc" | "desc" };
+    limit?: number;
+    offset?: number;
+    genre?: string;
+    developer?: string;
+    publisher?: string;
+    withObjectives?: boolean;
+    withSettings?: boolean;
+  },
   signal?: AbortSignal,
 ): Promise<PaginatedResult<Game>> {
-  const qs = buildQueryString({ sort_by: params?.sort?.field, sort_order: params?.sort?.direction, limit: params?.limit, offset: params?.offset, genre: params?.genre, developer: params?.developer, publisher: params?.publisher });
+  const qs = buildQueryString({
+    sort_by: params?.sort?.field,
+    sort_order: params?.sort?.direction,
+    limit: params?.limit,
+    offset: params?.offset,
+    genre: params?.genre,
+    developer: params?.developer,
+    publisher: params?.publisher,
+    with_objectives: params?.withObjectives ? "true" : undefined,
+    with_settings: params?.withSettings ? "true" : undefined,
+  });
   const result = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,
     path: `/games${qs}`,
