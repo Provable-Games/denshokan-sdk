@@ -11,6 +11,13 @@ export interface GamesParams {
   genre?: string;
   developer?: string;
   publisher?: string;
+  /** When true, only return games that have at least one objective
+   *  registered. Useful for quest/tournament creation flows where a
+   *  game with no objectives produces unreachable wins. Indexer-backed
+   *  only — ignored on the RPC fallback path. */
+  withObjectives?: boolean;
+  /** Same semantics as `withObjectives` for settings presets. */
+  withSettings?: boolean;
 }
 
 export interface UseGamesResult {

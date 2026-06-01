@@ -338,6 +338,13 @@ export class DenshokanClient {
     genre?: string;
     developer?: string;
     publisher?: string;
+    /** When true, the API filters out games that have no objectives.
+     *  Indexer-backed only — the RPC fallback path ignores this flag,
+     *  since the on-chain registry has no notion of "objectives
+     *  defined yet" without a per-game call. */
+    withObjectives?: boolean;
+    /** Same semantics as `withObjectives` for settings presets. */
+    withSettings?: boolean;
   }): Promise<PaginatedResult<Game>> {
     if (this.config.primarySource === "api") {
       return withFallback(

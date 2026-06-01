@@ -16,6 +16,14 @@ export interface Game {
   license?: string;
   gameFeeBps?: number;
   createdAt: string;
+  /** Number of objectives registered for this game's contract. Present
+   *  on responses from the indexer API; undefined when the Game came
+   *  from an RPC-only path. Consumers can treat undefined as "unknown"
+   *  rather than zero. */
+  objectivesCount?: number;
+  /** Number of settings presets registered for this game's contract.
+   *  Same nullability semantics as `objectivesCount`. */
+  settingsCount?: number;
 }
 
 export interface GameDetail {

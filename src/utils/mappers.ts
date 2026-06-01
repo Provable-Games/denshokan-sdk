@@ -117,6 +117,18 @@ export function mapGame(raw: Record<string, unknown>): Game {
     license: raw.license != null ? String(raw.license) : undefined,
     gameFeeBps: raw.gameFeeBps != null ? Number(raw.gameFeeBps) : (raw.game_fee_bps != null ? Number(raw.game_fee_bps) : undefined),
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
+    objectivesCount:
+      raw.objectivesCount != null
+        ? Number(raw.objectivesCount)
+        : raw.objectives_count != null
+          ? Number(raw.objectives_count)
+          : undefined,
+    settingsCount:
+      raw.settingsCount != null
+        ? Number(raw.settingsCount)
+        : raw.settings_count != null
+          ? Number(raw.settings_count)
+          : undefined,
   };
 }
 
