@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { TokenMetadata } from "../types/token.js";
 import type { DenshokanClient } from "../client.js";
 import { useDenshokanClient } from "./context.js";
@@ -20,6 +20,7 @@ function useAsync<T>(
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<Error | null>(null);
+  const fetchIdRef = useRef(0);
 
   useResetOnClient(client, setData, setError);
 
@@ -28,15 +29,18 @@ function useAsync<T>(
 
   const refetch = useCallback(async () => {
     if (!enabled) return;
+    const id = ++fetchIdRef.current;
     setIsLoading(true);
     setError(null);
     try {
       const result = await fetch();
+      if (id !== fetchIdRef.current) return;
       setData(result);
     } catch (e) {
+      if (id !== fetchIdRef.current) return;
       setError(e as Error);
     } finally {
-      setIsLoading(false);
+      if (id === fetchIdRef.current) setIsLoading(false);
     }
   }, [fetch, enabled]);
 

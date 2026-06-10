@@ -94,6 +94,10 @@ function GameList() {
 }
 ```
 
+Passing `config` inline as shown is safe: the provider compares the config by
+value and only rebuilds the underlying client (triggering hooks to refetch)
+when the config's values actually change, not when the object identity does.
+
 ### WebSocket Subscriptions
 
 ```tsx
