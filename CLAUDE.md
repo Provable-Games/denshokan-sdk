@@ -58,6 +58,7 @@ src/
 │   ├── retry.ts              # withRetry, calculateBackoff, sleep
 │   ├── token-id.ts           # decodePackedTokenId (felt252 bit unpacking)
 │   ├── address.ts            # normalizeAddress
+│   ├── config-equal.ts       # configsEqual — value-compare client configs
 │   └── mappers.ts            # snake_case ↔ camelCase transformers
 ├── errors/
 │   └── index.ts              # DenshokanError hierarchy
@@ -190,6 +191,15 @@ Tests live in `tests/unit/`. Run with `bun test`. Current test coverage:
 - `token-id.test.ts` — Packed token ID decoder (bit field extraction)
 - `resolver.test.ts` — `withFallback` data source switching logic
 - `api.test.ts` — `apiFetch` and `buildQueryString` utilities
+- `config-equal.test.ts` — `configsEqual` config value comparison
+- `react-context.test.tsx` — `DenshokanProvider` client identity + lifecycle
+- `use-rpc.test.tsx` — `useAsync` stale-response guard
+- `salt.test.ts`, `sort-field.test.ts`, `sort-tiebreak.test.ts`, `token-rank.test.ts`, `ws-mappers.test.ts`
+
+React component tests (`.test.tsx`) register a `happy-dom` document via
+`tests/helpers/register-dom.ts` (imported first in each file) and drive
+renders with `react-dom/client` + `act` — no per-file environment config
+needed, and they run under both `bun test` and vitest.
 
 ### CI/CD
 

@@ -164,6 +164,17 @@ const DEFAULT_WS_CONFIG = {
   reconnectBaseDelay: 1000,
 };
 
+// Drops undefined values so an explicit `{ timeout: undefined }` doesn't
+// clobber a default when spread — keeps `Required<...>` resolved configs
+// truly fully populated, and matches configsEqual's undefined-means-absent
+// semantics.
+function definedFields<T extends object>(obj: T | undefined): Partial<T> {
+  if (!obj) return {};
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== undefined),
+  ) as Partial<T>;
+}
+
 export class DenshokanClient {
   private readonly config: ResolvedConfig;
   private readonly connectionStatus: ConnectionStatus;
@@ -212,9 +223,9 @@ export class DenshokanClient {
       registryAddress: config.registryAddress ?? chainConfig.registryAddress,
       viewerAddress: config.viewerAddress ?? chainConfig.viewerAddress,
       primarySource: config.primarySource ?? "api",
-      fetch: { ...DEFAULT_FETCH_CONFIG, ...config.fetch },
-      ws: { ...DEFAULT_WS_CONFIG, ...config.ws },
-      health: { initialCheckDelay: 1000, checkInterval: 30000, checkTimeout: 5000, maxBlockLag: 50, ...config.health },
+      fetch: { ...DEFAULT_FETCH_CONFIG, ...definedFields(config.fetch) },
+      ws: { ...DEFAULT_WS_CONFIG, ...definedFields(config.ws) },
+      health: { initialCheckDelay: 1000, checkInterval: 30000, checkTimeout: 5000, maxBlockLag: 50, ...definedFields(config.health) },
     };
   }
 

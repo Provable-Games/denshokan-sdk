@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { TokenMetadata } from "../types/token.js";
 import type { DenshokanClient } from "../client.js";
 import { useDenshokanClient } from "./context.js";
@@ -20,6 +20,7 @@ function useAsync<T>(
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<Error | null>(null);
+  const fetchIdRef = useRef(0);
 
   useResetOnClient(client, setData, setError);
 
@@ -27,16 +28,25 @@ function useAsync<T>(
   const fetch = useCallback(fetcher, deps);
 
   const refetch = useCallback(async () => {
-    if (!enabled) return;
+    // Bump the sequence even when disabled, so an in-flight request from the
+    // enabled era can't commit after the hook is disabled.
+    const id = ++fetchIdRef.current;
+    if (!enabled) {
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
       const result = await fetch();
+      if (id !== fetchIdRef.current) return;
       setData(result);
     } catch (e) {
+      if (id !== fetchIdRef.current) return;
       setError(e as Error);
     } finally {
-      setIsLoading(false);
+      if (id === fetchIdRef.current) setIsLoading(false);
     }
   }, [fetch, enabled]);
 

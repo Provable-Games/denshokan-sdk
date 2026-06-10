@@ -67,7 +67,9 @@ export class ConnectionStatus {
   }
 
   startMonitoring(): void {
-    if (this.checkInterval) return;
+    // Guard the pending initial timeout too: a second call during the initial
+    // delay window would otherwise schedule a duplicate, untracked interval.
+    if (this.checkInterval || this.initialCheckTimeout) return;
     this.initialCheckTimeout = setTimeout(() => {
       this.performHealthCheck();
       this.checkInterval = setInterval(() => this.performHealthCheck(), this.checkIntervalMs);

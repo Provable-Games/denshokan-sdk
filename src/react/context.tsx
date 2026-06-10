@@ -1,7 +1,8 @@
-import { createContext, useContext, useMemo, useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { DenshokanClient, createDenshokanClient } from "../client.js";
 import type { DenshokanClientConfig } from "../types/config.js";
+import { configsEqual } from "../utils/config-equal.js";
 
 const DenshokanContext = createContext<DenshokanClient | null>(null);
 
@@ -12,26 +13,34 @@ export interface DenshokanProviderProps {
 }
 
 export function DenshokanProvider({ children, config, client: existingClient }: DenshokanProviderProps) {
-  const client = useMemo(() => {
-    if (existingClient) return existingClient;
-    if (config) return createDenshokanClient(config);
+  // Inline `config={{ ... }}` objects are a fresh reference on every render,
+  // so the internal client is keyed on the config's values, not its identity.
+  // Keying on identity would discard the client on every provider-owner
+  // render, making all data hooks reset and refetch in a loop (issue #38).
+  const internalRef = useRef<{ config: DenshokanClientConfig; client: DenshokanClient } | null>(null);
+
+  let client: DenshokanClient;
+  if (existingClient) {
+    client = existingClient;
+  } else if (config) {
+    if (!internalRef.current || !configsEqual(internalRef.current.config, config)) {
+      internalRef.current = { config, client: createDenshokanClient(config) };
+    }
+    client = internalRef.current.client;
+  } else {
     throw new Error("DenshokanProvider requires either 'config' or 'client' prop");
-  }, [existingClient, config]);
+  }
 
-  const clientRef = useRef(client);
-
-  useEffect(() => {
-    // Cleanup previous client if it changed and was created internally
-    return () => {
-      if (!existingClient && clientRef.current !== client) {
-        clientRef.current.disconnect();
-      }
-    };
-  }, [client, existingClient]);
+  const ownsClient = !existingClient;
 
   useEffect(() => {
-    clientRef.current = client;
-  }, [client]);
+    if (!ownsClient) return;
+    // The cleanup below may already have torn this client down (StrictMode
+    // remounts, or a temporary switch to the `client` prop) — re-arm health
+    // monitoring; WS connections are re-established by subscription hooks.
+    client.getConnectionStatus().startMonitoring();
+    return () => client.disconnect();
+  }, [client, ownsClient]);
 
   return (
     <DenshokanContext.Provider value={client}>

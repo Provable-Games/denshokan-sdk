@@ -61,9 +61,11 @@
     "access": "public"
   },
   "devDependencies": {
+    "@happy-dom/global-registrator": "^20.10.2",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "starknet": "^9.2.1",
     "tsup": "^8.4.0",
     "typescript": "^5.7.3",
