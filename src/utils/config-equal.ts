@@ -7,9 +7,11 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 function shallowEqual(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
-  const aKeys = Object.keys(a);
-  if (aKeys.length !== Object.keys(b).length) return false;
-  return aKeys.every((key) => Object.is(a[key], b[key]));
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const key of keys) {
+    if (!Object.is(a[key], b[key])) return false;
+  }
+  return true;
 }
 
 /**
@@ -21,6 +23,10 @@ function shallowEqual(a: Record<string, unknown>, b: Record<string, unknown>): b
  * primitives compare by value, plain objects (`rpcHeaders`, `fetch`, `ws`,
  * `health`) compare one level deep, and anything else (class instances like
  * `provider`, functions) compares by identity.
+ *
+ * An explicit `undefined` is equivalent to an absent key at every level,
+ * matching how `resolveConfig` ignores undefined values when applying
+ * defaults.
  */
 export function configsEqual(a: DenshokanClientConfig, b: DenshokanClientConfig): boolean {
   if (a === b) return true;

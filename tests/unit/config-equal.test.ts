@@ -28,6 +28,21 @@ describe("configsEqual", () => {
     expect(configsEqual({ chain: "mainnet" }, { chain: "mainnet", rpcUrl: undefined })).toBe(true);
   });
 
+  it("treats absent and explicit-undefined keys as equal inside nested objects", () => {
+    expect(
+      configsEqual(
+        { fetch: { timeout: 5000, maxRetries: undefined } },
+        { fetch: { timeout: 5000 } },
+      ),
+    ).toBe(true);
+    expect(
+      configsEqual(
+        { fetch: { timeout: 5000, maxRetries: undefined } },
+        { fetch: { timeout: 5000, maxRetries: 2 } },
+      ),
+    ).toBe(false);
+  });
+
   it("detects a field present in only one config", () => {
     expect(configsEqual({}, { apiUrl: "https://api.example.com" })).toBe(false);
   });
