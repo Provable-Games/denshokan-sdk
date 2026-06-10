@@ -19,7 +19,7 @@ function deferred<T>(): Deferred<T> {
 
 let latest: ReturnType<typeof useBalanceOf> | null = null;
 
-function Probe({ account }: { account: string }) {
+function Probe({ account }: { account?: string }) {
   latest = useBalanceOf(account);
   return null;
 }
@@ -60,6 +60,44 @@ describe("useAsync (via useBalanceOf)", () => {
     // …then the stale request resolves and must not overwrite the result.
     await act(async () => { first.resolve(111n); await first.promise; });
     expect(latest!.data).toBe(222n);
+    expect(latest!.isLoading).toBe(false);
+
+    await act(async () => { root.unmount(); });
+    container.remove();
+  });
+
+  it("does not commit an in-flight response after the hook becomes disabled", async () => {
+    const pending = deferred<bigint>();
+    const balanceOf = vi.fn(() => pending.promise);
+    const client = { balanceOf } as unknown as DenshokanClient;
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <DenshokanProvider client={client}>
+          <Probe account="0x1" />
+        </DenshokanProvider>,
+      );
+    });
+    expect(latest!.isLoading).toBe(true);
+
+    // Disable while the request is still in flight (e.g. wallet disconnect).
+    await act(async () => {
+      root.render(
+        <DenshokanProvider client={client}>
+          <Probe />
+        </DenshokanProvider>,
+      );
+    });
+    expect(latest!.isLoading).toBe(false);
+    expect(latest!.error).toBe(null);
+
+    // The old request resolving must not commit data for the disabled hook.
+    await act(async () => { pending.resolve(111n); await pending.promise; });
+    expect(latest!.data).toBe(null);
     expect(latest!.isLoading).toBe(false);
 
     await act(async () => { root.unmount(); });

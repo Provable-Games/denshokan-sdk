@@ -28,8 +28,14 @@ function useAsync<T>(
   const fetch = useCallback(fetcher, deps);
 
   const refetch = useCallback(async () => {
-    if (!enabled) return;
+    // Bump the sequence even when disabled, so an in-flight request from the
+    // enabled era can't commit after the hook is disabled.
     const id = ++fetchIdRef.current;
+    if (!enabled) {
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
