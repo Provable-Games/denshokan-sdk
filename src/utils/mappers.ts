@@ -16,6 +16,31 @@ import { MAX_SALT } from "./salt.js";
 // API response mappers (snake_case API JSON → camelCase types)
 // =========================================================================
 
+/**
+ * Whether a token's game can be played right now, derived from its own
+ * on-chain lifecycle rather than a backend flag.
+ *
+ * The token API exposes no playable flag, so we compute it from the lifecycle
+ * the game sets at mint: a game is available from `mintedAt + startDelay` until
+ * `mintedAt + endDelay` (endDelay 0 = no expiry), and stops being playable once
+ * the game is over. `nowMs` is injectable for deterministic tests.
+ */
+export function computeIsPlayable(args: {
+  mintedAtMs: number;
+  startDelaySecs: number;
+  endDelaySecs: number;
+  gameOver: boolean;
+  nowMs?: number;
+}): boolean {
+  const { mintedAtMs, startDelaySecs, endDelaySecs, gameOver } = args;
+  if (gameOver) return false;
+  if (!Number.isFinite(mintedAtMs)) return false;
+  const now = args.nowMs ?? Date.now();
+  if (now < mintedAtMs + startDelaySecs * 1000) return false; // not started yet
+  if (endDelaySecs > 0 && now >= mintedAtMs + endDelaySecs * 1000) return false; // expired
+  return true;
+}
+
 export function mapToken(raw: Record<string, unknown>): Token {
   const tokenId = toHexTokenId(raw.tokenId ?? raw.token_id ?? "0");
 
@@ -27,28 +52,42 @@ export function mapToken(raw: Record<string, unknown>): Token {
     // Invalid or missing tokenId - proceed without decoded fallback
   }
 
+  // Lifecycle fields, resolved once so the public fields and the derived
+  // `isPlayable` agree. The API omits a playable flag entirely (no such
+  // column), so it must be computed — see computeIsPlayable.
+  const gameOver = Boolean(raw.gameOver ?? raw.game_over);
+  const startDelaySecs = Number(raw.startDelay ?? raw.start_delay ?? decoded?.startDelay ?? 0);
+  const endDelaySecs = Number(raw.endDelay ?? raw.end_delay ?? decoded?.endDelay ?? 0);
+  const mintedAt = String(raw.mintedAt ?? raw.minted_at ?? decoded?.mintedAt.toISOString() ?? "");
+  const mintedAtMs = mintedAt ? Date.parse(mintedAt) : NaN;
+  // Honor an explicit backend flag if one is ever added; otherwise derive it.
+  const rawPlayable = raw.isPlayable ?? raw.is_playable;
+
   return {
     tokenId,
     // Prefer API value, fallback to decoded
     gameId: Number(raw.gameId ?? raw.game_id ?? decoded?.gameId ?? 0),
     owner: String(raw.ownerAddress ?? raw.owner_address ?? raw.owner ?? ""),
     score: Number(raw.currentScore ?? raw.current_score ?? raw.score ?? 0),
-    gameOver: Boolean(raw.gameOver ?? raw.game_over),
+    gameOver,
     playerName: String(raw.playerName ?? raw.player_name ?? "") || null,
     mintedBy: Number(raw.mintedBy ?? raw.minted_by ?? (decoded ? Number(decoded.mintedBy) : 0)),
     minterAddress: (raw.minterAddress ?? raw.minter_address) != null ? String(raw.minterAddress ?? raw.minter_address) : null,
-    mintedAt: String(raw.mintedAt ?? raw.minted_at ?? decoded?.mintedAt.toISOString() ?? ""),
+    mintedAt,
     settingsId: Number(raw.settingsId ?? raw.settings_id ?? decoded?.settingsId ?? 0),
     objectiveId: Number(raw.objectiveId ?? raw.objective_id ?? decoded?.objectiveId ?? 0),
     soulbound: Boolean(raw.soulbound ?? decoded?.soulbound),
-    isPlayable: Boolean(raw.isPlayable ?? raw.is_playable),
+    isPlayable:
+      rawPlayable != null
+        ? Boolean(rawPlayable)
+        : computeIsPlayable({ mintedAtMs, startDelaySecs, endDelaySecs, gameOver }),
     gameAddress: String(raw.gameAddress ?? raw.game_address ?? ""),
     clientUrl: raw.clientUrl != null ? String(raw.clientUrl) : (raw.client_url != null ? String(raw.client_url) : undefined),
     rendererAddress: raw.rendererAddress != null ? String(raw.rendererAddress) : (raw.renderer_address != null ? String(raw.renderer_address) : undefined),
     skillsAddress: raw.skillsAddress != null ? String(raw.skillsAddress) : (raw.skills_address != null ? String(raw.skills_address) : undefined),
     // New fields from decoded token ID
-    startDelay: Number(raw.startDelay ?? raw.start_delay ?? decoded?.startDelay ?? 0) || undefined,
-    endDelay: Number(raw.endDelay ?? raw.end_delay ?? decoded?.endDelay ?? 0) || undefined,
+    startDelay: startDelaySecs || undefined,
+    endDelay: endDelaySecs || undefined,
     hasContext: Boolean(raw.hasContext ?? raw.has_context ?? decoded?.hasContext),
     paymaster: Boolean(raw.paymaster ?? decoded?.paymaster),
     contextId: raw.contextId != null || raw.context_id != null
