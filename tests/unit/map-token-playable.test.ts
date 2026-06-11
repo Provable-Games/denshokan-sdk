@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { computeIsPlayable, mapToken } from "../../src/utils/mappers.js";
 
 const MINTED_AT = "2026-06-11T17:45:39.000Z";
@@ -47,46 +47,40 @@ describe("computeIsPlayable", () => {
 });
 
 describe("mapToken isPlayable derivation", () => {
-  afterEach(() => vi.useRealTimers());
+  // Use real-clock-relative fixtures (no fake timers) so this behaves the same
+  // under vitest and `bun test`, which doesn't honor vitest's fake-timer API.
+  const isoAgo = (ms: number) => new Date(Date.now() - ms).toISOString();
 
   // A live Greed run as returned by the token API: no isPlayable field, just
   // the lifecycle fields. Previously mapped to isPlayable=false forever.
-  const rawLiveGreedToken = {
+  // Minted 1 day ago with a 3-day window ⇒ currently within [start, end).
+  const liveRawGreedToken = () => ({
     tokenId: "1",
     gameId: 1,
     soulbound: true,
     gameOver: false,
-    mintedAt: MINTED_AT,
+    mintedAt: isoAgo(DAY),
     startDelay: 0,
-    endDelay: 259200,
+    endDelay: 259200, // 3 days
     ownerAddress: "0x2c0936e4ccfc2da58f59511a93bb4e21554b3ff0e7690f4ca4672397abdba04",
-  };
+  });
 
   it("derives isPlayable=true for a live, not-over run within its window", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(MINTED_AT_MS + DAY));
-    expect(mapToken(rawLiveGreedToken).isPlayable).toBe(true);
+    expect(mapToken(liveRawGreedToken()).isPlayable).toBe(true);
   });
 
   it("derives isPlayable=false once the run is over", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(MINTED_AT_MS + DAY));
-    expect(mapToken({ ...rawLiveGreedToken, gameOver: true }).isPlayable).toBe(false);
+    expect(mapToken({ ...liveRawGreedToken(), gameOver: true }).isPlayable).toBe(false);
   });
 
   it("derives isPlayable=false after the run has expired", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(MINTED_AT_MS + 4 * DAY));
-    expect(mapToken(rawLiveGreedToken).isPlayable).toBe(false);
+    // Minted 4 days ago with a 3-day window ⇒ expired.
+    expect(mapToken({ ...liveRawGreedToken(), mintedAt: isoAgo(4 * DAY) }).isPlayable).toBe(false);
   });
 
   it("honors an explicit backend is_playable flag when present", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(MINTED_AT_MS + DAY));
     // Backend says not playable even though the window is open — respect it.
-    expect(mapToken({ ...rawLiveGreedToken, is_playable: false }).isPlayable).toBe(false);
-    expect(mapToken({ ...rawLiveGreedToken, isPlayable: true, gameOver: false }).isPlayable).toBe(
-      true,
-    );
+    expect(mapToken({ ...liveRawGreedToken(), is_playable: false }).isPlayable).toBe(false);
+    expect(mapToken({ ...liveRawGreedToken(), isPlayable: true }).isPlayable).toBe(true);
   });
 });
