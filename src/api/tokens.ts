@@ -23,6 +23,7 @@ export async function apiGetTokens(
 ): Promise<PaginatedResult<Token>> {
   const qs = buildQueryString({
     game_id: params?.gameId,
+    game_address: params?.gameAddress,
     owner: params?.owner,
     game_over: params?.gameOver,
     playable: params?.playable,
