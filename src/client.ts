@@ -39,6 +39,7 @@ import { toHexTokenId, normalizeAddress, isZeroAddress } from "./utils/address.j
 import { mintParamsToSnake, playerNameUpdateToSnake } from "./utils/mappers.js";
 import { assignSalts } from "./utils/salt.js";
 import { sortTokensWithTiebreak } from "./utils/sort.js";
+import { applyRpcBestEffortFilters } from "./utils/rpc-filters.js";
 import { InvalidChainError, GameNotFoundError } from "./errors/index.js";
 import { ConnectionStatus } from "./datasource/health.js";
 import { withFallback } from "./datasource/resolver.js";
@@ -842,22 +843,15 @@ export class DenshokanClient {
     }
 
     // Build full Token objects for the results using batch method (1 RPC call for all tokens)
-    let tokens = tokenIds.length > 0
+    const tokens = tokenIds.length > 0
       ? await this.buildTokensFromFullStateBatch(viewerContract, tokenIds, includeUri)
       : [];
 
-    // Post-filter by contextId: in RPC mode contextId is not resolved, so
-    // at minimum filter out tokens without context (creator tokens).
-    // When the API is available it handles this server-side.
-    const { contextId } = params ?? {};
-    if (contextId !== undefined) {
-      tokens = tokens.filter((t) =>
-        t.contextId !== null ? t.contextId === contextId : t.hasContext,
-      );
-      total = tokens.length;
-    }
-
-    return { data: tokens, total };
+    // Reconcile any requested filters the viewer couldn't push down (or that
+    // have no native method for this combination): best-effort client-side
+    // filtering with a one-time warning, never a throw. See applyRpcBestEffortFilters.
+    const reconciled = applyRpcBestEffortFilters(tokens, total, params);
+    return { data: reconciled.tokens, total: reconciled.total };
   }
 
   private async buildTokensFromFullStateBatch(
