@@ -146,6 +146,7 @@ export class WebSocketManager {
       owners: options.owners,
       settingsIds: options.settingsIds,
       objectiveIds: options.objectiveIds,
+      tokenIds: options.tokenIds,
     }));
   }
 

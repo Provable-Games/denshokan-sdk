@@ -2,6 +2,7 @@ import type { FetchConfig } from "../types/config.js";
 import type { Token, TokenScoreEntry, TokenRank, TokenRankParams, TokenRanksResult, TokenSortField, PaginatedResult, TokensQueryParams } from "../types/token.js";
 import { apiFetch, buildQueryString } from "./base.js";
 import { mapPaginatedTokens, mapToken, mapTokenScoreEntries, mapTokenRank } from "../utils/mappers.js";
+import { sortTokensWithTiebreak } from "../utils/sort.js";
 
 /** Map consumer-facing sort field names to the short names the API expects */
 export const SORT_FIELD_TO_API: Record<TokenSortField, string> = {
@@ -21,6 +22,66 @@ export async function apiGetTokens(
   params?: TokensQueryParams,
   signal?: AbortSignal,
 ): Promise<PaginatedResult<Token>> {
+  // An explicit id set (INCLUDING an empty one) means "filter to exactly these ids".
+  // It goes to POST /tokens/query — the id list can be hundreds of felt252 values, too
+  // long for a GET query string (mirrors POST /tokens/rank). Branch on presence, not
+  // length: an empty array matches NOTHING — never fall through to the unfiltered GET,
+  // which would return the global page while a caller's ids are still resolving.
+  if (params?.tokenIds !== undefined) {
+    if (params.tokenIds.length === 0) return { data: [], total: 0 };
+
+    // The server caps the id list (MAX_TOKENS_BY_IDS = 500). Chunk larger sets into
+    // parallel requests, then re-sort + slice the merged result so ordering and
+    // limit/offset are uniform regardless of id-set size (the ≤500 branch below lets
+    // the server do it). Chunk calls drop limit/offset so each returns its whole set.
+    const MAX_IDS_PER_REQUEST = 500;
+    if (params.tokenIds.length > MAX_IDS_PER_REQUEST) {
+      const chunks: string[][] = [];
+      for (let i = 0; i < params.tokenIds.length; i += MAX_IDS_PER_REQUEST) {
+        chunks.push(params.tokenIds.slice(i, i + MAX_IDS_PER_REQUEST));
+      }
+      const pages = await Promise.all(
+        chunks.map((ids) =>
+          apiGetTokens(
+            ctx,
+            { ...params, tokenIds: ids, limit: undefined, offset: undefined },
+            signal,
+          ),
+        ),
+      );
+      const merged = sortTokensWithTiebreak(pages.flatMap((p) => p.data), params.sort);
+      const total = merged.length;
+      const offset = params.offset ?? 0;
+      const data =
+        params.limit !== undefined ? merged.slice(offset, offset + params.limit) : merged.slice(offset);
+      return { data, total };
+    }
+    const raw = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
+      baseUrl: ctx.baseUrl,
+      path: `/tokens/query`,
+      method: "POST",
+      body: {
+        tokenIds: params.tokenIds,
+        gameId: params.gameId,
+        owner: params.owner,
+        gameOver: params.gameOver,
+        minterAddress: params.minterAddress,
+        // Context filters, forwarded for parity with the GET path.
+        hasContext: params.hasContext,
+        contextId: params.contextId,
+        contextName: params.contextName,
+        sort: params.sort
+          ? { field: SORT_FIELD_TO_API[params.sort.field], direction: params.sort.direction }
+          : undefined,
+        limit: params.limit,
+        offset: params.offset,
+      },
+      signal,
+      fetchConfig: ctx.fetchConfig,
+    });
+    return mapPaginatedTokens(raw);
+  }
+
   const qs = buildQueryString({
     game_id: params?.gameId,
     owner: params?.owner,
