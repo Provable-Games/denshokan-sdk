@@ -10,6 +10,19 @@ async function getStarknet(): Promise<typeof import("starknet")> {
   return starknetModule;
 }
 
+/**
+ * Resolve the block a read should run at. Starknet RPC spec v0.10 dropped the
+ * "pending" tag, but starknet.js `Contract.call` still defaults to it → every read
+ * throws `TypeError: Block identifier unmanaged: pending`. Rewrite an absent/"pending"
+ * tag to "latest" (universally supported; ~1 block behind pre_confirmed — negligible
+ * for score/state reads); pass any explicit block (number, hash, "latest", …) through.
+ */
+export function resolveReadBlock(blockIdentifier?: unknown): unknown {
+  return blockIdentifier == null || blockIdentifier === "pending"
+    ? "latest"
+    : blockIdentifier;
+}
+
 export async function createProvider(
   rpcUrl: string,
   headers?: Record<string, string>,
@@ -31,11 +44,7 @@ export async function createProvider(
   (provider as unknown as { callContract: RpcProvider["callContract"] }).callContract = ((
     call: Parameters<RpcProvider["callContract"]>[0],
     blockIdentifier?: Parameters<RpcProvider["callContract"]>[1],
-  ) =>
-    rawCallContract(
-      call,
-      blockIdentifier == null || blockIdentifier === "pending" ? "latest" : blockIdentifier,
-    )) as RpcProvider["callContract"];
+  ) => rawCallContract(call, resolveReadBlock(blockIdentifier) as never)) as RpcProvider["callContract"];
 
   return provider;
 }

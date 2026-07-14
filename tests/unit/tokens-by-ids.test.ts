@@ -11,8 +11,9 @@ function okPage(total = 0) {
   return { ok: true, status: 200, json: () => Promise.resolve({ data: [], total }) };
 }
 
+const originalFetch = globalThis.fetch;
 afterEach(() => {
-  vi.restoreAllMocks();
+  globalThis.fetch = originalFetch;
 });
 
 describe("apiGetTokens — by-ids routing", () => {
@@ -73,7 +74,7 @@ describe("apiGetTokens — by-ids routing", () => {
     await apiGetTokens(ctx, { tokenIds: [] });
 
     const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain("/tokens?");
+    expect(url).toBe("http://api.test/tokens");
     expect(url).not.toContain("/tokens/query");
   });
 });
@@ -81,20 +82,21 @@ describe("apiGetTokens — by-ids routing", () => {
 describe("apiGetTokens — >500 id chunking", () => {
   it("splits into <=500-id POSTs and merges data + total", async () => {
     const ids = Array.from({ length: 501 }, (_, i) => String(i + 1));
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(okPage(500)) // first chunk of 500
-      .mockResolvedValueOnce(okPage(1)); // last chunk of 1
+    // Each request reports a total equal to its own id count → merged total = 501.
+    const fetchMock = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string);
+      return Promise.resolve(okPage(body.tokenIds.length));
+    });
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     const res = await apiGetTokens(ctx, { tokenIds: ids });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    const b0 = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
-    const b1 = JSON.parse((fetchMock.mock.calls[1][1] as RequestInit).body as string);
-    expect(b0.tokenIds).toHaveLength(500);
-    expect(b1.tokenIds).toHaveLength(1);
-    // every chunk still hits the by-ids endpoint
+    const sizes = fetchMock.mock.calls
+      .map((c) => JSON.parse((c[1] as RequestInit).body as string).tokenIds.length)
+      .sort((a: number, b: number) => b - a);
+    expect(sizes).toEqual([500, 1]);
+    // every chunk hits the by-ids endpoint
     expect(fetchMock.mock.calls[0][0]).toBe("http://api.test/tokens/query");
     // totals summed across chunks
     expect(res.total).toBe(501);
