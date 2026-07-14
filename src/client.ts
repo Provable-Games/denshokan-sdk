@@ -693,7 +693,7 @@ export class DenshokanClient {
       if (gameId !== undefined) tokens = tokens.filter((t) => t.gameId === gameId);
       if (owner) {
         const o = owner.toLowerCase();
-        tokens = tokens.filter((t) => t.ownerAddress?.toLowerCase() === o);
+        tokens = tokens.filter((t) => t.owner?.toLowerCase() === o);
       }
       if (gameOver !== undefined) tokens = tokens.filter((t) => t.gameOver === gameOver);
       return { data: tokens, total: tokens.length };
