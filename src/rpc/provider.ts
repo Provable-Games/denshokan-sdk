@@ -39,7 +39,10 @@ export async function createProvider(
   // the RPC token fallback were silently failing). Rewrite an absent/"pending" tag
   // to "latest" (universally supported across RPC providers; ~1 block behind
   // pre_confirmed — negligible for score/state reads) at the single choke point
-  // every Contract.call funnels through.
+  // every Contract.call funnels through. The funnel assumption (Contract.call →
+  // provider.callContract(call, block)) is verified against starknet ^9.2.1 and
+  // guarded by tests/unit/provider-funnel.test.ts so a peer-dep bump that changes
+  // the call path fails CI instead of silently reintroducing the "pending" error.
   const rawCallContract = provider.callContract.bind(provider);
   (provider as unknown as { callContract: RpcProvider["callContract"] }).callContract = ((
     call: Parameters<RpcProvider["callContract"]>[0],

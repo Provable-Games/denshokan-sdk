@@ -39,6 +39,7 @@ import { toHexTokenId, normalizeAddress, isZeroAddress } from "./utils/address.j
 import { mintParamsToSnake, playerNameUpdateToSnake } from "./utils/mappers.js";
 import { assignSalts } from "./utils/salt.js";
 import { sortTokensWithTiebreak } from "./utils/sort.js";
+import { applyTokenFilters } from "./utils/token-filter.js";
 import { InvalidChainError, GameNotFoundError } from "./errors/index.js";
 import { ConnectionStatus } from "./datasource/health.js";
 import { withFallback } from "./datasource/resolver.js";
@@ -680,23 +681,25 @@ export class DenshokanClient {
 
     // Explicit id set (getTokens({ tokenIds }) / the API's POST /tokens/query) — the
     // RPC fallback for THAT query. Build those exact tokens from the viewer full-state
-    // batch instead of enumerating by owner/game (which would ignore the ids). Apply
-    // the combinable filters (gameId/owner/gameOver) as post-filters on the built
-    // tokens so the fallback matches the API path. Returns the whole set (no server
-    // pagination in fallback mode); the id list is capped upstream (500).
-    if (params?.tokenIds && params.tokenIds.length > 0) {
-      let tokens = await this.buildTokensFromFullStateBatch(
+    // batch instead of enumerating by owner/game (which would ignore the ids), then
+    // apply the SAME filters the API path would, on the built tokens, so the two
+    // sources don't diverge. Branch on presence: an empty id set matches nothing.
+    if (params?.tokenIds !== undefined) {
+      if (params.tokenIds.length === 0) return { data: [], total: 0 };
+      const built = await this.buildTokensFromFullStateBatch(
         viewerContract,
         params.tokenIds,
         includeUri,
       );
-      if (gameId !== undefined) tokens = tokens.filter((t) => t.gameId === gameId);
-      if (owner) {
-        const o = owner.toLowerCase();
-        tokens = tokens.filter((t) => t.owner?.toLowerCase() === o);
-      }
-      if (gameOver !== undefined) tokens = tokens.filter((t) => t.gameOver === gameOver);
-      return { data: tokens, total: tokens.length };
+      // Apply every filter expressible on a built Token so RPC-fallback results match
+      // the API path. `minterAddress` is intentionally omitted (API-only) — see
+      // applyTokenFilters. Then paginate the filtered set.
+      const tokens = applyTokenFilters(built, params);
+      const total = tokens.length;
+      const off = params.offset ?? 0;
+      const data =
+        params.limit !== undefined ? tokens.slice(off, off + params.limit) : tokens.slice(off);
+      return { data, total };
     }
 
     // Resolve gameAddress from gameId if needed
