@@ -24,6 +24,30 @@ export async function apiGetTokens(
   // An explicit id set goes to POST /tokens/query — the id list can be hundreds of
   // felt252 values, too long for a GET query string (mirrors POST /tokens/rank).
   if (params?.tokenIds && params.tokenIds.length > 0) {
+    // The server caps the id list (MAX_TOKENS_BY_IDS = 500). Chunk larger sets into
+    // parallel requests and merge, so a caller with a big game set doesn't hard-fail.
+    // Drop limit/offset for the chunked calls (each chunk returns its whole set);
+    // the client re-applies sort/tiebreak over the merged result.
+    const MAX_IDS_PER_REQUEST = 500;
+    if (params.tokenIds.length > MAX_IDS_PER_REQUEST) {
+      const chunks: string[][] = [];
+      for (let i = 0; i < params.tokenIds.length; i += MAX_IDS_PER_REQUEST) {
+        chunks.push(params.tokenIds.slice(i, i + MAX_IDS_PER_REQUEST));
+      }
+      const pages = await Promise.all(
+        chunks.map((ids) =>
+          apiGetTokens(
+            ctx,
+            { ...params, tokenIds: ids, limit: undefined, offset: undefined },
+            signal,
+          ),
+        ),
+      );
+      return {
+        data: pages.flatMap((p) => p.data),
+        total: pages.reduce((sum, p) => sum + p.total, 0),
+      };
+    }
     const raw = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
       baseUrl: ctx.baseUrl,
       path: `/tokens/query`,
