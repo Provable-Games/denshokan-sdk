@@ -10,6 +10,8 @@ export interface UseSubscriptionOptions {
   owners?: string[];
   settingsIds?: number[];
   objectiveIds?: number[];
+  /** Only receive events for these token ids (server-side filter). */
+  tokenIds?: string[];
 }
 
 export function useSubscription(

@@ -160,6 +160,12 @@ export interface TokensFilterParams {
   gameAddress?: string;
   /** Filter by owner address */
   owner?: string;
+  /** Filter to an explicit set of token ids. Use for a known id set — e.g. a
+   *  player's whole campaign-minted game set — beyond the owner/minter paging and
+   *  row limits. Sent to `POST /tokens/query` (an id list can be hundreds of
+   *  felt252 values, too long for a query string). Combinable with the other
+   *  filters (gameId/owner/gameOver/minterAddress) + sort. */
+  tokenIds?: string[];
   /** Filter by settings ID (requires gameId or gameAddress) */
   settingsId?: number;
   /** Filter by objective ID (requires gameId or gameAddress) */

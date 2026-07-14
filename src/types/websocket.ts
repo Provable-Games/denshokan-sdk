@@ -14,6 +14,9 @@ export interface WSSubscribeOptions {
   owners?: string[];
   settingsIds?: number[];
   objectiveIds?: number[];
+  /** Only receive events for these token ids (server-side filter). Use to watch a
+   *  known id set — e.g. a player's campaign games — without client-side filtering. */
+  tokenIds?: string[];
 }
 
 export type WSEventHandler = (message: WSMessage) => void;

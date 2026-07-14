@@ -21,6 +21,31 @@ export async function apiGetTokens(
   params?: TokensQueryParams,
   signal?: AbortSignal,
 ): Promise<PaginatedResult<Token>> {
+  // An explicit id set goes to POST /tokens/query — the id list can be hundreds of
+  // felt252 values, too long for a GET query string (mirrors POST /tokens/rank).
+  if (params?.tokenIds && params.tokenIds.length > 0) {
+    const raw = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
+      baseUrl: ctx.baseUrl,
+      path: `/tokens/query`,
+      method: "POST",
+      body: {
+        tokenIds: params.tokenIds,
+        gameId: params.gameId,
+        owner: params.owner,
+        gameOver: params.gameOver,
+        minterAddress: params.minterAddress,
+        sort: params.sort
+          ? { field: SORT_FIELD_TO_API[params.sort.field], direction: params.sort.direction }
+          : undefined,
+        limit: params.limit,
+        offset: params.offset,
+      },
+      signal,
+      fetchConfig: ctx.fetchConfig,
+    });
+    return mapPaginatedTokens(raw);
+  }
+
   const qs = buildQueryString({
     game_id: params?.gameId,
     owner: params?.owner,
