@@ -678,6 +678,27 @@ export class DenshokanClient {
 
     const viewerContract = await this.getViewerContract();
 
+    // Explicit id set (getTokens({ tokenIds }) / the API's POST /tokens/query) — the
+    // RPC fallback for THAT query. Build those exact tokens from the viewer full-state
+    // batch instead of enumerating by owner/game (which would ignore the ids). Apply
+    // the combinable filters (gameId/owner/gameOver) as post-filters on the built
+    // tokens so the fallback matches the API path. Returns the whole set (no server
+    // pagination in fallback mode); the id list is capped upstream (500).
+    if (params?.tokenIds && params.tokenIds.length > 0) {
+      let tokens = await this.buildTokensFromFullStateBatch(
+        viewerContract,
+        params.tokenIds,
+        includeUri,
+      );
+      if (gameId !== undefined) tokens = tokens.filter((t) => t.gameId === gameId);
+      if (owner) {
+        const o = owner.toLowerCase();
+        tokens = tokens.filter((t) => t.ownerAddress?.toLowerCase() === o);
+      }
+      if (gameOver !== undefined) tokens = tokens.filter((t) => t.gameOver === gameOver);
+      return { data: tokens, total: tokens.length };
+    }
+
     // Resolve gameAddress from gameId if needed
     let gameAddress = providedGameAddress;
     if (!gameAddress && gameId !== undefined) {

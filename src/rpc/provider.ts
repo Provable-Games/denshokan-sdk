@@ -19,6 +19,24 @@ export async function createProvider(
     nodeUrl: rpcUrl,
     ...(headers && { headers }),
   });
+
+  // Starknet RPC spec v0.10 dropped the "pending" block tag, but starknet.js
+  // `Contract.call` still defaults to it → every read throws
+  // `TypeError: Block identifier unmanaged: pending` (this is why `scoreBatch` and
+  // the RPC token fallback were silently failing). Rewrite an absent/"pending" tag
+  // to "latest" (universally supported across RPC providers; ~1 block behind
+  // pre_confirmed — negligible for score/state reads) at the single choke point
+  // every Contract.call funnels through.
+  const rawCallContract = provider.callContract.bind(provider);
+  (provider as unknown as { callContract: RpcProvider["callContract"] }).callContract = ((
+    call: Parameters<RpcProvider["callContract"]>[0],
+    blockIdentifier?: Parameters<RpcProvider["callContract"]>[1],
+  ) =>
+    rawCallContract(
+      call,
+      blockIdentifier == null || blockIdentifier === "pending" ? "latest" : blockIdentifier,
+    )) as RpcProvider["callContract"];
+
   return provider;
 }
 
