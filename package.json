@@ -1,6 +1,6 @@
 {
   "name": "@provable-games/denshokan-sdk",
-  "version": "0.1.36",
+  "version": "0.1.37",
   "description": "TypeScript SDK for Denshokan — query game tokens via REST API and Starknet RPC with automatic fallback",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -85,8 +85,5 @@
   },
   "engines": {
     "node": ">=22.0.0"
-  },
-  "dependencies": {
-    "@rollup/rollup-linux-arm64-gnu": "^4.59.0"
   }
 }
