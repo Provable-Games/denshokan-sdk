@@ -65,6 +65,8 @@ export async function apiGetTokens(
         gameId: params.gameId,
         owner: params.owner,
         gameOver: params.gameOver,
+        // Forward-compat, ignored server-side today — safety-netted in _getTokensImpl.
+        playable: params.playable,
         minterAddress: params.minterAddress,
         // Context filters, forwarded for parity with the GET path.
         hasContext: params.hasContext,
@@ -86,6 +88,11 @@ export async function apiGetTokens(
     game_id: params?.gameId,
     owner: params?.owner,
     game_over: params?.gameOver,
+    // Forwarded for forward-compat: the `/tokens` endpoint currently IGNORES a
+    // playable flag, so the SDK safety-nets `playable` client-side (see
+    // _getTokensImpl). Sending it is harmless today and lets the server filter
+    // once it gains support.
+    playable: params?.playable,
     has_context: params?.hasContext,
     context_id: params?.contextId,
     context_name: params?.contextName,
