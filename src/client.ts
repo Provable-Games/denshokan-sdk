@@ -536,6 +536,32 @@ export class DenshokanClient {
       result = await this.buildTokensFromRpc(params);
     }
 
+    // Safety-net the game-STATE filters (`playable` / `gameOver`) on the returned
+    // rows. Neither datasource reliably enforces them for every query shape:
+    //   • API GET path: the `/tokens` endpoint IGNORES a playable flag entirely
+    //     (and the SDK never even sent one), so `{ playable }` came back unfiltered.
+    //   • RPC path: the enumerate-by branches (e.g. `owner && minterAddress`) select
+    //     by their primary key only — a combined `gameOver`/`playable` filter is
+    //     dropped; only the by-ids branch runs applyTokenFilters.
+    // `gameOver` and `isPlayable` are ALWAYS populated booleans on a built Token
+    // (the API mapper computes isPlayable when the endpoint omits it), so filtering
+    // on them can only REMOVE rows that don't match an explicitly-requested filter —
+    // it can never wrongly drop a valid row. NOTE: like the RPC by-ids branch, this
+    // runs AFTER the source paginated, so when one of these filters is combined with
+    // `limit`, that limit bounds the FETCHED set, not the post-filter count — pass a
+    // limit above the expected match count (or page yourself) for exact totals.
+    if (params?.playable !== undefined || params?.gameOver !== undefined) {
+      const before = result.data.length;
+      const data = result.data.filter(
+        (t) =>
+          (params.playable === undefined || t.isPlayable === params.playable) &&
+          (params.gameOver === undefined || t.gameOver === params.gameOver),
+      );
+      if (data.length !== before) {
+        result = { ...result, data, total: Math.min(result.total, data.length) };
+      }
+    }
+
     // Apply the on-chain leaderboard tiebreak (mintedAt asc, tokenId asc) on
     // top of whatever the data source returned, so equal-key entries land in
     // the same order the leaderboard contract enforces at submit_score time.
