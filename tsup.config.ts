@@ -14,7 +14,7 @@ export default defineConfig({
   minify: false,
   target: "es2022",
   outDir: "dist",
-  external: ["react", "starknet"],
+  external: ["react", "starknet", "ws"],
   esbuildOptions(options) {
     options.jsx = "automatic";
   },
