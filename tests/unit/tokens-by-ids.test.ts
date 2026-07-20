@@ -163,3 +163,31 @@ describe("apiGetTokens — >500 id chunking", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("apiGetTokens — includeUri controls the payload", () => {
+  it("POST /tokens/query omits tokenUri by default (includeUri:false in body)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okPage());
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    await apiGetTokens(ctx, { tokenIds: ["1"], gameId: 1 });
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(body.includeUri).toBe(false);
+  });
+
+  it("POST /tokens/query requests tokenUri when includeUri:true (field omitted → server default)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okPage());
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    await apiGetTokens(ctx, { tokenIds: ["1"], gameId: 1, includeUri: true });
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect("includeUri" in body).toBe(false);
+  });
+
+  it("GET /tokens sends include_uri=false by default, omits it when includeUri:true", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okPage());
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    await apiGetTokens(ctx, { owner: "0xabc" });
+    expect(fetchMock.mock.calls[0][0]).toContain("include_uri=false");
+    fetchMock.mockClear();
+    await apiGetTokens(ctx, { owner: "0xabc", includeUri: true });
+    expect(fetchMock.mock.calls[0][0]).not.toContain("include_uri");
+  });
+});
