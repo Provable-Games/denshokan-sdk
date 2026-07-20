@@ -75,6 +75,12 @@ export async function apiGetTokens(
           : undefined,
         limit: params.limit,
         offset: params.offset,
+        // Only ask the server for the ~40 KB tokenUri when the caller wants it.
+        // `includeUri` now controls the PAYLOAD (not just the SDK's URI-enrichment
+        // step) — omitting it here cuts by-ids responses from ~40 KB/token to ~100 B.
+        // undefined ⇒ server default (includes), so this is safe for callers who do
+        // want URIs (they pass includeUri:true).
+        includeUri: params.includeUri ? undefined : false,
       },
       signal,
       fetchConfig: ctx.fetchConfig,
@@ -90,6 +96,9 @@ export async function apiGetTokens(
     context_id: params?.contextId,
     context_name: params?.contextName,
     minter_address: params?.minterAddress,
+    // Drop the ~40 KB tokenUri per row unless the caller asked for it (see the POST
+    // path above). undefined ⇒ omitted ⇒ server default (includes).
+    include_uri: params?.includeUri ? undefined : "false",
     sort_by: params?.sort?.field ? SORT_FIELD_TO_API[params.sort.field] : undefined,
     sort_order: params?.sort?.direction,
     limit: params?.limit,
