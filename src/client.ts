@@ -656,6 +656,8 @@ export class DenshokanClient {
       contextName: null,
       completedAt: null,
       minterAddress: null,
+      // RPC-built tokens can't know the mint recipient (event lookup only).
+      mintedTo: null,
     };
   }
 
@@ -955,6 +957,8 @@ export class DenshokanClient {
         contextName: null,
         completedAt: null,
         minterAddress: !isZeroAddr(enriched?.minterAddress) ? enriched?.minterAddress ?? null : null,
+        // RPC/viewer-built tokens can't know the mint recipient.
+        mintedTo: null,
         rendererAddress: !isZeroAddr(enriched?.rendererAddress) ? enriched?.rendererAddress : undefined,
         skillsAddress: !isZeroAddr(enriched?.skillsAddress) ? enriched?.skillsAddress : undefined,
         clientUrl: enriched?.clientUrl || undefined,

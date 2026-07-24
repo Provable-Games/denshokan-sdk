@@ -73,6 +73,7 @@ export function mapToken(raw: Record<string, unknown>): Token {
     playerName: String(raw.playerName ?? raw.player_name ?? "") || null,
     mintedBy: Number(raw.mintedBy ?? raw.minted_by ?? (decoded ? Number(decoded.mintedBy) : 0)),
     minterAddress: (raw.minterAddress ?? raw.minter_address) != null ? String(raw.minterAddress ?? raw.minter_address) : null,
+    mintedTo: (raw.mintedTo ?? raw.minted_to) != null ? String(raw.mintedTo ?? raw.minted_to) : null,
     mintedAt,
     settingsId: Number(raw.settingsId ?? raw.settings_id ?? decoded?.settingsId ?? 0),
     objectiveId: Number(raw.objectiveId ?? raw.objective_id ?? decoded?.objectiveId ?? 0),

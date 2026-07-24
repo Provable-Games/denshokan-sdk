@@ -9,6 +9,13 @@ export interface Token {
   mintedBy: number;
   /** Full minter contract address (resolved from minters registry) */
   minterAddress: string | null;
+  /**
+   * Original mint recipient (the `to` of the ERC-721 Transfer from 0x0).
+   * Immutable — unlike `owner`, it never changes when the token transfers.
+   * Null for tokens indexed before the minted_to column existed and not yet
+   * backfilled.
+   */
+  mintedTo: string | null;
   mintedAt: string;
   settingsId: number;
   objectiveId: number;
