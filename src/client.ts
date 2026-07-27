@@ -526,10 +526,17 @@ export class DenshokanClient {
 
   private async _getTokensImpl(params?: TokensQueryParams): Promise<PaginatedResult<Token>> {
     let result: PaginatedResult<Token>;
+    // Whether the API actually served this response. withFallback only invokes
+    // the fallback thunk when the primary failed, so setting the flag there is
+    // a reliable "the API did not answer" signal for the URI step below.
+    let servedByApi = this.config.primarySource === "api";
     if (this.config.primarySource === "api") {
       result = await withFallback(
         () => apiGetTokens(this.apiCtx, params),
-        async () => this.buildTokensFromRpc(params),
+        async () => {
+          servedByApi = false;
+          return this.buildTokensFromRpc(params);
+        },
         this.connectionStatus,
       );
     } else {
@@ -543,8 +550,15 @@ export class DenshokanClient {
       result = { ...result, data: sortTokensWithTiebreak(result.data, params?.sort) };
     }
 
-    // Enrich with token URIs if requested — only fetch for tokens missing a URI
-    if (params?.includeUri && result.data.length > 0) {
+    // Enrich with token URIs if requested — only fetch for tokens missing a URI.
+    //
+    // Skipped when the API served the response. We send include_uri explicitly
+    // now, so a healthy API that returned no tokenUri is giving an
+    // authoritative answer (the caller's origin is not in the server's URI
+    // allowlist), not leaving a gap for us to paper over. Reaching for RPC there
+    // would put ~40 KB/token of on-chain reads behind every list call while the
+    // API is up and perfectly fine. The fallback is for an API that is *down*.
+    if (params?.includeUri && !servedByApi && result.data.length > 0) {
       const missingIndices = result.data
         .map((t, i) => (!t.tokenUri ? i : -1))
         .filter((i) => i >= 0);
@@ -973,17 +987,22 @@ export class DenshokanClient {
 
   async getPlayerTokens(address: string, params?: PlayerTokensParams): Promise<PaginatedResult<Token>> {
     let result: PaginatedResult<Token>;
+    // See _getTokensImpl — tracks whether the API actually answered, so the URI
+    // step below can tell "API declined to send it" from "API was unreachable".
+    let servedByApi = this.config.primarySource === "api";
     if (this.config.primarySource === "api") {
       result = await withFallback(
         () => apiGetPlayerTokens(this.apiCtx, address, params),
-        () =>
-          this.buildTokensFromRpc({
+        () => {
+          servedByApi = false;
+          return this.buildTokensFromRpc({
             owner: address,
             gameId: params?.gameId,
             limit: params?.limit,
             offset: params?.offset,
             includeUri: params?.includeUri,
-          }),
+          });
+        },
         this.connectionStatus,
       );
     } else {
@@ -1002,8 +1021,9 @@ export class DenshokanClient {
       result = { ...result, data: sortTokensWithTiebreak(result.data, params?.sort) };
     }
 
-    // Enrich with token URIs if requested — only fetch for tokens missing a URI
-    if (params?.includeUri && result.data.length > 0) {
+    // Enrich with token URIs if requested — see _getTokensImpl for why this is
+    // skipped when the API itself served the response.
+    if (params?.includeUri && !servedByApi && result.data.length > 0) {
       const missingIndices = result.data
         .map((t, i) => (!t.tokenUri ? i : -1))
         .filter((i) => i >= 0);

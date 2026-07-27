@@ -22,6 +22,11 @@ export async function apiGetPlayerTokens(
     sort_order: params?.sort?.direction,
     limit: params?.limit,
     offset: params?.offset,
+    // PlayerTokensParams has accepted includeUri all along but never forwarded
+    // it, so a portfolio page always got the ~40 KB tokenUri per row whether or
+    // not it wanted one. Sent explicitly in both directions, as on the /tokens
+    // paths.
+    include_uri: params?.includeUri === true ? "true" : "false",
   });
   const raw = await apiFetch<{ data: Record<string, unknown>[]; total: number }>({
     baseUrl: ctx.baseUrl,

@@ -76,11 +76,15 @@ export async function apiGetTokens(
         limit: params.limit,
         offset: params.offset,
         // Only ask the server for the ~40 KB tokenUri when the caller wants it.
-        // `includeUri` now controls the PAYLOAD (not just the SDK's URI-enrichment
-        // step) — omitting it here cuts by-ids responses from ~40 KB/token to ~100 B.
-        // undefined ⇒ server default (includes), so this is safe for callers who do
-        // want URIs (they pass includeUri:true).
-        includeUri: params.includeUri ? undefined : false,
+        // `includeUri` controls the PAYLOAD (not just the SDK's URI-enrichment
+        // step) — omitting it cuts by-ids responses from ~40 KB/token to ~100 B.
+        //
+        // Always sent explicitly, both ways. Leaving it undefined used to mean
+        // "server default, which includes", but list endpoints are opt-in as of
+        // denshokan-api's egress work — an omitted flag now yields no URI, and a
+        // caller that wanted one would silently fall through to the RPC
+        // enrichment step in client.ts against a perfectly healthy API.
+        includeUri: params.includeUri === true,
       },
       signal,
       fetchConfig: ctx.fetchConfig,
@@ -96,9 +100,9 @@ export async function apiGetTokens(
     context_id: params?.contextId,
     context_name: params?.contextName,
     minter_address: params?.minterAddress,
-    // Drop the ~40 KB tokenUri per row unless the caller asked for it (see the POST
-    // path above). undefined ⇒ omitted ⇒ server default (includes).
-    include_uri: params?.includeUri ? undefined : "false",
+    // Drop the ~40 KB tokenUri per row unless the caller asked for it. Sent
+    // explicitly both ways for the reason given on the POST path above.
+    include_uri: params?.includeUri === true ? "true" : "false",
     sort_by: params?.sort?.field ? SORT_FIELD_TO_API[params.sort.field] : undefined,
     sort_order: params?.sort?.direction,
     limit: params?.limit,
