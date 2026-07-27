@@ -173,21 +173,25 @@ describe("apiGetTokens — includeUri controls the payload", () => {
     expect(body.includeUri).toBe(false);
   });
 
-  it("POST /tokens/query requests tokenUri when includeUri:true (field omitted → server default)", async () => {
+  // The flag is sent explicitly in both directions. It used to be omitted when
+  // the caller wanted URIs, leaning on a server default that included them —
+  // but list endpoints are opt-in now, so an omitted flag means "no URI" and a
+  // caller that wanted one would silently fall through to RPC enrichment.
+  it("POST /tokens/query requests tokenUri explicitly when includeUri:true", async () => {
     const fetchMock = vi.fn().mockResolvedValue(okPage());
     globalThis.fetch = fetchMock as unknown as typeof fetch;
     await apiGetTokens(ctx, { tokenIds: ["1"], gameId: 1, includeUri: true });
     const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
-    expect("includeUri" in body).toBe(false);
+    expect(body.includeUri).toBe(true);
   });
 
-  it("GET /tokens sends include_uri=false by default, omits it when includeUri:true", async () => {
+  it("GET /tokens sends include_uri explicitly in both directions", async () => {
     const fetchMock = vi.fn().mockResolvedValue(okPage());
     globalThis.fetch = fetchMock as unknown as typeof fetch;
     await apiGetTokens(ctx, { owner: "0xabc" });
     expect(fetchMock.mock.calls[0][0]).toContain("include_uri=false");
     fetchMock.mockClear();
     await apiGetTokens(ctx, { owner: "0xabc", includeUri: true });
-    expect(fetchMock.mock.calls[0][0]).not.toContain("include_uri");
+    expect(fetchMock.mock.calls[0][0]).toContain("include_uri=true");
   });
 });
