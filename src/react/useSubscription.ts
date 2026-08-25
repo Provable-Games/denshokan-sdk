@@ -4,7 +4,7 @@ import { useDenshokanClient } from "./context.js";
 
 export interface UseSubscriptionOptions {
   channels: WSChannel[];
-  gameIds?: number[];
+  gameAddresses?: string[];
   contextIds?: number[];
   minterAddresses?: string[];
   owners?: string[];
@@ -17,15 +17,15 @@ export interface UseSubscriptionOptions {
 export function useSubscription(
   channelsOrOptions: WSChannel[] | UseSubscriptionOptions,
   handler: WSEventHandler,
-  gameIds?: number[],
+  gameAddresses?: string[],
 ): void {
   const client = useDenshokanClient();
   const handlerRef = useRef(handler);
   handlerRef.current = handler;
 
-  // Support both legacy (channels[], handler, gameIds?) and options object signatures
+  // Support both positional (channels[], handler, gameAddresses?) and options object signatures
   const options: WSSubscribeOptions = Array.isArray(channelsOrOptions)
-    ? { channels: channelsOrOptions, gameIds }
+    ? { channels: channelsOrOptions, gameAddresses }
     : channelsOrOptions;
 
   useEffect(() => {

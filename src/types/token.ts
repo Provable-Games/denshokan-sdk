@@ -1,11 +1,20 @@
 export interface Token {
   tokenId: string;
-  gameId: number;
+  /**
+   * The ERC721 that issued this token, which IS its game. Together with
+   * `tokenId` this is the token's identity — an id is unique only within its
+   * own contract.
+   */
+  contractAddress: string;
   owner: string;
   score: number;
   gameOver: boolean;
   playerName: string | null;
-  /** 40-bit truncated minter address from token ID (not full address) */
+  /**
+   * Truncated 26-bit minter id from the token id, NOT an address. Scoped to
+   * `contractAddress`: the same number means a different minter in another
+   * contract. Use `minterAddress` for the resolved address.
+   */
   mintedBy: number;
   /** Full minter contract address (resolved from minters registry) */
   minterAddress: string | null;
@@ -47,7 +56,6 @@ export interface Token {
  */
 export interface CoreToken {
   tokenId: string;
-  gameId: number;
   settingsId: number;
   objectiveId: number;
   mintedAt: string;
@@ -56,11 +64,18 @@ export interface CoreToken {
   endDelay: number;
   hasContext: boolean;
   paymaster: boolean;
-  /** 40-bit truncated minter address (not full address) */
+  /**
+   * Truncated 26-bit minter id — not an address, and meaningful only within
+   * the contract that issued it.
+   */
   mintedByTruncated: bigint;
   txHash: number;
   salt: number;
-  metadata: number;
+  /**
+   * Inert game-interpreted data, 65 bits — past Number.MAX_SAFE_INTEGER, so a
+   * bigint rather than a silently rounded number.
+   */
+  metadata: bigint;
 }
 
 /**
@@ -74,7 +89,6 @@ export interface TokenMutableState {
 
 export interface DecodedTokenId {
   tokenId: bigint;
-  gameId: number;
   mintedBy: bigint;
   settingsId: number;
   mintedAt: Date;
@@ -86,7 +100,8 @@ export interface DecodedTokenId {
   paymaster: boolean;
   txHash: number;
   salt: number;
-  metadata: number;
+  /** See CoreToken.metadata — bigint to hold all 65 bits. */
+  metadata: bigint;
 }
 
 export interface TokenMetadata {
@@ -122,7 +137,8 @@ export interface TokenRank {
  * if it doesn't, the SDK call rejects with TokenNotFoundError.
  */
 export interface TokenRankParams {
-  gameId?: number;
+  /** Scope the leaderboard to one game, by contract address. */
+  gameAddress?: string;
   settingsId?: number;
   objectiveId?: number;
   contextId?: number;
@@ -161,9 +177,7 @@ export interface PaginatedResult<T> {
 export type TokenSortField = "score" | "mintedAt" | "lastUpdatedAt" | "completedAt";
 
 export interface TokensFilterParams {
-  /** Filter by game ID (resolved to game address via registry) */
-  gameId?: number;
-  /** Filter by game contract address directly */
+  /** Filter by game contract address */
   gameAddress?: string;
   /** Filter by owner address */
   owner?: string;
@@ -171,11 +185,11 @@ export interface TokensFilterParams {
    *  player's whole campaign-minted game set — beyond the owner/minter paging and
    *  row limits. Sent to `POST /tokens/query` (an id list can be hundreds of
    *  felt252 values, too long for a query string). Combinable with the other
-   *  filters (gameId/owner/gameOver/minterAddress) + sort. */
+   *  filters (gameAddress/owner/gameOver/minterAddress) + sort. */
   tokenIds?: string[];
-  /** Filter by settings ID (requires gameId or gameAddress) */
+  /** Filter by settings ID (requires gameAddress) */
   settingsId?: number;
-  /** Filter by objective ID (requires gameId or gameAddress) */
+  /** Filter by objective ID (requires gameAddress) */
   objectiveId?: number;
   /** Filter by minter address */
   minterAddress?: string;

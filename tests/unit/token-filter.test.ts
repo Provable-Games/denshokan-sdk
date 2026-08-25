@@ -5,7 +5,7 @@ import type { Token } from "../../src/types/token.js";
 function tok(overrides: Partial<Token>): Token {
   return {
     tokenId: "0x1",
-    gameId: 1,
+    contractAddress: "0xgame1",
     owner: "0xabc",
     score: 0,
     gameOver: false,
@@ -29,9 +29,9 @@ function tok(overrides: Partial<Token>): Token {
 }
 
 const tokens = [
-  tok({ tokenId: "0x1", gameId: 1, owner: "0xAAA", gameOver: false, settingsId: 5 }),
-  tok({ tokenId: "0x2", gameId: 2, owner: "0xbbb", gameOver: true, settingsId: 5 }),
-  tok({ tokenId: "0x3", gameId: 1, owner: "0xCCC", gameOver: true, settingsId: 9 }),
+  tok({ tokenId: "0x1", contractAddress: "0xgame1", owner: "0xAAA", gameOver: false, settingsId: 5 }),
+  tok({ tokenId: "0x2", contractAddress: "0xgame2", owner: "0xbbb", gameOver: true, settingsId: 5 }),
+  tok({ tokenId: "0x3", contractAddress: "0xgame1", owner: "0xCCC", gameOver: true, settingsId: 9 }),
 ];
 const ids = (list: Token[]) => list.map((t) => t.tokenId);
 
@@ -40,8 +40,8 @@ describe("applyTokenFilters", () => {
     expect(applyTokenFilters(tokens, {})).toHaveLength(3);
   });
 
-  it("filters by gameId, gameOver, settingsId", () => {
-    expect(ids(applyTokenFilters(tokens, { gameId: 1 }))).toEqual(["0x1", "0x3"]);
+  it("filters by gameAddress, gameOver, settingsId", () => {
+    expect(ids(applyTokenFilters(tokens, { gameAddress: "0xgame1" }))).toEqual(["0x1", "0x3"]);
     expect(ids(applyTokenFilters(tokens, { gameOver: true }))).toEqual(["0x2", "0x3"]);
     expect(ids(applyTokenFilters(tokens, { settingsId: 9 }))).toEqual(["0x3"]);
   });
@@ -51,7 +51,7 @@ describe("applyTokenFilters", () => {
   });
 
   it("ANDs multiple filters", () => {
-    expect(ids(applyTokenFilters(tokens, { gameId: 1, gameOver: true }))).toEqual(["0x3"]);
+    expect(ids(applyTokenFilters(tokens, { gameAddress: "0xgame1", gameOver: true }))).toEqual(["0x3"]);
   });
 
   it("filters by hasContext / contextId / contextName", () => {

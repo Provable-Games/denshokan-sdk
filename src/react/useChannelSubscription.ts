@@ -4,7 +4,7 @@ import { WS_EVENT_MAPPERS } from "../utils/mappers.js";
 import { useDenshokanClient } from "./context.js";
 
 export interface UseChannelOptions<C extends WSChannel> {
-  gameIds?: number[];
+  gameAddresses?: string[];
   contextIds?: number[];
   minterAddresses?: string[];
   owners?: string[];
@@ -29,7 +29,7 @@ function useChannelSubscription<C extends WSChannel>(
   channel: C,
   options: UseChannelOptions<C> = {},
 ): UseChannelResult<C> {
-  const { gameIds, contextIds, minterAddresses, owners, settingsIds, objectiveIds, tokenIds, bufferSize = 50, enabled = true, onEvent } = options;
+  const { gameAddresses, contextIds, minterAddresses, owners, settingsIds, objectiveIds, tokenIds, bufferSize = 50, enabled = true, onEvent } = options;
   const client = useDenshokanClient();
 
   const [lastEvent, setLastEvent] = useState<WSChannelPayloadMap[C] | null>(null);
@@ -62,7 +62,7 @@ function useChannelSubscription<C extends WSChannel>(
     client.connect();
 
     const unsubscribe = client.subscribe(
-      { channels: [channel], gameIds, contextIds, minterAddresses, owners, settingsIds, objectiveIds, tokenIds },
+      { channels: [channel], gameAddresses, contextIds, minterAddresses, owners, settingsIds, objectiveIds, tokenIds },
       (message) => {
         if (message.channel !== channel) return;
 
@@ -83,7 +83,7 @@ function useChannelSubscription<C extends WSChannel>(
 
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, channel, enabled, JSON.stringify(gameIds), JSON.stringify(contextIds), JSON.stringify(minterAddresses), JSON.stringify(owners), JSON.stringify(settingsIds), JSON.stringify(objectiveIds), JSON.stringify(tokenIds)]);
+  }, [client, channel, enabled, JSON.stringify(gameAddresses), JSON.stringify(contextIds), JSON.stringify(minterAddresses), JSON.stringify(owners), JSON.stringify(settingsIds), JSON.stringify(objectiveIds), JSON.stringify(tokenIds)]);
 
   return { lastEvent, events, isConnected, clear };
 }

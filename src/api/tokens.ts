@@ -62,7 +62,7 @@ export async function apiGetTokens(
       method: "POST",
       body: {
         tokenIds: params.tokenIds,
-        gameId: params.gameId,
+        gameAddress: params.gameAddress,
         owner: params.owner,
         gameOver: params.gameOver,
         minterAddress: params.minterAddress,
@@ -93,7 +93,7 @@ export async function apiGetTokens(
   }
 
   const qs = buildQueryString({
-    game_id: params?.gameId,
+    game_address: params?.gameAddress,
     owner: params?.owner,
     game_over: params?.gameOver,
     has_context: params?.hasContext,
@@ -138,7 +138,7 @@ export async function apiGetTokenRank(
   signal?: AbortSignal,
 ): Promise<TokenRank> {
   const qs = buildQueryString({
-    game_id: params?.gameId,
+    game_address: params?.gameAddress,
     settings_id: params?.settingsId,
     objective_id: params?.objectiveId,
     context_id: params?.contextId,
@@ -180,7 +180,7 @@ export async function apiGetTokenRanks(
     method: "POST",
     body: {
       tokenIds,
-      gameId: params?.gameId,
+      gameAddress: params?.gameAddress,
       settingsId: params?.settingsId,
       objectiveId: params?.objectiveId,
       contextId: params?.contextId,

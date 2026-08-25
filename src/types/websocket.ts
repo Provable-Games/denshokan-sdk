@@ -8,7 +8,8 @@ export interface WSMessage {
 
 export interface WSSubscribeOptions {
   channels: WSChannel[];
-  gameIds?: number[];
+  /** Game contract addresses — a game's identity is its contract. */
+  gameAddresses?: string[];
   contextIds?: number[];
   minterAddresses?: string[];
   owners?: string[];
@@ -25,7 +26,12 @@ export type WSEventHandler = (message: WSMessage) => void;
 
 export interface ScoreEvent {
   tokenId: string;
-  gameId: number;
+  /**
+   * The issuing game contract. Together with `tokenId` this is the token's
+   * identity — an id is unique only within its own ERC721, so live updates
+   * must be keyed on the pair.
+   */
+  gameAddress: string;
   score: number;
   ownerAddress: string;
   playerName: string;
@@ -37,7 +43,8 @@ export interface ScoreEvent {
 
 export interface GameOverEvent {
   tokenId: string;
-  gameId: number;
+  /** The issuing game contract — see ScoreEvent.gameAddress. */
+  gameAddress: string;
   score: number;
   ownerAddress: string;
   playerName: string;
@@ -50,7 +57,8 @@ export interface GameOverEvent {
 
 export interface MintEvent {
   tokenId: string;
-  gameId: number;
+  /** The issuing game contract — see ScoreEvent.gameAddress. */
+  gameAddress: string;
   ownerAddress: string;
   mintedBy: string;
   settingsId: number;
@@ -59,12 +67,11 @@ export interface MintEvent {
 }
 
 export type TokenUpdateEvent =
-  | { type: "scoreUpdate"; tokenId: string; gameId: number; score: number }
-  | { type: "gameOver"; tokenId: string; gameId: number; score: number }
-  | { type: "minted"; tokenId: string; gameId: number; ownerAddress: string };
+  | { type: "scoreUpdate"; tokenId: string; gameAddress: string; score: number }
+  | { type: "gameOver"; tokenId: string; gameAddress: string; score: number }
+  | { type: "minted"; tokenId: string; gameAddress: string; ownerAddress: string };
 
 export interface NewGameEvent {
-  gameId: number;
   contractAddress: string;
   name: string;
 }

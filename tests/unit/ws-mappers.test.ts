@@ -15,14 +15,14 @@ describe("mapScoreEvent", () => {
   it("should convert snake_case to camelCase", () => {
     const raw = {
       token_id: "0x123",
-      game_id: 1,
+      contract_address: "0xgame1",
       score: 500,
       owner_address: "0xabc",
       player_name: "Alice",
     };
     expect(mapScoreEvent(raw)).toEqual({
       tokenId: "0x123",
-      gameId: 1,
+      gameAddress: "0xgame1",
       score: 500,
       ownerAddress: "0xabc",
       playerName: "Alice",
@@ -37,7 +37,7 @@ describe("mapScoreEvent", () => {
     const raw = {};
     expect(mapScoreEvent(raw)).toEqual({
       tokenId: "",
-      gameId: 0,
+      gameAddress: "",
       score: 0,
       ownerAddress: "",
       playerName: "",
@@ -51,7 +51,7 @@ describe("mapScoreEvent", () => {
   it("should map filter fields when present", () => {
     const raw = {
       token_id: "0x123",
-      game_id: 1,
+      contract_address: "0xgame1",
       score: 500,
       owner_address: "0xabc",
       player_name: "Alice",
@@ -72,7 +72,7 @@ describe("mapGameOverEvent", () => {
   it("should convert snake_case to camelCase", () => {
     const raw = {
       token_id: "0x456",
-      game_id: 2,
+      contract_address: "0xgame2",
       score: 1000,
       owner_address: "0xdef",
       player_name: "Bob",
@@ -80,7 +80,7 @@ describe("mapGameOverEvent", () => {
     };
     expect(mapGameOverEvent(raw)).toEqual({
       tokenId: "0x456",
-      gameId: 2,
+      gameAddress: "0xgame2",
       score: 1000,
       ownerAddress: "0xdef",
       playerName: "Bob",
@@ -95,7 +95,7 @@ describe("mapGameOverEvent", () => {
   it("should map filter fields when present", () => {
     const raw = {
       token_id: "0x456",
-      game_id: 2,
+      contract_address: "0xgame2",
       score: 1000,
       owner_address: "0xdef",
       player_name: "Bob",
@@ -123,14 +123,14 @@ describe("mapMintEvent", () => {
   it("should convert snake_case to camelCase", () => {
     const raw = {
       token_id: "0x789",
-      game_id: 3,
+      contract_address: "0xgame3",
       owner_address: "0xfed",
       minted_by: "0xcba",
       settings_id: 5,
     };
     expect(mapMintEvent(raw)).toEqual({
       tokenId: "0x789",
-      gameId: 3,
+      gameAddress: "0xgame3",
       ownerAddress: "0xfed",
       mintedBy: "0xcba",
       settingsId: 5,
@@ -143,7 +143,7 @@ describe("mapMintEvent", () => {
     const raw = {};
     expect(mapMintEvent(raw)).toEqual({
       tokenId: "",
-      gameId: 0,
+      gameAddress: "",
       ownerAddress: "",
       mintedBy: "",
       settingsId: 0,
@@ -155,7 +155,7 @@ describe("mapMintEvent", () => {
   it("should map filter fields when present", () => {
     const raw = {
       token_id: "0x789",
-      game_id: 3,
+      contract_address: "0xgame3",
       owner_address: "0xfed",
       minted_by: "0xcba",
       settings_id: 5,
@@ -170,25 +170,25 @@ describe("mapMintEvent", () => {
 
 describe("mapTokenUpdateEvent", () => {
   it("should map score_update type to scoreUpdate", () => {
-    const raw = { type: "score_update", token_id: "0x1", game_id: 1, score: 100 };
+    const raw = { type: "score_update", token_id: "0x1", contract_address: "0xgame1", score: 100 };
     const result = mapTokenUpdateEvent(raw);
-    expect(result).toEqual({ type: "scoreUpdate", tokenId: "0x1", gameId: 1, score: 100 });
+    expect(result).toEqual({ type: "scoreUpdate", tokenId: "0x1", gameAddress: "0xgame1", score: 100 });
   });
 
   it("should map game_over type to gameOver", () => {
-    const raw = { type: "game_over", token_id: "0x2", game_id: 2, score: 200 };
+    const raw = { type: "game_over", token_id: "0x2", contract_address: "0xgame2", score: 200 };
     const result = mapTokenUpdateEvent(raw);
-    expect(result).toEqual({ type: "gameOver", tokenId: "0x2", gameId: 2, score: 200 });
+    expect(result).toEqual({ type: "gameOver", tokenId: "0x2", gameAddress: "0xgame2", score: 200 });
   });
 
   it("should map minted type to minted", () => {
-    const raw = { type: "minted", token_id: "0x3", game_id: 3, owner_address: "0xabc" };
+    const raw = { type: "minted", token_id: "0x3", contract_address: "0xgame3", owner_address: "0xabc" };
     const result = mapTokenUpdateEvent(raw);
-    expect(result).toEqual({ type: "minted", tokenId: "0x3", gameId: 3, ownerAddress: "0xabc" });
+    expect(result).toEqual({ type: "minted", tokenId: "0x3", gameAddress: "0xgame3", ownerAddress: "0xabc" });
   });
 
   it("should default unknown type to scoreUpdate", () => {
-    const raw = { type: "unknown", token_id: "0x4", game_id: 4, score: 50 };
+    const raw = { type: "unknown", token_id: "0x4", contract_address: "0xgame4", score: 50 };
     const result = mapTokenUpdateEvent(raw);
     expect(result.type).toBe("scoreUpdate");
   });
@@ -196,9 +196,8 @@ describe("mapTokenUpdateEvent", () => {
 
 describe("mapNewGameEvent", () => {
   it("should convert snake_case to camelCase", () => {
-    const raw = { game_id: 10, contract_address: "0xgame", name: "TestGame" };
+    const raw = { contract_address: "0xgame", name: "TestGame" };
     expect(mapNewGameEvent(raw)).toEqual({
-      gameId: 10,
       contractAddress: "0xgame",
       name: "TestGame",
     });
@@ -207,7 +206,6 @@ describe("mapNewGameEvent", () => {
   it("should handle missing fields with defaults", () => {
     const raw = {};
     expect(mapNewGameEvent(raw)).toEqual({
-      gameId: 0,
       contractAddress: "",
       name: "",
     });

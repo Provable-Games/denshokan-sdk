@@ -63,10 +63,18 @@ export function mapToken(raw: Record<string, unknown>): Token {
   // Honor an explicit backend flag if one is ever added; otherwise derive it.
   const rawPlayable = raw.isPlayable ?? raw.is_playable;
 
+  // The issuing contract IS the game, so `contractAddress` and `gameAddress`
+  // are one address under two names. Resolve it once from whichever spelling
+  // the payload used and give both fields the same value — otherwise a row
+  // carrying only `contract_address` yields an empty `gameAddress`, and every
+  // SDK method that requires one rejects a token the API returned happily.
+  const issuingContract = String(
+    raw.contractAddress ?? raw.contract_address ?? raw.gameAddress ?? raw.game_address ?? "",
+  );
+
   return {
     tokenId,
-    // Prefer API value, fallback to decoded
-    gameId: Number(raw.gameId ?? raw.game_id ?? decoded?.gameId ?? 0),
+    contractAddress: issuingContract,
     owner: String(raw.ownerAddress ?? raw.owner_address ?? raw.owner ?? ""),
     score: Number(raw.currentScore ?? raw.current_score ?? raw.score ?? 0),
     gameOver,
@@ -82,7 +90,7 @@ export function mapToken(raw: Record<string, unknown>): Token {
       rawPlayable != null
         ? Boolean(rawPlayable)
         : computeIsPlayable({ mintedAtMs, startDelaySecs, endDelaySecs, gameOver }),
-    gameAddress: String(raw.gameAddress ?? raw.game_address ?? ""),
+    gameAddress: issuingContract,
     clientUrl: raw.clientUrl != null ? String(raw.clientUrl) : (raw.client_url != null ? String(raw.client_url) : undefined),
     rendererAddress: raw.rendererAddress != null ? String(raw.rendererAddress) : (raw.renderer_address != null ? String(raw.renderer_address) : undefined),
     skillsAddress: raw.skillsAddress != null ? String(raw.skillsAddress) : (raw.skills_address != null ? String(raw.skills_address) : undefined),
@@ -140,7 +148,6 @@ export function mapTokenRank(raw: Record<string, unknown>): TokenRank {
 export function mapGame(raw: Record<string, unknown>): Game {
   const skillsAddress = raw.skillsAddress ?? raw.skills_address;
   return {
-    gameId: Number(raw.gameId ?? raw.game_id ?? 0),
     name: String(raw.name ?? ""),
     description: String(raw.description ?? ""),
     contractAddress: String(raw.contractAddress ?? raw.contract_address ?? ""),
@@ -224,6 +231,7 @@ export function mapGameMetadata(raw: Record<string, unknown>): GameMetadata {
 
 export function mapGameFeeInfo(raw: Record<string, unknown>): GameFeeInfo {
   return {
+    recipient: String(raw.recipient ?? ""),
     license: String(raw.license ?? ""),
     feeNumerator: Number(raw.fee_numerator ?? 0),
   };
@@ -325,7 +333,7 @@ import type {
 export function mapScoreEvent(raw: Record<string, unknown>): ScoreEvent {
   return {
     tokenId: String(raw.token_id ?? ""),
-    gameId: Number(raw.game_id ?? 0),
+    gameAddress: String(raw.contract_address ?? raw.game_address ?? ""),
     score: Number(raw.score ?? 0),
     ownerAddress: String(raw.owner_address ?? ""),
     playerName: String(raw.player_name ?? ""),
@@ -339,7 +347,7 @@ export function mapScoreEvent(raw: Record<string, unknown>): ScoreEvent {
 export function mapGameOverEvent(raw: Record<string, unknown>): GameOverEvent {
   return {
     tokenId: String(raw.token_id ?? ""),
-    gameId: Number(raw.game_id ?? 0),
+    gameAddress: String(raw.contract_address ?? raw.game_address ?? ""),
     score: Number(raw.score ?? 0),
     ownerAddress: String(raw.owner_address ?? ""),
     playerName: String(raw.player_name ?? ""),
@@ -354,7 +362,7 @@ export function mapGameOverEvent(raw: Record<string, unknown>): GameOverEvent {
 export function mapMintEvent(raw: Record<string, unknown>): MintEvent {
   return {
     tokenId: String(raw.token_id ?? ""),
-    gameId: Number(raw.game_id ?? 0),
+    gameAddress: String(raw.contract_address ?? raw.game_address ?? ""),
     ownerAddress: String(raw.owner_address ?? ""),
     mintedBy: String(raw.minted_by ?? ""),
     settingsId: Number(raw.settings_id ?? 0),
@@ -366,21 +374,25 @@ export function mapMintEvent(raw: Record<string, unknown>): MintEvent {
 export function mapTokenUpdateEvent(raw: Record<string, unknown>): TokenUpdateEvent {
   const type = String(raw.type ?? "");
   const tokenId = String(raw.token_id ?? "");
-  const gameId = Number(raw.game_id ?? 0);
+  const gameAddress = String(raw.contract_address ?? raw.game_address ?? "");
 
   if (type === "game_over") {
-    return { type: "gameOver", tokenId, gameId, score: Number(raw.score ?? 0) };
+    return { type: "gameOver", tokenId, gameAddress, score: Number(raw.score ?? 0) };
   }
   if (type === "minted") {
-    return { type: "minted", tokenId, gameId, ownerAddress: String(raw.owner_address ?? "") };
+    return {
+      type: "minted",
+      tokenId,
+      gameAddress,
+      ownerAddress: String(raw.owner_address ?? ""),
+    };
   }
   // Default to scoreUpdate
-  return { type: "scoreUpdate", tokenId, gameId, score: Number(raw.score ?? 0) };
+  return { type: "scoreUpdate", tokenId, gameAddress, score: Number(raw.score ?? 0) };
 }
 
 export function mapNewGameEvent(raw: Record<string, unknown>): NewGameEvent {
   return {
-    gameId: Number(raw.game_id ?? 0),
     contractAddress: String(raw.contract_address ?? ""),
     name: String(raw.name ?? ""),
   };

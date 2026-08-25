@@ -24,7 +24,6 @@ import type {
   PlayerTokensParams,
   Minter,
   RoyaltyInfo,
-  GameMetadata,
   GameFeeInfo,
   MintParams,
   PlayerNameUpdate,
@@ -35,12 +34,12 @@ import type {
 import { getChainConfig } from "./chains/constants.js";
 import { DEFAULT_FETCH_CONFIG } from "./utils/retry.js";
 import { decodePackedTokenId, decodeCoreToken } from "./utils/token-id.js";
-import { toHexTokenId, normalizeAddress, isZeroAddress } from "./utils/address.js";
+import { toHexTokenId, isZeroAddress } from "./utils/address.js";
 import { mintParamsToSnake, playerNameUpdateToSnake } from "./utils/mappers.js";
 import { assignSalts } from "./utils/salt.js";
 import { sortTokensWithTiebreak } from "./utils/sort.js";
 import { applyTokenFilters } from "./utils/token-filter.js";
-import { InvalidChainError, GameNotFoundError } from "./errors/index.js";
+import { InvalidChainError } from "./errors/index.js";
 import { ConnectionStatus } from "./datasource/health.js";
 import { withFallback } from "./datasource/resolver.js";
 import { WebSocketManager } from "./ws/manager.js";
@@ -95,8 +94,8 @@ import {
   rpcUpdatePlayerName,
   rpcUpdatePlayerNameBatch,
 } from "./rpc/denshokan.js";
-import { rpcGameMetadata, rpcGameAddress, rpcGameFeeInfo, rpcDefaultGameFeeInfo } from "./rpc/registry.js";
 import {
+  rpcGameFeeTerms,
   rpcScore,
   rpcScoreBatch,
   rpcGameOver,
@@ -123,7 +122,6 @@ import {
 
 // ABI
 import denshokanAbi from "./rpc/abis/denshokan.json";
-import minigameRegistryAbi from "./rpc/abis/minigameRegistry.json";
 import viewerAbi from "./rpc/abis/denshokanViewer.json";
 import minigameAbi from "./rpc/abis/minigame.json";
 
@@ -187,11 +185,8 @@ export class DenshokanClient {
   // Lazy-initialized RPC objects
   private _provider: RpcProvider | null = null;
   private _denshokanContract: Contract | null = null;
-  private _registryContract: Contract | null = null;
   private _viewerContract: Contract | null = null;
   private _gameContracts = new Map<string, Contract>();
-  private _gameAddressCache = new Map<number, string>();
-  private _gameIdByAddress = new Map<string, number>();
 
   constructor(config: DenshokanClientConfig) {
     this.config = this.resolveConfig(config);
@@ -221,7 +216,6 @@ export class DenshokanClient {
       rpcHeaders: config.rpcHeaders,
       provider: config.provider ?? null,
       denshokanAddress: config.denshokanAddress ?? chainConfig.denshokanAddress,
-      registryAddress: config.registryAddress ?? chainConfig.registryAddress,
       viewerAddress: config.viewerAddress ?? chainConfig.viewerAddress,
       primarySource: config.primarySource ?? "api",
       fetch: { ...DEFAULT_FETCH_CONFIG, ...definedFields(config.fetch) },
@@ -255,18 +249,6 @@ export class DenshokanClient {
     return this._denshokanContract;
   }
 
-  private async getRegistryContract(): Promise<Contract> {
-    if (!this._registryContract) {
-      const provider = await this.getProvider();
-      this._registryContract = await createContract(
-        minigameRegistryAbi as unknown[],
-        this.config.registryAddress,
-        provider,
-      );
-    }
-    return this._registryContract;
-  }
-
   private async getViewerContract(): Promise<Contract> {
     if (!this._viewerContract) {
       const provider = await this.getProvider();
@@ -287,57 +269,6 @@ export class DenshokanClient {
       this._gameContracts.set(gameAddress, contract);
     }
     return contract;
-  }
-
-  private async resolveGameAddress(gameId: number): Promise<string> {
-    const cached = this._gameAddressCache.get(gameId);
-    if (cached) return cached;
-    const registryContract = await this.getRegistryContract();
-    const address = await rpcGameAddress(registryContract, gameId);
-    this._gameAddressCache.set(gameId, address);
-    this._gameIdByAddress.set(normalizeAddress(address), gameId);
-    return address;
-  }
-
-  private async resolveGameAddressForToken(tokenId: string): Promise<string> {
-    const decoded = decodePackedTokenId(tokenId);
-    return this.resolveGameAddress(decoded.gameId);
-  }
-
-  /**
-   * If input looks like a numeric game ID (not a hex address), resolve it to
-   * a contract address using the registry. This ensures the RPC fallback path
-   * receives a proper contract address.
-   */
-  private async maybeResolveNumericId(input: string): Promise<string> {
-    if (input.startsWith("0x")) return input;
-    if (/^[0-9]+$/.test(input)) {
-      const numericId = Number(input);
-      if (numericId > 0 && numericId <= Number.MAX_SAFE_INTEGER) {
-        return this.resolveGameAddress(numericId);
-      }
-    }
-    return input;
-  }
-
-  /**
-   * Resolve a gameAddress to a numeric gameId.
-   * Uses cache first, then fetches games list from API to populate cache.
-   */
-  private async resolveGameId(gameAddress: string): Promise<number> {
-    const normalized = normalizeAddress(gameAddress);
-    const cached = this._gameIdByAddress.get(normalized);
-    if (cached !== undefined) return cached;
-    // Populate cache from games list
-    const games = await this.getGames();
-    for (const game of games.data) {
-      const addr = normalizeAddress(game.contractAddress);
-      this._gameIdByAddress.set(addr, game.gameId);
-      this._gameAddressCache.set(game.gameId, addr);
-    }
-    const resolved = this._gameIdByAddress.get(normalized);
-    if (resolved === undefined) throw new GameNotFoundError(gameAddress);
-    return resolved;
   }
 
   // =========================================================================
@@ -391,38 +322,17 @@ export class DenshokanClient {
     return viewerAllGames(viewerContract, offset, limit);
   }
 
-  private async getGameViaRpc(gameAddress: string): Promise<Game> {
-    const resolved = await this.maybeResolveNumericId(gameAddress);
-    const gameId = await this.resolveGameId(resolved);
-    const contract = await this.getRegistryContract();
-    const meta = await rpcGameMetadata(contract, gameId);
-    return {
-      gameId: meta.gameId,
-      name: meta.name,
-      description: meta.description,
-      contractAddress: meta.contractAddress,
-      imageUrl: meta.image || undefined,
-      developer: meta.developer || undefined,
-      publisher: meta.publisher || undefined,
-      genre: meta.genre || undefined,
-      color: meta.color || undefined,
-      clientUrl: meta.clientUrl || undefined,
-      rendererAddress: meta.rendererAddress || undefined,
-      royaltyFraction: meta.royaltyFraction.toString(),
-      skillsAddress: meta.skillsAddress || undefined,
-      createdAt: meta.createdAt ? new Date(meta.createdAt * 1000).toISOString() : "",
-    };
-  }
-
+  /**
+   * API-only, deliberately.
+   *
+   * A game's metadata is not readable from the chain: there is no registry and
+   * no `game_metadata()` entrypoint — upstream, GameMetadata is only ever a
+   * renderer input, so the values exist solely inside token URIs. The indexer
+   * parses them out of the URIs it fetches; there is nothing for an RPC
+   * fallback to call.
+   */
   async getGame(gameAddress: string): Promise<Game> {
-    if (this.config.primarySource === "api") {
-      return withFallback(
-        () => apiGetGame(this.apiCtx, gameAddress),
-        () => this.getGameViaRpc(gameAddress),
-        this.connectionStatus,
-      );
-    }
-    return this.getGameViaRpc(gameAddress);
+    return apiGetGame(this.apiCtx, gameAddress);
   }
 
   // =========================================================================
@@ -649,7 +559,9 @@ export class DenshokanClient {
 
     return {
       tokenId: toHexTokenId(tokenId),
-      gameId: decoded.gameId,
+      // Self-bound: the game IS the token contract, so these are the same
+      // address by construction.
+      contractAddress: gameAddress,
       settingsId: decoded.settingsId,
       objectiveId: decoded.objectiveId,
       mintedAt: decoded.mintedAt.toISOString(),
@@ -677,7 +589,6 @@ export class DenshokanClient {
 
   private async buildTokensFromRpc(params?: TokensQueryParams): Promise<PaginatedResult<Token>> {
     const {
-      gameId,
       gameAddress: providedGameAddress,
       owner,
       settingsId,
@@ -718,11 +629,7 @@ export class DenshokanClient {
       return { data, total };
     }
 
-    // Resolve gameAddress from gameId if needed
-    let gameAddress = providedGameAddress;
-    if (!gameAddress && gameId !== undefined) {
-      gameAddress = await this.resolveGameAddress(gameId);
-    }
+    const gameAddress = providedGameAddress;
 
     // Use viewer contract for efficient filtering
     let filterResult: FilterResult | null = null;
@@ -950,7 +857,8 @@ export class DenshokanClient {
       const enriched = usedEnriched ? (state as import("./types/rpc.js").DenshokanTokenState) : null;
       return {
         tokenId: state.tokenId,
-        gameId: decoded.gameId,
+        // Self-bound: a token's issuing contract IS its game.
+        contractAddress: state.gameAddress,
         settingsId: decoded.settingsId,
         objectiveId: decoded.objectiveId,
         mintedAt: decoded.mintedAt.toISOString(),
@@ -997,7 +905,7 @@ export class DenshokanClient {
           servedByApi = false;
           return this.buildTokensFromRpc({
             owner: address,
-            gameId: params?.gameId,
+            gameAddress: params?.gameAddress,
             limit: params?.limit,
             offset: params?.offset,
             includeUri: params?.includeUri,
@@ -1008,7 +916,7 @@ export class DenshokanClient {
     } else {
       result = await this.buildTokensFromRpc({
         owner: address,
-        gameId: params?.gameId,
+        gameAddress: params?.gameAddress,
         limit: params?.limit,
         offset: params?.offset,
         includeUri: params?.includeUri,
@@ -1335,35 +1243,28 @@ export class DenshokanClient {
   }
 
   // =========================================================================
-  // RPC: Registry Contract
-  // =========================================================================
-
-  async gameMetadata(gameId: number): Promise<GameMetadata> {
-    const contract = await this.getRegistryContract();
-    return rpcGameMetadata(contract, gameId);
-  }
-
-  async gameAddress(gameId: number): Promise<string> {
-    return this.resolveGameAddress(gameId);
-  }
-
-  async gameFeeInfo(gameId: number): Promise<GameFeeInfo> {
-    const contract = await this.getRegistryContract();
-    return rpcGameFeeInfo(contract, gameId);
-  }
-
-  async defaultGameFeeInfo(): Promise<GameFeeInfo> {
-    const contract = await this.getRegistryContract();
-    return rpcDefaultGameFeeInfo(contract);
-  }
-
-  // =========================================================================
   // RPC: Game Contract (score & game state, batch-first with fallback)
   // =========================================================================
 
-  async score(tokenId: string, gameAddress?: string): Promise<bigint> {
-    const address = gameAddress ?? await this.resolveGameAddressForToken(tokenId);
-    const contract = await this.getGameContract(address);
+  /**
+   * The game's own fee terms — license, basis-point fee and payee.
+   *
+   * Read from the game contract, which declares them via
+   * `IMinigameTokenGameFee`. There is no registry and no per-deployment
+   * default to fall back to: each game states its own terms.
+   */
+  async gameFeeInfo(gameAddress: string): Promise<GameFeeInfo> {
+    const contract = await this.getGameContract(gameAddress);
+    return rpcGameFeeTerms(contract);
+  }
+
+  /**
+   * `gameAddress` is required: a token id packs nothing that identifies its
+   * game, so there is no address to derive from it. Callers always have it —
+   * they had to know the contract to obtain the token.
+   */
+  async score(tokenId: string, gameAddress: string): Promise<bigint> {
+    const contract = await this.getGameContract(gameAddress);
     return rpcScore(contract, tokenId);
   }
 
@@ -1372,9 +1273,9 @@ export class DenshokanClient {
     return rpcScoreBatch(contract, tokenIds);
   }
 
-  async gameOver(tokenId: string, gameAddress?: string): Promise<boolean> {
-    const address = gameAddress ?? await this.resolveGameAddressForToken(tokenId);
-    const contract = await this.getGameContract(address);
+  /** `gameAddress` is required — see `score`. */
+  async gameOver(tokenId: string, gameAddress: string): Promise<boolean> {
+    const contract = await this.getGameContract(gameAddress);
     return rpcGameOver(contract, tokenId);
   }
 

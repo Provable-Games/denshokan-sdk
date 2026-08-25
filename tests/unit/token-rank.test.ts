@@ -55,7 +55,7 @@ describe("apiGetTokenRank", () => {
       { baseUrl: "http://localhost:3001", fetchConfig: { maxRetries: 1, timeout: 5000, baseBackoff: 100, maxBackoff: 500 } },
       "0x1",
       {
-        gameId: 7,
+        gameAddress: "0xgame7",
         settingsId: 2,
         contextId: 99,
         contextName: "Budokan",
@@ -71,7 +71,7 @@ describe("apiGetTokenRank", () => {
     expect(captured).toHaveLength(1);
     const url = new URL(captured[0]);
     expect(url.pathname).toBe("/tokens/0x1/rank");
-    expect(url.searchParams.get("game_id")).toBe("7");
+    expect(url.searchParams.get("game_address")).toBe("0xgame7");
     expect(url.searchParams.get("settings_id")).toBe("2");
     expect(url.searchParams.get("context_id")).toBe("99");
     expect(url.searchParams.get("context_name")).toBe("Budokan");
@@ -128,13 +128,13 @@ describe("apiGetPlayerBestRank", () => {
     const result = await apiGetPlayerBestRank(
       { baseUrl: "http://localhost:3001", fetchConfig: { maxRetries: 1, timeout: 5000, baseBackoff: 100, maxBackoff: 500 } },
       "0xabc",
-      { gameId: 3, contextId: 9, gameOver: false },
+      { gameAddress: "0xgame3", contextId: 9, gameOver: false },
     );
 
     expect(result).toEqual({ tokenId: "0xa", rank: 4, total: 50, score: 900 });
     const url = new URL(captured[0]);
     expect(url.pathname).toBe("/players/0xabc/rank");
-    expect(url.searchParams.get("game_id")).toBe("3");
+    expect(url.searchParams.get("game_address")).toBe("0xgame3");
     expect(url.searchParams.get("context_id")).toBe("9");
     expect(url.searchParams.get("game_over")).toBe("false");
     expect(url.searchParams.get("owner")).toBeNull();

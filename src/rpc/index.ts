@@ -17,9 +17,6 @@ export {
   rpcUpdatePlayerName, rpcUpdatePlayerNameBatch,
 } from "./denshokan.js";
 
-// Registry contract
-export { rpcGameMetadata, rpcGameAddress } from "./registry.js";
-
 // Game contract
 export {
   rpcScore, rpcScoreBatch,

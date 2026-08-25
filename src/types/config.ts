@@ -35,8 +35,6 @@ export interface DenshokanClientConfig {
   provider?: unknown;
   /** Denshokan ERC721 contract address. Defaults to chain-specific address if not provided. */
   denshokanAddress?: string;
-  /** Minigame registry contract address. Defaults to chain-specific address if not provided. */
-  registryAddress?: string;
   /** Viewer contract address for efficient filter queries. Defaults to chain-specific address if not provided. */
   viewerAddress?: string;
   primarySource?: DataSource;
@@ -53,7 +51,6 @@ export interface ResolvedConfig {
   rpcHeaders: Record<string, string> | undefined;
   provider: unknown | null;
   denshokanAddress: string;
-  registryAddress: string;
   /** Viewer contract address for efficient filter queries */
   viewerAddress: string;
   primarySource: DataSource;

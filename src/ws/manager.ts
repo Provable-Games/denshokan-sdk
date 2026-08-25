@@ -140,7 +140,7 @@ export class WebSocketManager {
     this.ws.send(JSON.stringify({
       type: "subscribe",
       channels: options.channels,
-      gameIds: options.gameIds?.map(String),
+      gameAddresses: options.gameAddresses?.map(String),
       contextIds: options.contextIds,
       minterAddresses: options.minterAddresses,
       owners: options.owners,

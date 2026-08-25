@@ -13,7 +13,7 @@ import type { Token, TokensFilterParams } from "../types/token.js";
 export function applyTokenFilters(tokens: Token[], params: TokensFilterParams): Token[] {
   let out = tokens;
   const {
-    gameId,
+    gameAddress,
     owner,
     gameOver,
     settingsId,
@@ -27,7 +27,10 @@ export function applyTokenFilters(tokens: Token[], params: TokensFilterParams): 
     mintedBefore,
   } = params;
 
-  if (gameId !== undefined) out = out.filter((t) => t.gameId === gameId);
+  if (gameAddress !== undefined) {
+    const g = gameAddress.toLowerCase();
+    out = out.filter((t) => t.contractAddress?.toLowerCase() === g);
+  }
   if (owner) {
     const o = owner.toLowerCase();
     out = out.filter((t) => t.owner?.toLowerCase() === o);

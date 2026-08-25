@@ -75,7 +75,7 @@ export function useTokenRank(
   // events. We can't cheaply tell on the client whether a particular event
   // shifts *this* token's rank, so any matching event triggers a refetch.
   const wsFilters = {
-    gameIds: scope.gameId != null ? [scope.gameId] : undefined,
+    gameAddresses: scope.gameAddress != null ? [scope.gameAddress] : undefined,
     contextIds: scope.contextId != null ? [scope.contextId] : undefined,
     minterAddresses: scope.minterAddress != null ? [scope.minterAddress] : undefined,
     owners: scope.owner != null ? [scope.owner] : undefined,

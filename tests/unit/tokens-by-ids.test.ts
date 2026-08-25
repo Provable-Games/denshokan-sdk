@@ -23,7 +23,7 @@ describe("apiGetTokens — by-ids routing", () => {
 
     await apiGetTokens(ctx, {
       tokenIds: ["10", "20"],
-      gameId: 1,
+      gameAddress: "0xgame",
       gameOver: false,
       sort: { field: "score", direction: "desc" },
     });
@@ -34,7 +34,7 @@ describe("apiGetTokens — by-ids routing", () => {
     expect(init.method).toBe("POST");
     const body = JSON.parse(init.body as string);
     expect(body.tokenIds).toEqual(["10", "20"]);
-    expect(body.gameId).toBe(1);
+    expect(body.gameAddress).toBe("0xgame");
     expect(body.gameOver).toBe(false);
     // TokenSortField "score" maps to the API short name "score"
     expect(body.sort).toEqual({ field: "score", direction: "desc" });
@@ -168,7 +168,7 @@ describe("apiGetTokens — includeUri controls the payload", () => {
   it("POST /tokens/query omits tokenUri by default (includeUri:false in body)", async () => {
     const fetchMock = vi.fn().mockResolvedValue(okPage());
     globalThis.fetch = fetchMock as unknown as typeof fetch;
-    await apiGetTokens(ctx, { tokenIds: ["1"], gameId: 1 });
+    await apiGetTokens(ctx, { tokenIds: ["1"], gameAddress: "0xgame" });
     const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
     expect(body.includeUri).toBe(false);
   });
@@ -180,7 +180,7 @@ describe("apiGetTokens — includeUri controls the payload", () => {
   it("POST /tokens/query requests tokenUri explicitly when includeUri:true", async () => {
     const fetchMock = vi.fn().mockResolvedValue(okPage());
     globalThis.fetch = fetchMock as unknown as typeof fetch;
-    await apiGetTokens(ctx, { tokenIds: ["1"], gameId: 1, includeUri: true });
+    await apiGetTokens(ctx, { tokenIds: ["1"], gameAddress: "0xgame", includeUri: true });
     const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
     expect(body.includeUri).toBe(true);
   });
