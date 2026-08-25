@@ -1,6 +1,13 @@
 export interface Token {
   tokenId: string;
-  gameId: number;
+  /**
+   * LEGACY ONLY. `null` for self-bound tokens, whose game is a contract
+   * address rather than a registry id — read `gameAddress` for those.
+   *
+   * The API returns null here for any token minted by a v2.x game, so this
+   * has to be nullable to describe the response honestly.
+   */
+  gameId: number | null;
   owner: string;
   score: number;
   gameOver: boolean;
@@ -42,12 +49,30 @@ export interface Token {
 }
 
 /**
+ * Which contract generation minted a token, and therefore which bit layout its
+ * id uses.
+ *
+ * - `legacy`   — the registry-backed denshokan: one token contract serving
+ *                many games, hence a `gameId` in the layout.
+ * - `standard` — game-components v2.x: the game contract IS the token, so
+ *                there is no game id to pack.
+ *
+ * The two layouts share no field offsets and ids carry no marker, so this has
+ * to come from the contract a token was minted by — it cannot be inferred
+ * from the id, and guessing wrong is silent rather than an error.
+ */
+export type TokenGeneration = "legacy" | "standard";
+
+/**
  * Core token data decoded purely from the packed token ID.
  * No RPC calls required - useful for quick client-side display.
  */
 export interface CoreToken {
   tokenId: string;
-  gameId: number;
+  /** Which layout decoded this token. */
+  generation: TokenGeneration;
+  /** LEGACY ONLY — `null` for self-bound tokens, whose game IS their contract. */
+  gameId: number | null;
   settingsId: number;
   objectiveId: number;
   mintedAt: string;
@@ -56,11 +81,17 @@ export interface CoreToken {
   endDelay: number;
   hasContext: boolean;
   paymaster: boolean;
-  /** 40-bit truncated minter address (not full address) */
+  /** Truncated minter id (legacy 40 bits, standard 26) — not a full address */
   mintedByTruncated: bigint;
   txHash: number;
+  /** Legacy 10 bits, standard 16 */
   salt: number;
-  metadata: number;
+  /**
+   * Inert game-interpreted data. 13 bits on legacy, 65 on standard — the
+   * latter exceeds Number.MAX_SAFE_INTEGER, so this is a bigint for both
+   * rather than silently rounding wide values.
+   */
+  metadata: bigint;
 }
 
 /**
@@ -74,7 +105,10 @@ export interface TokenMutableState {
 
 export interface DecodedTokenId {
   tokenId: bigint;
-  gameId: number;
+  /** Which layout decoded this token. */
+  generation: TokenGeneration;
+  /** LEGACY ONLY — `null` for self-bound tokens, whose game IS their contract. */
+  gameId: number | null;
   mintedBy: bigint;
   settingsId: number;
   mintedAt: Date;
@@ -86,7 +120,8 @@ export interface DecodedTokenId {
   paymaster: boolean;
   txHash: number;
   salt: number;
-  metadata: number;
+  /** See CoreToken.metadata — bigint to hold the standard layout's 65 bits. */
+  metadata: bigint;
 }
 
 export interface TokenMetadata {

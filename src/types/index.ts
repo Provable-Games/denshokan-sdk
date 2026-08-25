@@ -1,6 +1,7 @@
 export type { DataSource, FetchConfig, WSConfig, HealthConfig, DenshokanClientConfig, ResolvedConfig } from "./config.js";
 export type {
   Token,
+  TokenGeneration,
   DecodedTokenId,
   CoreToken,
   TokenMutableState,

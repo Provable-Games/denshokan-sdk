@@ -10,6 +10,7 @@ export type {
   DenshokanClientConfig,
   ResolvedConfig,
   Token,
+  TokenGeneration,
   DecodedTokenId,
   CoreToken,
   TokenMutableState,

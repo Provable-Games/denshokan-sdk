@@ -299,8 +299,23 @@ export class DenshokanClient {
     return address;
   }
 
+  /**
+   * Resolve a token's game address from the id alone, via the registry.
+   *
+   * LEGACY ONLY. This decodes with the legacy layout, which is the only one
+   * that packs a game id. A self-bound token has no game id and no registry
+   * entry — its game IS the contract that minted it — so callers holding one
+   * must pass `gameAddress` explicitly. They always can: they had to know the
+   * contract to obtain the token in the first place.
+   */
   private async resolveGameAddressForToken(tokenId: string): Promise<string> {
     const decoded = decodePackedTokenId(tokenId);
+    if (decoded.gameId === null) {
+      throw new Error(
+        `Cannot resolve a game address from token ${tokenId} alone: it has no packed game id. ` +
+          `Pass gameAddress explicitly — for a self-bound token the game IS its contract.`,
+      );
+    }
     return this.resolveGameAddress(decoded.gameId);
   }
 
