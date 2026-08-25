@@ -1,5 +1,6 @@
 import { shortString, type Contract } from "starknet";
 import type { GameDetail, GameObjectiveDetails, GameSettingDetails } from "../types/game.js";
+import type { GameFeeInfo } from "../types/rpc.js";
 import { RpcError } from "../errors/index.js";
 
 function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise<T> {
@@ -9,6 +10,26 @@ function wrapRpcCall<T>(fn: () => Promise<T>, contractAddress?: string): Promise
       contractAddress,
     );
   });
+}
+
+/**
+ * A game's fee terms, read from the game contract itself.
+ *
+ * There is no registry: a game declares its own license, fee and payee via
+ * `IMinigameTokenGameFee` (`IMINIGAME_TOKEN_GAME_FEE_ID`) on the same address
+ * that issues its tokens.
+ */
+export async function rpcGameFeeTerms(contract: Contract): Promise<GameFeeInfo> {
+  return wrapRpcCall(async () => {
+    const result = await contract.call("game_fee_terms", []);
+    const obj = result as Record<string, unknown>;
+    return {
+      recipient: obj.recipient?.toString() ?? "",
+      license: obj.license?.toString() ?? "",
+      // Basis points against FEE_DENOMINATOR = 10_000.
+      feeNumerator: Number(obj.fee_numerator ?? 0),
+    };
+  }, contract.address);
 }
 
 // === Score & game state (batch-first) ===

@@ -22,6 +22,8 @@ export interface GameMetadata {
 }
 
 export interface GameFeeInfo {
+  /** Address the game's cut is paid to. */
+  recipient: string;
   license: string;
   feeNumerator: number;
 }

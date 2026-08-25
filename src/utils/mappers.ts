@@ -143,7 +143,6 @@ export function mapTokenRank(raw: Record<string, unknown>): TokenRank {
 export function mapGame(raw: Record<string, unknown>): Game {
   const skillsAddress = raw.skillsAddress ?? raw.skills_address;
   return {
-    gameId: Number(raw.gameId ?? raw.game_id ?? 0),
     name: String(raw.name ?? ""),
     description: String(raw.description ?? ""),
     contractAddress: String(raw.contractAddress ?? raw.contract_address ?? ""),
@@ -227,6 +226,7 @@ export function mapGameMetadata(raw: Record<string, unknown>): GameMetadata {
 
 export function mapGameFeeInfo(raw: Record<string, unknown>): GameFeeInfo {
   return {
+    recipient: String(raw.recipient ?? ""),
     license: String(raw.license ?? ""),
     feeNumerator: Number(raw.fee_numerator ?? 0),
   };

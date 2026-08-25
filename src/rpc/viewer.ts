@@ -678,7 +678,6 @@ function parseGameEntry(raw: unknown): Game {
   const metadata = entry.metadata as Record<string, unknown>;
   const feeInfo = entry.fee_info as Record<string, unknown>;
   return {
-    gameId: Number(entry.game_id ?? 0),
     contractAddress: toHexAddress(metadata.contract_address ?? 0),
     name: metadata.name?.toString() ?? "",
     description: metadata.description?.toString() ?? "",
