@@ -8,11 +8,28 @@ export interface Token {
    * has to be nullable to describe the response honestly.
    */
   gameId: number | null;
+  /**
+   * Which layout the indexer decoded this token with. Optional because an API
+   * deployment that predates the self-bound generation does not return it;
+   * absent means legacy.
+   */
+  generation?: TokenGeneration;
+  /**
+   * The ERC721 that issued this token. Together with `tokenId` it is the
+   * token's identity — a token id is only unique within its own contract.
+   * Optional for the same reason as `generation`.
+   */
+  contractAddress?: string | null;
   owner: string;
   score: number;
   gameOver: boolean;
   playerName: string | null;
-  /** 40-bit truncated minter address from token ID (not full address) */
+  /**
+   * Truncated minter id from the token id, NOT a full address — 40 bits on
+   * legacy, 26 on standard. It is also scoped to `contractAddress`: the same
+   * number means a different minter in another contract. Use `minterAddress`
+   * for the resolved address.
+   */
   mintedBy: number;
   /** Full minter contract address (resolved from minters registry) */
   minterAddress: string | null;
@@ -158,6 +175,12 @@ export interface TokenRank {
  */
 export interface TokenRankParams {
   gameId?: number;
+  /**
+   * Scope the leaderboard to one game by contract address. Required for
+   * self-bound games, which have no `gameId` — scoping those by `gameId`
+   * silently produces a leaderboard with none of their tokens in it.
+   */
+  gameAddress?: string;
   settingsId?: number;
   objectiveId?: number;
   contextId?: number;

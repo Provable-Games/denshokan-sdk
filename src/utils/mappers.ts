@@ -1,4 +1,4 @@
-import type { Token, TokenScoreEntry, TokenRank, PaginatedResult, DecodedTokenId } from "../types/token.js";
+import type { Token, TokenScoreEntry, TokenRank, PaginatedResult, DecodedTokenId, TokenGeneration } from "../types/token.js";
 import { decodePackedTokenId } from "./token-id.js";
 import { toHexTokenId } from "./address.js";
 import type {
@@ -44,13 +44,26 @@ export function computeIsPlayable(args: {
 export function mapToken(raw: Record<string, unknown>): Token {
   const tokenId = toHexTokenId(raw.tokenId ?? raw.token_id ?? "0");
 
+  // Which layout this row's id is packed with. The two share no field offsets,
+  // and decoding with the wrong one returns plausible-but-wrong values rather
+  // than throwing — so take the row's word for it, defaulting to legacy for
+  // responses from an API deployment that predates the column.
+  const generation: TokenGeneration = raw.generation === "standard" ? "standard" : "legacy";
+
   // Decode token ID for immutable fields - fallback when API doesn't provide them
   let decoded: DecodedTokenId | null = null;
   try {
-    if (tokenId && tokenId !== "0x0") decoded = decodePackedTokenId(tokenId);
+    if (tokenId && tokenId !== "0x0") decoded = decodePackedTokenId(tokenId, generation);
   } catch {
     // Invalid or missing tokenId - proceed without decoded fallback
   }
+
+  // A self-bound token's game_id comes back explicitly null. `??` alone would
+  // swallow that into the fallback chain and report 0 — which reads as a real
+  // game id rather than "this token has none".
+  const hasGameIdKey = "gameId" in raw || "game_id" in raw;
+  const rawGameId = raw.gameId ?? raw.game_id ?? decoded?.gameId;
+  const gameId = rawGameId != null ? Number(rawGameId) : hasGameIdKey ? null : 0;
 
   // Lifecycle fields, resolved once so the public fields and the derived
   // `isPlayable` agree. The API omits a playable flag entirely (no such
@@ -65,8 +78,13 @@ export function mapToken(raw: Record<string, unknown>): Token {
 
   return {
     tokenId,
-    // Prefer API value, fallback to decoded
-    gameId: Number(raw.gameId ?? raw.game_id ?? decoded?.gameId ?? 0),
+    // Prefer API value, fallback to decoded — see above for the null case.
+    gameId,
+    generation,
+    contractAddress:
+      (raw.contractAddress ?? raw.contract_address) != null
+        ? String(raw.contractAddress ?? raw.contract_address)
+        : null,
     owner: String(raw.ownerAddress ?? raw.owner_address ?? raw.owner ?? ""),
     score: Number(raw.currentScore ?? raw.current_score ?? raw.score ?? 0),
     gameOver,
