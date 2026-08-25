@@ -94,7 +94,7 @@ export function useTokenRanks(
   // We can't cheaply tell client-side whether a given event affects one of
   // the tokens we're tracking.
   const wsFilters = {
-    gameIds: scope.gameId != null ? [scope.gameId] : undefined,
+    gameAddresses: scope.gameAddress != null ? [scope.gameAddress] : undefined,
     contextIds: scope.contextId != null ? [scope.contextId] : undefined,
     minterAddresses:
       scope.minterAddress != null ? [scope.minterAddress] : undefined,

@@ -82,7 +82,7 @@ export function usePlayerBestRank(
 
   // Scope filters for scope-wide events (scores, game_over)
   const scopeFilters = {
-    gameIds: scope.gameId != null ? [scope.gameId] : undefined,
+    gameAddresses: scope.gameAddress != null ? [scope.gameAddress] : undefined,
     contextIds: scope.contextId != null ? [scope.contextId] : undefined,
     minterAddresses: scope.minterAddress != null ? [scope.minterAddress] : undefined,
     settingsIds: scope.settingsId != null ? [scope.settingsId] : undefined,

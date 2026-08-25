@@ -8,7 +8,8 @@ export interface WSMessage {
 
 export interface WSSubscribeOptions {
   channels: WSChannel[];
-  gameIds?: number[];
+  /** Game contract addresses — a game's identity is its contract. */
+  gameAddresses?: string[];
   contextIds?: number[];
   minterAddresses?: string[];
   owners?: string[];

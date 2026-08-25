@@ -214,13 +214,14 @@ export function useLiveLeaderboard(
   );
 
   // Derive WS filters from TokensFilterParams for server-side event filtering
-  const wsGameIds = filterParams.gameId != null ? [filterParams.gameId] : undefined;
+  const wsGameAddresses =
+    filterParams.gameAddress != null ? [filterParams.gameAddress] : undefined;
   const wsContextIds = filterParams.contextId != null ? [filterParams.contextId] : undefined;
   const wsMinterAddresses = filterParams.minterAddress != null ? [filterParams.minterAddress] : undefined;
   const wsOwners = filterParams.owner != null ? [filterParams.owner] : undefined;
   const wsSettingsIds = filterParams.settingsId != null ? [filterParams.settingsId] : undefined;
   const wsObjectiveIds = filterParams.objectiveId != null ? [filterParams.objectiveId] : undefined;
-  const wsFilters = { gameIds: wsGameIds, contextIds: wsContextIds, minterAddresses: wsMinterAddresses, owners: wsOwners, settingsIds: wsSettingsIds, objectiveIds: wsObjectiveIds };
+  const wsFilters = { gameAddresses: wsGameAddresses, contextIds: wsContextIds, minterAddresses: wsMinterAddresses, owners: wsOwners, settingsIds: wsSettingsIds, objectiveIds: wsObjectiveIds };
 
   useScoreUpdates({ enabled: enabled && liveScores, onEvent: onScoreEvent, ...wsFilters });
 

@@ -17,7 +17,7 @@ export async function apiGetPlayerTokens(
   signal?: AbortSignal,
 ): Promise<PaginatedResult<Token>> {
   const qs = buildQueryString({
-    game_id: params?.gameId,
+    game_address: params?.gameAddress,
     sort_by: params?.sort?.field ? SORT_FIELD_TO_API[params.sort.field] : undefined,
     sort_order: params?.sort?.direction,
     limit: params?.limit,
@@ -44,7 +44,7 @@ export async function apiGetPlayerBestRank(
   signal?: AbortSignal,
 ): Promise<TokenRank> {
   const qs = buildQueryString({
-    game_id: params?.gameId,
+    game_address: params?.gameAddress,
     settings_id: params?.settingsId,
     objective_id: params?.objectiveId,
     context_id: params?.contextId,

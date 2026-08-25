@@ -62,11 +62,6 @@ export async function apiGetTokens(
       method: "POST",
       body: {
         tokenIds: params.tokenIds,
-        gameId: params.gameId,
-        // Scopes across both generations. `gameId` alone can never reach a
-        // self-bound token — it has none — so a caller filtering a v2.x game
-        // by address previously had the filter dropped on the floor and got
-        // an unfiltered set back.
         gameAddress: params.gameAddress,
         owner: params.owner,
         gameOver: params.gameOver,
@@ -98,8 +93,6 @@ export async function apiGetTokens(
   }
 
   const qs = buildQueryString({
-    game_id: params?.gameId,
-    // See the POST path — required to filter a self-bound game at all.
     game_address: params?.gameAddress,
     owner: params?.owner,
     game_over: params?.gameOver,
@@ -145,7 +138,6 @@ export async function apiGetTokenRank(
   signal?: AbortSignal,
 ): Promise<TokenRank> {
   const qs = buildQueryString({
-    game_id: params?.gameId,
     game_address: params?.gameAddress,
     settings_id: params?.settingsId,
     objective_id: params?.objectiveId,
@@ -188,7 +180,6 @@ export async function apiGetTokenRanks(
     method: "POST",
     body: {
       tokenIds,
-      gameId: params?.gameId,
       gameAddress: params?.gameAddress,
       settingsId: params?.settingsId,
       objectiveId: params?.objectiveId,

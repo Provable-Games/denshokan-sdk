@@ -300,26 +300,6 @@ export class DenshokanClient {
   }
 
   /**
-   * Resolve a token's game address from the id alone, via the registry.
-   *
-   * LEGACY ONLY. This decodes with the legacy layout, which is the only one
-   * that packs a game id. A self-bound token has no game id and no registry
-   * entry — its game IS the contract that minted it — so callers holding one
-   * must pass `gameAddress` explicitly. They always can: they had to know the
-   * contract to obtain the token in the first place.
-   */
-  private async resolveGameAddressForToken(tokenId: string): Promise<string> {
-    const decoded = decodePackedTokenId(tokenId);
-    if (decoded.gameId === null) {
-      throw new Error(
-        `Cannot resolve a game address from token ${tokenId} alone: it has no packed game id. ` +
-          `Pass gameAddress explicitly — for a self-bound token the game IS its contract.`,
-      );
-    }
-    return this.resolveGameAddress(decoded.gameId);
-  }
-
-  /**
    * If input looks like a numeric game ID (not a hex address), resolve it to
    * a contract address using the registry. This ensures the RPC fallback path
    * receives a proper contract address.
@@ -664,7 +644,9 @@ export class DenshokanClient {
 
     return {
       tokenId: toHexTokenId(tokenId),
-      gameId: decoded.gameId,
+      // Self-bound: the game IS the token contract, so these are the same
+      // address by construction.
+      contractAddress: gameAddress,
       settingsId: decoded.settingsId,
       objectiveId: decoded.objectiveId,
       mintedAt: decoded.mintedAt.toISOString(),
@@ -692,7 +674,6 @@ export class DenshokanClient {
 
   private async buildTokensFromRpc(params?: TokensQueryParams): Promise<PaginatedResult<Token>> {
     const {
-      gameId,
       gameAddress: providedGameAddress,
       owner,
       settingsId,
@@ -733,11 +714,7 @@ export class DenshokanClient {
       return { data, total };
     }
 
-    // Resolve gameAddress from gameId if needed
-    let gameAddress = providedGameAddress;
-    if (!gameAddress && gameId !== undefined) {
-      gameAddress = await this.resolveGameAddress(gameId);
-    }
+    const gameAddress = providedGameAddress;
 
     // Use viewer contract for efficient filtering
     let filterResult: FilterResult | null = null;
@@ -965,7 +942,8 @@ export class DenshokanClient {
       const enriched = usedEnriched ? (state as import("./types/rpc.js").DenshokanTokenState) : null;
       return {
         tokenId: state.tokenId,
-        gameId: decoded.gameId,
+        // Self-bound: a token's issuing contract IS its game.
+        contractAddress: state.gameAddress,
         settingsId: decoded.settingsId,
         objectiveId: decoded.objectiveId,
         mintedAt: decoded.mintedAt.toISOString(),
@@ -1012,7 +990,7 @@ export class DenshokanClient {
           servedByApi = false;
           return this.buildTokensFromRpc({
             owner: address,
-            gameId: params?.gameId,
+            gameAddress: params?.gameAddress,
             limit: params?.limit,
             offset: params?.offset,
             includeUri: params?.includeUri,
@@ -1023,7 +1001,7 @@ export class DenshokanClient {
     } else {
       result = await this.buildTokensFromRpc({
         owner: address,
-        gameId: params?.gameId,
+        gameAddress: params?.gameAddress,
         limit: params?.limit,
         offset: params?.offset,
         includeUri: params?.includeUri,
@@ -1376,9 +1354,13 @@ export class DenshokanClient {
   // RPC: Game Contract (score & game state, batch-first with fallback)
   // =========================================================================
 
-  async score(tokenId: string, gameAddress?: string): Promise<bigint> {
-    const address = gameAddress ?? await this.resolveGameAddressForToken(tokenId);
-    const contract = await this.getGameContract(address);
+  /**
+   * `gameAddress` is required: a token id packs nothing that identifies its
+   * game, so there is no address to derive from it. Callers always have it —
+   * they had to know the contract to obtain the token.
+   */
+  async score(tokenId: string, gameAddress: string): Promise<bigint> {
+    const contract = await this.getGameContract(gameAddress);
     return rpcScore(contract, tokenId);
   }
 
@@ -1387,9 +1369,9 @@ export class DenshokanClient {
     return rpcScoreBatch(contract, tokenIds);
   }
 
-  async gameOver(tokenId: string, gameAddress?: string): Promise<boolean> {
-    const address = gameAddress ?? await this.resolveGameAddressForToken(tokenId);
-    const contract = await this.getGameContract(address);
+  /** `gameAddress` is required — see `score`. */
+  async gameOver(tokenId: string, gameAddress: string): Promise<boolean> {
+    const contract = await this.getGameContract(gameAddress);
     return rpcGameOver(contract, tokenId);
   }
 

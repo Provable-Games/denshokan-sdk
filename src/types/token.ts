@@ -1,34 +1,19 @@
 export interface Token {
   tokenId: string;
   /**
-   * LEGACY ONLY. `null` for self-bound tokens, whose game is a contract
-   * address rather than a registry id — read `gameAddress` for those.
-   *
-   * The API returns null here for any token minted by a v2.x game, so this
-   * has to be nullable to describe the response honestly.
+   * The ERC721 that issued this token, which IS its game. Together with
+   * `tokenId` this is the token's identity — an id is unique only within its
+   * own contract.
    */
-  gameId: number | null;
-  /**
-   * Which layout the indexer decoded this token with. Optional because an API
-   * deployment that predates the self-bound generation does not return it;
-   * absent means legacy.
-   */
-  generation?: TokenGeneration;
-  /**
-   * The ERC721 that issued this token. Together with `tokenId` it is the
-   * token's identity — a token id is only unique within its own contract.
-   * Optional for the same reason as `generation`.
-   */
-  contractAddress?: string | null;
+  contractAddress: string;
   owner: string;
   score: number;
   gameOver: boolean;
   playerName: string | null;
   /**
-   * Truncated minter id from the token id, NOT a full address — 40 bits on
-   * legacy, 26 on standard. It is also scoped to `contractAddress`: the same
-   * number means a different minter in another contract. Use `minterAddress`
-   * for the resolved address.
+   * Truncated 26-bit minter id from the token id, NOT an address. Scoped to
+   * `contractAddress`: the same number means a different minter in another
+   * contract. Use `minterAddress` for the resolved address.
    */
   mintedBy: number;
   /** Full minter contract address (resolved from minters registry) */
@@ -66,30 +51,11 @@ export interface Token {
 }
 
 /**
- * Which contract generation minted a token, and therefore which bit layout its
- * id uses.
- *
- * - `legacy`   — the registry-backed denshokan: one token contract serving
- *                many games, hence a `gameId` in the layout.
- * - `standard` — game-components v2.x: the game contract IS the token, so
- *                there is no game id to pack.
- *
- * The two layouts share no field offsets and ids carry no marker, so this has
- * to come from the contract a token was minted by — it cannot be inferred
- * from the id, and guessing wrong is silent rather than an error.
- */
-export type TokenGeneration = "legacy" | "standard";
-
-/**
  * Core token data decoded purely from the packed token ID.
  * No RPC calls required - useful for quick client-side display.
  */
 export interface CoreToken {
   tokenId: string;
-  /** Which layout decoded this token. */
-  generation: TokenGeneration;
-  /** LEGACY ONLY — `null` for self-bound tokens, whose game IS their contract. */
-  gameId: number | null;
   settingsId: number;
   objectiveId: number;
   mintedAt: string;
@@ -98,15 +64,16 @@ export interface CoreToken {
   endDelay: number;
   hasContext: boolean;
   paymaster: boolean;
-  /** Truncated minter id (legacy 40 bits, standard 26) — not a full address */
+  /**
+   * Truncated 26-bit minter id — not an address, and meaningful only within
+   * the contract that issued it.
+   */
   mintedByTruncated: bigint;
   txHash: number;
-  /** Legacy 10 bits, standard 16 */
   salt: number;
   /**
-   * Inert game-interpreted data. 13 bits on legacy, 65 on standard — the
-   * latter exceeds Number.MAX_SAFE_INTEGER, so this is a bigint for both
-   * rather than silently rounding wide values.
+   * Inert game-interpreted data, 65 bits — past Number.MAX_SAFE_INTEGER, so a
+   * bigint rather than a silently rounded number.
    */
   metadata: bigint;
 }
@@ -122,10 +89,6 @@ export interface TokenMutableState {
 
 export interface DecodedTokenId {
   tokenId: bigint;
-  /** Which layout decoded this token. */
-  generation: TokenGeneration;
-  /** LEGACY ONLY — `null` for self-bound tokens, whose game IS their contract. */
-  gameId: number | null;
   mintedBy: bigint;
   settingsId: number;
   mintedAt: Date;
@@ -137,7 +100,7 @@ export interface DecodedTokenId {
   paymaster: boolean;
   txHash: number;
   salt: number;
-  /** See CoreToken.metadata — bigint to hold the standard layout's 65 bits. */
+  /** See CoreToken.metadata — bigint to hold all 65 bits. */
   metadata: bigint;
 }
 
@@ -174,12 +137,7 @@ export interface TokenRank {
  * if it doesn't, the SDK call rejects with TokenNotFoundError.
  */
 export interface TokenRankParams {
-  gameId?: number;
-  /**
-   * Scope the leaderboard to one game by contract address. Required for
-   * self-bound games, which have no `gameId` — scoping those by `gameId`
-   * silently produces a leaderboard with none of their tokens in it.
-   */
+  /** Scope the leaderboard to one game, by contract address. */
   gameAddress?: string;
   settingsId?: number;
   objectiveId?: number;
@@ -219,9 +177,7 @@ export interface PaginatedResult<T> {
 export type TokenSortField = "score" | "mintedAt" | "lastUpdatedAt" | "completedAt";
 
 export interface TokensFilterParams {
-  /** Filter by game ID (resolved to game address via registry) */
-  gameId?: number;
-  /** Filter by game contract address directly */
+  /** Filter by game contract address */
   gameAddress?: string;
   /** Filter by owner address */
   owner?: string;
@@ -229,11 +185,11 @@ export interface TokensFilterParams {
    *  player's whole campaign-minted game set — beyond the owner/minter paging and
    *  row limits. Sent to `POST /tokens/query` (an id list can be hundreds of
    *  felt252 values, too long for a query string). Combinable with the other
-   *  filters (gameId/owner/gameOver/minterAddress) + sort. */
+   *  filters (gameAddress/owner/gameOver/minterAddress) + sort. */
   tokenIds?: string[];
-  /** Filter by settings ID (requires gameId or gameAddress) */
+  /** Filter by settings ID (requires gameAddress) */
   settingsId?: number;
-  /** Filter by objective ID (requires gameId or gameAddress) */
+  /** Filter by objective ID (requires gameAddress) */
   objectiveId?: number;
   /** Filter by minter address */
   minterAddress?: string;

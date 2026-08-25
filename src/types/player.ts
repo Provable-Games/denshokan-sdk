@@ -10,7 +10,8 @@ export interface PlayerStats {
 }
 
 export interface PlayerTokensParams {
-  gameId?: number;
+  /** Scope to one game, by contract address. */
+  gameAddress?: string;
   sort?: { field: TokenSortField; direction: "asc" | "desc" };
   limit?: number;
   offset?: number;
