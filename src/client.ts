@@ -17,6 +17,8 @@ import type {
   TokenRanksResult,
   PlayerRankParams,
   PaginatedResult,
+  GameCoreLeaderboardEntry,
+  GameCoreLeaderboardParams,
   TokensQueryParams,
   DecodedTokenId,
   CoreToken,
@@ -55,6 +57,7 @@ import {
   apiGetObjective,
 } from "./api/games.js";
 import { apiGetTokens, apiGetToken, apiGetTokenScores, apiGetTokenRank, apiGetTokenRanks } from "./api/tokens.js";
+import { apiGetGameCoreLeaderboard } from "./api/leaderboard.js";
 import { apiGetPlayerTokens, apiGetPlayerStats, apiGetPlayerBestRank } from "./api/players.js";
 import { apiGetMinters, apiGetMinter } from "./api/minters.js";
 
@@ -522,6 +525,17 @@ export class DenshokanClient {
     });
     this._inflight.set(cacheKey, promise);
     return promise;
+  }
+
+  /** Exact scores and GameCore mint-block ordering, applied before pagination.
+   * API-only: fail if the endpoint is unavailable rather than returning a
+   * partially sorted page through a legacy RPC fallback.
+   */
+  async getGameCoreLeaderboard(
+    params: GameCoreLeaderboardParams,
+    signal?: AbortSignal,
+  ): Promise<PaginatedResult<GameCoreLeaderboardEntry>> {
+    return apiGetGameCoreLeaderboard(this.apiCtx, params, signal);
   }
 
   private async _getTokensImpl(params?: TokensQueryParams): Promise<PaginatedResult<Token>> {

@@ -11,6 +11,8 @@ export type {
   TokenRanksResult,
   PlayerRankParams,
   PaginatedResult,
+  GameCoreLeaderboardEntry,
+  GameCoreLeaderboardParams,
   TokenSortField,
   TokensFilterParams,
   TokensQueryParams,

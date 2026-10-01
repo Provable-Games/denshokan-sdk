@@ -223,6 +223,7 @@ The SDK monitors API and RPC health in the background (30s interval). When the A
 | `getGame(id)` | Yes | Yes | Yes |
 | `getToken(id)` | Yes | Yes | Yes |
 | `getTokens(filter)` | Yes | — | API only |
+| `getGameCoreLeaderboard(params)` | Yes | — | API only |
 | `getPlayerTokens/Stats` | Yes | — | API only |
 | `balanceOf(account)` | — | Yes | RPC only |
 | `ownerOf(tokenId)` | — | Yes | RPC only |
@@ -236,6 +237,19 @@ The SDK monitors API and RPC health in the background (30s interval). When the A
 **Games** — `getGames()`, `getGame(id)`, `getGameLeaderboard(id, opts?)`, `getLeaderboardPosition(gameId, tokenId, context?)`, `getGameObjectives(id)`, `getGameSettings(id)`
 
 **Tokens** — `getTokens(params?)`, `getToken(id)`, `getTokenScores(id, limit?)`
+
+**GameCore leaderboard** — `getGameCoreLeaderboard({ gameAddress, minterAddress, contextId, direction?, limit?, offset? }, signal?)`
+
+Queries `GET /tokens/leaderboard` for a schema-1 GameCore tournament. PostgreSQL
+orders positive scores by score (descending by default), mint block ascending,
+then the full numeric token ID ascending **before** applying limit and offset.
+`contextId` and every returned `score` are decimal strings, preserving values
+beyond JavaScript's safe integer range. The result contains
+`{ tokenId, score, owner, mintBlock }` rows and `total`.
+
+The endpoint must be deployed first. This method does not fall back to legacy
+token queries or RPC pages, whose ordering cannot guarantee the correct page.
+Existing `getTokens()` numeric scores and legacy ordering remain unchanged.
 
 **Players** — `getPlayerTokens(address, params?)`, `getPlayerStats(address)`
 
