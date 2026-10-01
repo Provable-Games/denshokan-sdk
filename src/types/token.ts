@@ -155,6 +155,25 @@ export interface PaginatedResult<T> {
   total: number;
 }
 
+/** GameCore winners in score, mint-block, numeric-token-ID order. */
+export interface GameCoreLeaderboardEntry {
+  tokenId: string;
+  /** Exact decimal u64 score. Never converted to JavaScript Number. */
+  score: string;
+  owner: string;
+  mintBlock: number;
+}
+
+export interface GameCoreLeaderboardParams {
+  gameAddress: string;
+  minterAddress: string;
+  /** Exact decimal tournament context ID. */
+  contextId: string;
+  direction?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
+}
+
 /**
  * Available sort fields for token queries.
  */
